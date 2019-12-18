@@ -1,0 +1,54 @@
+###############################################################################
+# File containing golden test output for tests.
+#
+# Format:
+# '#' = line comment, skipped when file is read.
+# '== SOME TEXT ' = section separator. Tests are run on each section individually.
+#                   SOME TEXT should be the same on all 3 DDL files
+#
+# Each DDL statement must be on a single line.
+# Case sensitive comparison.
+# no trailing semicolons.
+# no '--' DDL comments allowed.
+###############################################################################
+== TEST 1 simple add table and index
+
+CREATE TABLE test2 (col1 INT64, col2 INT64) PRIMARY KEY (col1 ASC)
+CREATE INDEX index2 ON test2 (col1 ASC)
+
+== TEST 2 drop table and index (index should be dropped first)
+
+DROP INDEX index2
+DROP TABLE test2
+
+== TEST 3 update table and index
+
+DROP INDEX index2
+ALTER TABLE test2 ADD COLUMN col3 TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=TRUE)
+CREATE INDEX index2 ON test2 (col3 ASC)
+
+== TEST 4 multiple tables, indexes, different orders - verify creation order.
+
+DROP INDEX index1
+DROP INDEX index2
+ALTER TABLE test1 ADD COLUMN col6 BYTES(100)
+ALTER TABLE test1 ALTER COLUMN col2 INT64 NOT NULL
+ALTER TABLE test1 ALTER COLUMN col3 STRING(MAX)
+ALTER TABLE test1 ALTER COLUMN col4 ARRAY<STRING(200)>
+ALTER TABLE test2 ADD COLUMN newcol2 STRING(MAX)
+ALTER TABLE test3 SET ON DELETE NO ACTION
+ALTER TABLE test3 ADD COLUMN col3 TIMESTAMP
+CREATE TABLE cccparent (col1 INT64) PRIMARY KEY (col1 ASC)
+CREATE TABLE bbbchild1 (col1 INT64, col2 INT64) PRIMARY KEY (col1 ASC, col2 ASC), INTERLEAVE IN PARENT cccparent ON DELETE NO ACTION
+CREATE TABLE aaachild2 (col1 INT64, col2 INT64, col3 INT64) PRIMARY KEY (col1 ASC, col2 ASC, col3 ASC), INTERLEAVE IN PARENT bbbchild1 ON DELETE NO ACTION
+CREATE INDEX index1 ON test1 (col2 ASC)
+CREATE INDEX index2 ON test2 (col1 DESC)
+
+== TEST 5 verify table deletion order - important for interleaved
+
+DROP INDEX aaaindex1
+DROP TABLE cccchild2
+DROP TABLE bbbchild1
+DROP TABLE aaaparent
+
+==

@@ -1,0 +1,62 @@
+###############################################################################
+# File containing segments of new DDL for test input.
+#
+# Format:
+# '#' = line comment, skipped when file is read.
+# '== SOME TEXT ' = section separator. Tests are run on each section individually.
+#                   SOME TEXT should be the same on all 3 DDL files
+# '--' DDL line comment - skipped by parser.
+###############################################################################
+== TEST 1 simple add table and index
+
+create table test1 ( col1 int64, col2 int64 ) primary key (col1);
+create table test2 ( col1 int64, col2 int64 ) primary key (col1);
+create index index1 on test1 (col1);
+create index index2 on test2 (col1);
+
+== TEST 2 drop table and index (index should be dropped first)
+
+create table test1 ( col1 int64, col2 int64 ) primary key (col1);
+create index index1 on test1 (col1);
+
+== TEST 3 update table and index
+
+create table test1 ( col1 int64, col2 int64 ) primary key (col1);
+create table test2 ( col1 int64, col2 int64, col3 timestamp NOT NULL OPTIONS (allow_commit_timestamp=true) ) primary key (col1);
+create index index1 on test1 (col1);
+create index index2 on test2 (col3);
+
+== TEST 4 multiple tables, indexes, different orders - verify creation order.
+
+create table test2 ( col1 int64, newcol2 string(max)) primary key (col1);
+create table test3 ( col1 int64, col2 int64, col3 timestamp ) primary key (col1, col2), interleave in parent test2;
+create index index2 on test2 (col1 desc);
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL,
+    col3 STRING(MAX),
+    col4 ARRAY<STRING(200)>,
+    col5 float64 not null,
+    col6 BYTES(100))
+primary key (col1 desc);
+create index index1 on test1 (col2);
+
+# attempt to break by using different table name order.
+create table cccparent (col1 int64) primary key (col1);
+create table bbbchild1 (col1 int64, col2 int64) primary key (col1, col2), interleave in parent cccparent;
+create table aaachild2 (col1 int64, col2 int64, col3 int64) primary key (col1, col2, col3), interleave in parent bbbchild1;
+
+== TEST 5 verify table deletion order - important for interleaved
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL,
+    col3 STRING(MAX),
+    col4 ARRAY<STRING(200)>,
+    col5 float64 not null,
+    col6 BYTES(100))
+primary key (col1 desc);
+create index index1 on test1 (col2);
+
+==

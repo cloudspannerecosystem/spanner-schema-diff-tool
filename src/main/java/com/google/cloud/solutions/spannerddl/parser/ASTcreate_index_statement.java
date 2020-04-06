@@ -67,14 +67,14 @@ public class ASTcreate_index_statement extends SimpleNode
 
   @Override
   public int compareTo(ASTcreate_index_statement other) {
-    return this.getIndexName().compareToIgnoreCase(other.getIndexName().toUpperCase());
+    return this.getIndexName().compareTo(other.getIndexName());
   }
 
   @Override
   public boolean equals(Object other) {
     if (other instanceof ASTcreate_index_statement) {
       // lazy: compare text rendering.
-      return this.toString().equalsIgnoreCase(other.toString());
+      return this.toString().equals(other.toString());
     }
     return false;
   }

@@ -59,4 +59,23 @@ create table test1 (
 primary key (col1 desc);
 create index index1 on test1 (col2);
 
+== TEST 6 case-sensitive table names
+
+create table TEST1 (
+    col1 int64)
+primary key (col1);
+
+== TEST 7 case-sensitive column names
+
+create table test1 (col1 String(100), COL2 int64) primary key (col1);
+
+== TEST 8 case-sensitive index names
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+create index INDEX1 on test1 (col2);
+
 ==

@@ -73,10 +73,8 @@ public class ASTcolumn_def extends SimpleNode {
     // type
     ret.append(getColumnTypeString());
 
-    int index = 2;
     if (isNotNull()) {
       ret.append(" NOT NULL");
-      index++;
     }
     // getOptions also checks for unknown children.
     if (getOptionsClause() != null) {
@@ -89,7 +87,7 @@ public class ASTcolumn_def extends SimpleNode {
   @Override
   public boolean equals(Object other) {
     if (other instanceof ASTcolumn_def) {
-      return this.toString().equalsIgnoreCase(other.toString());
+      return this.toString().equals(other.toString());
     }
     return false;
   }

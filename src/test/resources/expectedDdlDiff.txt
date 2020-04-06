@@ -51,4 +51,19 @@ DROP TABLE cccchild2
 DROP TABLE bbbchild1
 DROP TABLE aaaparent
 
+== TEST 6 case-sensitive table names
+
+DROP TABLE test1
+CREATE TABLE TEST1 (col1 INT64) PRIMARY KEY (col1 ASC)
+
+== TEST 7 case-sensitive column names
+
+ALTER TABLE test1 DROP COLUMN col2
+ALTER TABLE test1 ADD COLUMN COL2 INT64
+
+== TEST 8 case-sensitive index names
+
+DROP INDEX index1
+CREATE INDEX INDEX1 ON test1 (col2 ASC)
+
 ==

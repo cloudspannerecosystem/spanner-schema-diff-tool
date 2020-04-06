@@ -192,7 +192,7 @@ public class DdlDiff {
         && !(left.getInterleaveClause()
         .get()
         .getParentTableName()
-        .equalsIgnoreCase(right.getInterleaveClause().get().getParentTableName()))) {
+        .equals(right.getInterleaveClause().get().getParentTableName()))) {
       throw new DdlDiffException(
           "Cannot change interleaved parent of table " + left.getTableName());
     }
@@ -207,7 +207,7 @@ public class DdlDiff {
         && !(left.getInterleaveClause()
         .get()
         .getOnDelete()
-            .equalsIgnoreCase(right.getInterleaveClause().get().getOnDelete()))) {
+        .equals(right.getInterleaveClause().get().getOnDelete()))) {
       alterStatements.add(
           "ALTER TABLE "
               + left.getTableName()
@@ -248,7 +248,7 @@ public class DdlDiff {
     if (!columnDiff
         .leftValue()
         .getColumnTypeString()
-        .equalsIgnoreCase(columnDiff.rightValue().getColumnTypeString())) {
+        .equals(columnDiff.rightValue().getColumnTypeString())) {
 
       // check for changing lengths of Strings or Arrays - for arrays we need the 'root' type and
       // the depth.
@@ -369,11 +369,11 @@ public class DdlDiff {
       if (statement.jjtGetChild(0) instanceof ASTcreate_table_statement) {
         ASTcreate_table_statement createTable =
             (ASTcreate_table_statement) statement.jjtGetChild(0);
-        tables.put(createTable.getTableName().toLowerCase(), createTable);
+        tables.put(createTable.getTableName(), createTable);
       } else if (statement.jjtGetChild(0) instanceof ASTcreate_index_statement) {
         ASTcreate_index_statement createIndex =
             (ASTcreate_index_statement) statement.jjtGetChild(0);
-        indexes.put(createIndex.getIndexName().toLowerCase(), createIndex);
+        indexes.put(createIndex.getIndexName(), createIndex);
       } else {
         throw new IllegalArgumentException(
             "Unsupported statement type: "

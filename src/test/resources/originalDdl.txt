@@ -57,4 +57,24 @@ create table aaaparent (col1 int64) primary key (col1);
 create table bbbchild1 (col1 int64, col2 int64) primary key (col1, col2), interleave in parent aaaparent;
 create table cccchild2 (col1 int64, col2 int64, col3 int64) primary key (col1, col2, col3), interleave in parent bbbchild1;
 create index aaaindex1 on aaachild2 (col3);
+
+== TEST 6 case-sensitive table names
+
+create table test1 (
+    col1 int64)
+primary key (col1);
+
+== TEST 7 case-sensitive column names
+
+create table test1 (col1 String(100), col2 int64) primary key (col1);
+
+== TEST 8 case-sensitive index names
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+create index index1 on test1 (col2);
+
 ==

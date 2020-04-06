@@ -95,13 +95,13 @@ public class ASTcreate_table_statement extends SimpleNode {
   }
 
   public static Comparator<ASTcreate_table_statement> COMPARE_BY_NAME =
-      Comparator.comparing(o -> o.getTableName().toUpperCase());
+      Comparator.comparing(ASTcreate_table_statement::getTableName);
 
   @Override
   public boolean equals(Object other) {
     if (other instanceof ASTcreate_table_statement) {
       // lazy: compare text rendering.
-      return this.toString().equalsIgnoreCase(other.toString());
+      return this.toString().equals(other.toString());
     }
     return false;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2020 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,21 @@ package com.google.cloud.solutions.spannerddl.diff;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.cloud.solutions.spannerddl.parser.ASTalter_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_def;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_type;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTforeign_key;
+import com.google.cloud.solutions.spannerddl.parser.ASToptions_clause;
 import com.google.cloud.solutions.spannerddl.parser.DdlParser;
 import com.google.cloud.solutions.spannerddl.parser.DdlParserTreeConstants;
 import com.google.cloud.solutions.spannerddl.parser.ParseException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.MapDifference.ValueDifference;
 import com.google.common.collect.Maps;
@@ -57,9 +61,9 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Example usage:
  *
- * <p>Pass the original and new DDL text to the {@link #build(String, String)} function, and
- * call {@link #generateDifferenceStatements(boolean, boolean)} to generate the list of
- * {@code ALTER} statements.
+ * <p>Pass the original and new DDL text to the {@link #build(String, String)}
+ * function, and call {@link #generateDifferenceStatements(Map)} to generate the list of {@code
+ * ALTER} statements.
  *
  * <p>eg:
  * <pre>
@@ -77,35 +81,64 @@ public class DdlDiff {
   public static final String NEW_DDL_FILE_OPT = "newDdlFile";
   public static final String OUTPUT_DDL_FILE_OPT = "outputDdlFile";
   public static final String ALLOW_RECREATE_INDEXES_OPT = "allowRecreateIndexes";
+  public static final String ALLOW_RECREATE_FOREIGN_KEYS_OPT = "allowRecreateForeignKeys";
   public static final String ALLOW_DROP_STATEMENTS_OPT = "allowDropStatements";
   public static final String HELP_OPT = "help";
 
   private final MapDifference<String, ASTcreate_index_statement> indexDifferences;
   private final MapDifference<String, ASTcreate_table_statement> tableDifferences;
+  private final MapDifference<String, ForeignKeyWrapper> foreignKeyDifferences;
   private final Map<String, ASTcreate_table_statement> newTablesCreationOrder;
   private final Map<String, ASTcreate_table_statement> originalTablesCreationOrder;
+
+  private static class ForeignKeyWrapper {
+
+    private final String tableName;
+    private final ASTforeign_key foreignKey;
+
+    private ForeignKeyWrapper(String tableName, ASTforeign_key fk) {
+      this.tableName = tableName;
+      this.foreignKey = fk;
+    }
+
+    private String getName() {
+      return foreignKey.getName();
+    }
+  }
 
   private DdlDiff(
       MapDifference<String, ASTcreate_table_statement> tableDifferences,
       Map<String, ASTcreate_table_statement> originalTablesCreationOrder,
       Map<String, ASTcreate_table_statement> newTablesCreationOrder,
-      MapDifference<String, ASTcreate_index_statement> indexDifferences) {
+      MapDifference<String, ASTcreate_index_statement> indexDifferences,
+      MapDifference<String, ForeignKeyWrapper> foreignKeyDifferences) {
     this.tableDifferences = tableDifferences;
     this.originalTablesCreationOrder = originalTablesCreationOrder;
     this.newTablesCreationOrder = newTablesCreationOrder;
     this.indexDifferences = indexDifferences;
+    this.foreignKeyDifferences = foreignKeyDifferences;
   }
 
 
-  public List<String> generateDifferenceStatements(
-      boolean allowRecreateIndexes, boolean allowDropStatements) throws DdlDiffException {
+  public List<String> generateDifferenceStatements(Map<String, Boolean> options)
+      throws DdlDiffException {
     ImmutableList.Builder<String> output = ImmutableList.builder();
 
-    if (!indexDifferences.entriesDiffering().isEmpty() && !allowRecreateIndexes) {
+    boolean allowDropStatements = options.get(ALLOW_DROP_STATEMENTS_OPT);
+
+    if (!indexDifferences.entriesDiffering().isEmpty() && !options
+        .get(ALLOW_RECREATE_INDEXES_OPT)) {
       throw new DdlDiffException(
           "At least one Index differs, and allowRecreateIndexes is not set.\n"
               + "Indexes: "
               + Joiner.on(", ").join(indexDifferences.entriesDiffering().keySet()));
+    }
+
+    if (!foreignKeyDifferences.entriesDiffering().isEmpty() && !options
+        .get(ALLOW_RECREATE_FOREIGN_KEYS_OPT)) {
+      throw new DdlDiffException(
+          "At least one FOREIGN KEY constraint differs, and allowRecreateForeignKeys is not set.\n"
+              + Joiner.on(", ").join(foreignKeyDifferences.entriesDiffering().keySet()));
     }
 
     // Drop deleted indexes.
@@ -121,6 +154,20 @@ public class DdlDiff {
     for (String indexName : indexDifferences.entriesDiffering().keySet()) {
       LOG.info("Dropping changed index for re-creation: {}", indexName);
       output.add("DROP INDEX " + indexName);
+    }
+
+    // Drop deleted foreign keys
+    for (ForeignKeyWrapper fk : foreignKeyDifferences.entriesOnlyOnLeft().values()) {
+      output
+          .add("ALTER TABLE " + fk.tableName + " DROP CONSTRAINT " + fk.getName());
+    }
+
+    // Drop modified foreign keys that need to be re-created...
+    for (ValueDifference<ForeignKeyWrapper> fkDiff : foreignKeyDifferences.entriesDiffering()
+        .values()) {
+      output
+          .add("ALTER TABLE " + fkDiff.leftValue().tableName + " DROP CONSTRAINT " + fkDiff
+              .leftValue().getName());
     }
 
     if (allowDropStatements) {
@@ -141,7 +188,8 @@ public class DdlDiff {
       LOG.info("Altering modified table: {}", difference.leftValue().getTableName());
       output.addAll(
           generateAlterTableStatements(
-              difference.leftValue(), difference.rightValue(), allowDropStatements));
+              difference.leftValue(), difference.rightValue(),
+              options));
     }
 
     // Create new tables. Must be done in the order of creation in the new DDL.
@@ -162,26 +210,41 @@ public class DdlDiff {
     // Re-create modified indexes...
     for (ValueDifference<ASTcreate_index_statement> difference :
         indexDifferences.entriesDiffering().values()) {
-      LOG.info("Re-creaating changed index: {}", difference.leftValue().getIndexName());
+      LOG.info("Re-creating changed index: {}", difference.leftValue().getIndexName());
       output.add(difference.rightValue().toString());
     }
 
+    // Create new Foreign Keys.
+    for (ForeignKeyWrapper fk : foreignKeyDifferences.entriesOnlyOnRight().values()) {
+      output.add("ALTER TABLE " + fk.tableName + " ADD " + fk.foreignKey.toString());
+    }
+
+    // Re-create modified Foreign Keys.
+    for (ValueDifference<ForeignKeyWrapper> fkDiff : foreignKeyDifferences.entriesDiffering()
+        .values()) {
+      output.add(
+          "ALTER TABLE " + fkDiff.rightValue().tableName + " ADD " + fkDiff.rightValue().foreignKey
+              .toString());
+    }
     return output.build();
   }
 
   @VisibleForTesting
   static List<String> generateAlterTableStatements(
-      ASTcreate_table_statement left, ASTcreate_table_statement right, boolean allowDropStatements)
+      ASTcreate_table_statement left, ASTcreate_table_statement right, Map<String, Boolean> options)
       throws DdlDiffException {
     ArrayList<String> alterStatements = new ArrayList<>();
 
     // Alter Table can:
+    //   - Add constraints
+    //   - drop constraints
     //   - Add cols
     //   - drop cols (if enabled)
     //   - change on-delete action for interleaved
     // ALTER TABLE ALTER COLUMN can:
     //   - change options on column
     //   - change not null on column.
+    // note that constraints need to be dropped before columns, and created after columns.
 
     // Check interleaving has not changed.
     if (left.getInterleaveClause().isPresent() != right.getInterleaveClause().isPresent()) {
@@ -219,7 +282,7 @@ public class DdlDiff {
     MapDifference<String, ASTcolumn_def> columnDifferences =
         Maps.difference(left.getColumns(), right.getColumns());
 
-    if (allowDropStatements) {
+    if (options.get(ALLOW_DROP_STATEMENTS_OPT)) {
       for (String columnName : columnDifferences.entriesOnlyOnLeft().keySet()) {
         alterStatements.add("ALTER TABLE " + left.getTableName() + " DROP COLUMN " + columnName);
       }
@@ -300,15 +363,15 @@ public class DdlDiff {
     }
 
     // Update options.
+    ASToptions_clause leftOptionsClause = columnDiff.leftValue().getOptionsClause();
     Map<String, String> leftOptions =
-        columnDiff.leftValue().getOptionsClause() == null
-            ? Collections.emptyMap()
-            : columnDiff.leftValue().getOptionsClause().getKeyValueMap();
+        leftOptionsClause == null ? Collections.emptyMap() : leftOptionsClause.getKeyValueMap();
 
     TreeMap<String, String> optionsToUpdate = new TreeMap<>();
     // add all in right, then remove those that are the same as left
-    if (columnDiff.rightValue().getOptionsClause() != null) {
-      optionsToUpdate.putAll(columnDiff.rightValue().getOptionsClause().getKeyValueMap());
+    ASToptions_clause rightOptionsClause = columnDiff.rightValue().getOptionsClause();
+    if (rightOptionsClause != null) {
+      optionsToUpdate.putAll(rightOptionsClause.getKeyValueMap());
     }
 
     for (Map.Entry<String, String> left : leftOptions.entrySet()) {
@@ -338,19 +401,26 @@ public class DdlDiff {
     }
   }
 
-  static DdlDiff build(String originalDDL, String newDDL) throws DdlDiffException {
+  static DdlDiff build(String originalDDL, String newDDL)
+      throws DdlDiffException {
     List<ASTddl_statement> originalStatements = parseDDL(originalDDL);
     List<ASTddl_statement> newStatements = parseDDL(newDDL);
 
     Map<String, ASTcreate_table_statement> originalTablesCreationOrder = new LinkedHashMap<>();
     Map<String, ASTcreate_index_statement> originalIndexes = new TreeMap<>();
-    separateTablesAndIndexes(originalStatements, originalTablesCreationOrder, originalIndexes);
+    Map<String, ForeignKeyWrapper> originalForeignKeys = new TreeMap<>();
+
+    separateTablesIndexesForeignKeys(originalStatements, originalTablesCreationOrder,
+        originalIndexes, originalForeignKeys);
     Map<String, ASTcreate_table_statement> originalTablesNameOrder =
         new TreeMap<>(originalTablesCreationOrder);
 
     Map<String, ASTcreate_table_statement> newTablesCreationOrder = new LinkedHashMap<>();
     Map<String, ASTcreate_index_statement> newIndexes = new TreeMap<>();
-    separateTablesAndIndexes(newStatements, newTablesCreationOrder, newIndexes);
+    Map<String, ForeignKeyWrapper> newForeignKeys = new TreeMap<>();
+
+    separateTablesIndexesForeignKeys(newStatements, newTablesCreationOrder, newIndexes,
+        newForeignKeys);
     Map<String, ASTcreate_table_statement> newTablesNameOrder =
         new TreeMap<>(newTablesCreationOrder);
 
@@ -358,22 +428,38 @@ public class DdlDiff {
         Maps.difference(originalTablesNameOrder, newTablesNameOrder),
         originalTablesCreationOrder,
         newTablesCreationOrder,
-        Maps.difference(originalIndexes, newIndexes));
+        Maps.difference(originalIndexes, newIndexes),
+        Maps.difference(originalForeignKeys, newForeignKeys));
   }
 
-  private static void separateTablesAndIndexes(
+  private static void separateTablesIndexesForeignKeys(
       List<ASTddl_statement> statements,
       Map<String, ASTcreate_table_statement> tables,
-      Map<String, ASTcreate_index_statement> indexes) {
+      Map<String, ASTcreate_index_statement> indexes,
+      Map<String, ForeignKeyWrapper> foreignKeys) {
     for (ASTddl_statement statement : statements) {
       if (statement.jjtGetChild(0) instanceof ASTcreate_table_statement) {
         ASTcreate_table_statement createTable =
             (ASTcreate_table_statement) statement.jjtGetChild(0);
         tables.put(createTable.getTableName(), createTable);
+        // convert embedded foreign key statements into wrapper object with table name
+        // use a single map for all foreign keys, whether created in table or externally
+        createTable.getForeignKeys().values().stream()
+            .map(fk -> new ForeignKeyWrapper(createTable.getTableName(), fk))
+            .forEach(fk -> foreignKeys.put(fk.getName(), fk));
+
       } else if (statement.jjtGetChild(0) instanceof ASTcreate_index_statement) {
         ASTcreate_index_statement createIndex =
             (ASTcreate_index_statement) statement.jjtGetChild(0);
         indexes.put(createIndex.getIndexName(), createIndex);
+
+      } else if (statement.jjtGetChild(0) instanceof ASTalter_table_statement &&
+          // use a single map for all foreign keys, whether created in table or externally
+          statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTforeign_key) {
+        ASTalter_table_statement alterTable = (ASTalter_table_statement) statement.jjtGetChild(0);
+        ForeignKeyWrapper fk = new ForeignKeyWrapper(alterTable.jjtGetChild(0).toString(),
+            (ASTforeign_key) alterTable.jjtGetChild(1));
+        foreignKeys.put(fk.getName(), fk);
       } else {
         throw new IllegalArgumentException(
             "Unsupported statement type: "
@@ -396,12 +482,43 @@ public class DdlDiff {
         ASTddl_statement ddlStatement = DdlParser.parseDdlStatement(statement);
         int statementType = ddlStatement.jjtGetChild(0).getId();
 
-        if (statementType != DdlParserTreeConstants.JJTCREATE_TABLE_STATEMENT
-            && statementType != DdlParserTreeConstants.JJTCREATE_INDEX_STATEMENT) {
+        if (statementType == DdlParserTreeConstants.JJTDROP_STATEMENT) {
           throw new IllegalArgumentException(
               "Unsupported statement:\n"
                   + statement
-                  + "\nCan only create diffs from CREATE TABLE and CREATE INDEX DDL statements");
+                  + "\nCan only create diffs from 'CREATE TABLE, CREATE INDEX, and "
+                  + "'ALTER TABLE table_name ADD CONSTRAINT' DDL statements");
+        }
+
+        if (statementType == DdlParserTreeConstants.JJTALTER_TABLE_STATEMENT) {
+          ASTalter_table_statement alterTableStatement = (ASTalter_table_statement) ddlStatement
+              .jjtGetChild(0);
+          // child 0 = table name
+          // child 1 = alter statement. Only ASTforeign_key is supported
+          if (!(alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key)) {
+            throw new IllegalArgumentException(
+                "Unsupported statement:\n"
+                    + statement
+                    + "\nCan only create diffs from 'CREATE TABLE, CREATE INDEX, and "
+                    + "'ALTER TABLE table_name ADD CONSTRAINT' DDL statements");
+          }
+          // only foreign key statements here:
+          if (((ASTforeign_key) alterTableStatement.jjtGetChild(1)).getName()
+              .equals(ASTforeign_key.ANONYMOUS_NAME)) {
+            throw new IllegalArgumentException(
+                "Unsupported statement:\n"
+                    + statement
+                    + "\nCan not create diffs when anonymous FOREIGN KEY constraints are used.");
+          }
+        }
+        if (statementType == DdlParserTreeConstants.JJTCREATE_TABLE_STATEMENT) {
+          if (((ASTcreate_table_statement) ddlStatement.jjtGetChild(0)).getForeignKeys()
+              .containsKey(ASTforeign_key.ANONYMOUS_NAME)) {
+            throw new IllegalArgumentException(
+                "Unsupported statement:\n"
+                    + statement
+                    + "\nCan not create diffs when anonymous FOREIGN KEY constraints are used.");
+          }
         }
         ddlStatements.add(ddlStatement);
       } catch (ParseException e) {
@@ -420,7 +537,11 @@ public class DdlDiff {
       if (commandLine.hasOption(HELP_OPT)) {
         printHelpAndExit(0);
       }
-
+      Map<String, Boolean> options = ImmutableMap.of(
+          ALLOW_RECREATE_INDEXES_OPT, commandLine.hasOption(ALLOW_RECREATE_INDEXES_OPT),
+          ALLOW_DROP_STATEMENTS_OPT, commandLine.hasOption(ALLOW_DROP_STATEMENTS_OPT),
+          ALLOW_RECREATE_FOREIGN_KEYS_OPT, commandLine.hasOption(ALLOW_RECREATE_FOREIGN_KEYS_OPT)
+      );
       List<String> alterStatements =
           DdlDiff.build(
               new String(
@@ -431,9 +552,7 @@ public class DdlDiff {
                   Files.readAllBytes(
                       new File(commandLine.getOptionValue(NEW_DDL_FILE_OPT)).toPath()),
                   UTF_8))
-              .generateDifferenceStatements(
-                  commandLine.hasOption(ALLOW_RECREATE_INDEXES_OPT),
-                  commandLine.hasOption(ALLOW_DROP_STATEMENTS_OPT));
+              .generateDifferenceStatements(options);
 
       StringBuilder output = new StringBuilder();
       for (String statement : alterStatements) {
@@ -460,12 +579,13 @@ public class DdlDiff {
     printHelpAndExit(1);
   }
 
-  private static Options buildOptions() {
+  @VisibleForTesting
+  static Options buildOptions() {
     Options options = new Options();
     options.addOption(
         Option.builder()
             .longOpt(ORIGINAL_DDL_FILE_OPT)
-            .desc("File path to the original DDL definition")
+            .desc("File path to the original DDL definition.")
             .hasArg()
             .argName("FILE")
             .type(File.class)
@@ -474,7 +594,7 @@ public class DdlDiff {
     options.addOption(
         Option.builder()
             .longOpt(NEW_DDL_FILE_OPT)
-            .desc("File path to the new DDL definition")
+            .desc("File path to the new DDL definition.")
             .hasArg()
             .argName("FILE")
             .type(File.class)
@@ -483,7 +603,7 @@ public class DdlDiff {
     options.addOption(
         Option.builder()
             .longOpt(OUTPUT_DDL_FILE_OPT)
-            .desc("File path to the output DDL to write")
+            .desc("File path to the output DDL to write.")
             .hasArg()
             .argName("FILE")
             .required()
@@ -491,7 +611,13 @@ public class DdlDiff {
     options.addOption(
         Option.builder()
             .longOpt(ALLOW_RECREATE_INDEXES_OPT)
-            .desc("Allows dropping and recreating secondary Indexes to apply changes")
+            .desc("Allows dropping and recreating secondary Indexes to apply changes.")
+            .build());
+    options.addOption(
+        Option.builder()
+            .longOpt(ALLOW_RECREATE_FOREIGN_KEYS_OPT)
+            .desc("Allows dropping and recreating Foreign Keys (and their backing Indexes) to "
+                + "apply changes.")
             .build());
     options.addOption(
         Option.builder()
@@ -504,7 +630,7 @@ public class DdlDiff {
     return options;
   }
 
-  private static void printHelpAndExit(int retval) {
+  private static void printHelpAndExit(int exitStatus) {
     try (PrintWriter pw = new PrintWriter(System.err)) {
       new HelpFormatter()
           .printHelp(
@@ -524,13 +650,18 @@ public class DdlDiff {
                   + " --"
                   + ALLOW_RECREATE_INDEXES_OPT
                   + " command line option enables index changes by"
-                  + " generating statements to drop and recreate the index.\n\n",
+                  + " generating statements to drop and recreate the index.\n\n"
+                  + "By default, changes to foreign key constraints will also cause a failure. The"
+                  + " --"
+                  + ALLOW_RECREATE_FOREIGN_KEYS_OPT
+                  + " command line option enables foreign key changes by"
+                  + " generating statements to drop and recreate the constraint.\n\n",
               buildOptions(),
               1,
               4,
               "",
               true);
     }
-    System.exit(retval);
+    System.exit(exitStatus);
   }
 }

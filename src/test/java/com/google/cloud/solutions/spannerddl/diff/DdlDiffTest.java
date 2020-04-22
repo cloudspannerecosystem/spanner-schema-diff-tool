@@ -16,13 +16,16 @@
 
 package com.google.cloud.solutions.spannerddl.diff;
 
+import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_DROP_STATEMENTS_OPT;
+import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_RECREATE_FOREIGN_KEYS_OPT;
+import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_RECREATE_INDEXES_OPT;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.fail;
 
-import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
+import com.google.common.collect.ImmutableMap;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -33,11 +36,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.junit.Test;
-
 public class DdlDiffTest {
 
   @Test
@@ -86,12 +87,62 @@ public class DdlDiffTest {
     }
   }
 
+  @Test
+  public void parseCreateTable_anonForeignKey() throws DdlDiffException {
+    try {
+      DdlDiff.parseDDL(
+          "create table test ("
+              + "intcol int64 not null, "
+              + "FOREIGN KEY(col1, col2) REFERENCES other_table(other_col1, other_col2)"
+              + ")"
+              + "primary key (intcol ASC)");
+      fail("Expected exception not thrown");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage()).containsMatch("anonymous FOREIGN KEY constraints");
+    }
+  }
 
   @Test(expected = IllegalArgumentException.class)
-  public void parseDDLNoAlterTable() throws DdlDiffException {
+  public void parseDDLNoAlterTableAlterColumn() throws DdlDiffException {
     String DDL = "alter table test1 alter column col1 int64 not null";
     DdlDiff.parseDDL(DDL);
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void parseDDLNoAlterTableAddColumn() throws DdlDiffException {
+    String DDL = "alter table test1 add column col1 int64 not null";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void parseDDLNoAlterTableDropColumn() throws DdlDiffException {
+    String DDL = "alter table test1 drop column col1";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void parseDDLNoAlterTableDropConstraint() throws DdlDiffException {
+    String DDL = "alter table test1 drop constraint xxx";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void parseDDLNoAlterTableSetOnDelete() throws DdlDiffException {
+    String DDL = "alter table test1 set on delete cascade";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  public void parseDDLAlterTableAddConstraint() throws DdlDiffException {
+    String DDL = "alter table test1 add constraint XXX FOREIGN KEY (yyy) references zzz(xxx)";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void parseDDLNoAlterTableAddAnonConstraint() throws DdlDiffException {
+    String DDL = "alter table test1 add FOREIGN KEY (yyy) references zzz(xxx)";
+    DdlDiff.parseDDL(DDL);
+  }
+
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoDropTable() throws DdlDiffException {
@@ -325,7 +376,7 @@ public class DdlDiffTest {
             "ALTER TABLE test1 ALTER COLUMN col7 STRING(200)");
   }
 
-  private void getTableDiffCheckDdlDiffException(String originalDdl, String newDdl,
+  private static void getTableDiffCheckDdlDiffException(String originalDdl, String newDdl,
       boolean allowDropStatements,
       String exceptionContains) {
     try {
@@ -337,7 +388,8 @@ public class DdlDiffTest {
   }
 
 
-  private List<String> getTableDiff(String originalDdl, String newDdl, boolean allowDropStatements)
+  private static List<String> getTableDiff(String originalDdl, String newDdl,
+      boolean allowDropStatements)
       throws DdlDiffException {
     List<ASTddl_statement> ddl1 = DdlDiff
         .parseDDL(originalDdl);
@@ -347,7 +399,9 @@ public class DdlDiffTest {
     assertThat(ddl2).hasSize(1);
     return DdlDiff
         .generateAlterTableStatements((ASTcreate_table_statement) ddl1.get(0).jjtGetChild(0),
-            (ASTcreate_table_statement) ddl2.get(0).jjtGetChild(0), allowDropStatements);
+            (ASTcreate_table_statement) ddl2.get(0).jjtGetChild(0),
+            ImmutableMap.of(ALLOW_RECREATE_FOREIGN_KEYS_OPT, true, ALLOW_DROP_STATEMENTS_OPT,
+                allowDropStatements));
   }
 
 
@@ -358,8 +412,10 @@ public class DdlDiffTest {
             + "Create table table2 (col2 int64) primary key (col2);",
         "Create table table1 (col1 int64) primary key (col1);");
 
-    assertThat(diff.generateDifferenceStatements(true, true)).containsExactly("DROP TABLE table2");
-    assertThat(diff.generateDifferenceStatements(true, false)).isEmpty();
+    assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true)))
+        .containsExactly("DROP TABLE table2");
+    assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, false)))
+        .isEmpty();
   }
 
   @Test
@@ -369,17 +425,22 @@ public class DdlDiffTest {
             + "Create index index2 on table2 (col2 desc);",
         "Create index index1 on table1 (col1 desc);");
 
-    assertThat(diff.generateDifferenceStatements(true, true)).containsExactly("DROP INDEX index2");
-    assertThat(diff.generateDifferenceStatements(true, false)).isEmpty();
+    assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true)))
+        .containsExactly("DROP INDEX index2");
+    assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, false)))
+        .isEmpty();
   }
 
   @Test
   public void differentIndexesWithNoRecreate() {
+    Map<String, Boolean> options = ImmutableMap
+        .of(ALLOW_DROP_STATEMENTS_OPT, false, ALLOW_RECREATE_INDEXES_OPT, false);
     try {
       DdlDiff.build(
           "Create unique null_filtered index index1 on table1 (col1 desc)",
           "Create unique null_filtered index index1 on table1 (col1 asc)")
-          .generateDifferenceStatements(false, false);
+          .generateDifferenceStatements(
+              options);
       fail("Expected exception not thrown");
     } catch (DdlDiffException e) {
       assertThat(e.getMessage()).containsMatch("one Index differs");
@@ -388,7 +449,7 @@ public class DdlDiffTest {
       DdlDiff.build(
           "Create unique null_filtered index index1 on table1 (col1 desc)",
           "Create unique null_filtered index index1 on table1 (col2 desc)")
-          .generateDifferenceStatements(false, false);
+          .generateDifferenceStatements(options);
       fail("Expected exception not thrown");
     } catch (DdlDiffException e) {
       assertThat(e.getMessage()).containsMatch("one Index differs");
@@ -397,7 +458,7 @@ public class DdlDiffTest {
       DdlDiff.build(
           "Create unique null_filtered index index1 on table1 (col1 desc)",
           "Create index index1 on table1 (col1 desc)")
-          .generateDifferenceStatements(false, false);
+          .generateDifferenceStatements(options);
       fail("Expected exception not thrown");
     } catch (DdlDiffException e) {
       assertThat(e.getMessage()).containsMatch("one Index differs");
@@ -406,23 +467,26 @@ public class DdlDiffTest {
 
   @Test
   public void differentIndexesWithRecreate() throws DdlDiffException {
+    Map<String, Boolean> options = ImmutableMap
+        .of(ALLOW_DROP_STATEMENTS_OPT, true, ALLOW_RECREATE_INDEXES_OPT, true);
     assertThat(
         DdlDiff.build(
             "Create unique null_filtered index index1 on table1 (col1 desc)",
             "Create unique null_filtered index index1 on table1 (col1 asc)")
-            .generateDifferenceStatements(true, false)).isEqualTo(Arrays.asList("DROP INDEX index1",
+            .generateDifferenceStatements(
+                options)).isEqualTo(Arrays.asList("DROP INDEX index1",
         "CREATE UNIQUE NULL_FILTERED INDEX index1 ON table1 (col1 ASC)"));
     assertThat(
         DdlDiff.build(
             "Create unique null_filtered index index1 on table1 (col1 desc)",
             "Create unique null_filtered index index1 on table1 (col2 desc)")
-            .generateDifferenceStatements(true, false)).isEqualTo(Arrays.asList("DROP INDEX index1",
+            .generateDifferenceStatements(options)).isEqualTo(Arrays.asList("DROP INDEX index1",
         "CREATE UNIQUE NULL_FILTERED INDEX index1 ON table1 (col2 DESC)"));
     assertThat(
         DdlDiff.build(
             "Create unique null_filtered index index1 on table1 (col1 desc)",
             "Create index index1 on table1 (col1 desc)")
-            .generateDifferenceStatements(true, false))
+            .generateDifferenceStatements(options))
         .isEqualTo(Arrays.asList("DROP INDEX index1", "CREATE INDEX index1 ON table1 (col1 DESC)"));
   }
 
@@ -458,7 +522,9 @@ public class DdlDiffTest {
 
         DdlDiff ddlDiff = DdlDiff.build(originalSegment.getValue(), newSegment.getValue());
         // Run diff with allowRecreateIndexes and allowDropStatements
-        List<String> diff =  ddlDiff.generateDifferenceStatements(true, true);
+        List<String> diff = ddlDiff.generateDifferenceStatements(
+            ImmutableMap.of(ALLOW_RECREATE_INDEXES_OPT, true, ALLOW_DROP_STATEMENTS_OPT, true,
+                ALLOW_RECREATE_FOREIGN_KEYS_OPT, true));
         // check expected results.
         assertWithMessage("Mismatch for section " + segmentName).that(diff)
             .isEqualTo(expectedDiff);
@@ -468,7 +534,7 @@ public class DdlDiffTest {
 
         // build an expectedResults without any column or table drops.
         List<String> expectedDiffNoDrops = expectedDiff.stream().filter(statement -> ! statement.matches(".*DROP (TABLE|COLUMN).*"))
-            .collect(Collectors.toCollection(() -> new LinkedList<>()));
+            .collect(Collectors.toCollection(LinkedList::new));
 
         // remove any drop indexes from the expectedResults if they do not have an equivalent
         // CREATE statement. This is because we are allowing recreation of indexes, but not allowing
@@ -484,7 +550,9 @@ public class DdlDiffTest {
           }
         }
 
-        diff = ddlDiff.generateDifferenceStatements(true, false);
+        diff = ddlDiff.generateDifferenceStatements(
+            ImmutableMap.of(ALLOW_RECREATE_INDEXES_OPT, true, ALLOW_DROP_STATEMENTS_OPT, false,
+                ALLOW_RECREATE_FOREIGN_KEYS_OPT, true));
         // check expected results.
         assertWithMessage("Mismatch for section (noDrops)" + segmentName).that(diff)
             .isEqualTo(expectedDiffNoDrops);

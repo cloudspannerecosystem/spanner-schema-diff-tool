@@ -78,4 +78,76 @@ create table test1 (
 primary key (col1);
 create index INDEX1 on test1 (col2);
 
+== TEST 9 add foreign key in table
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL,
+    constraint fk_in_table foreign key (col2) references othertable(othercol)
+)
+primary key (col1);
+
+== TEST 10 add foreign key via alter statement
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+
+alter table test1 add constraint fk_in_alter foreign key (col2) references othertable(othercol);
+
+== TEST 11 modify foreign key in table
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL,
+    constraint fk_in_table foreign key (col1) references othertable(othercol1)
+)
+primary key (col1);
+
+== TEST 12 modify foreign key via alter statement
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+
+alter table test1 add constraint fk_in_alter foreign key (col1) references othertable(othercol1);
+
+
+== TEST 13 drop foreign key in table
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+
+== TEST 14 drop foreign key via alter statement
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+
+== TEST 15 Verify modification ordering
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL,
+    col3 int64,
+    constraint fk_in_test1 foreign key (col3) references othertable(othercol)
+)
+primary key (col1);
+create index index1 on test1 (col3);
+
+create table test3 (
+    col1 int64)
+primary key (col1);
+alter table test3 add constraint fk_in_test3 foreign key (col3) references othertable(othercol)
+
+
 ==

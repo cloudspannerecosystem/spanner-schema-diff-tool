@@ -66,4 +66,43 @@ ALTER TABLE test1 ADD COLUMN COL2 INT64
 DROP INDEX index1
 CREATE INDEX INDEX1 ON test1 (col2 ASC)
 
+== TEST 9 add foreign key in table
+
+ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY (col2) REFERENCES othertable (othercol)
+
+== TEST 10 add foreign key via alter statement
+
+ALTER TABLE test1 ADD CONSTRAINT fk_in_alter FOREIGN KEY (col2) REFERENCES othertable (othercol)
+
+== TEST 11 modify foreign key in table
+
+ALTER TABLE test1 DROP CONSTRAINT fk_in_table
+ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY (col1) REFERENCES othertable (othercol1)
+
+== TEST 12 modify foreign key via alter statement
+
+ALTER TABLE test1 DROP CONSTRAINT fk_in_alter
+ALTER TABLE test1 ADD CONSTRAINT fk_in_alter FOREIGN KEY (col1) REFERENCES othertable (othercol1)
+
+== TEST 13 drop foreign key in table
+
+ALTER TABLE test1 DROP CONSTRAINT fk_in_table
+
+== TEST 14 drop foreign key via alter statement
+
+ALTER TABLE test1 DROP CONSTRAINT fk_in_alter
+
+== TEST 15 Verify modification ordering
+
+DROP INDEX index2
+DROP INDEX index1
+ALTER TABLE test2 DROP CONSTRAINT fk_in_test2
+ALTER TABLE test1 DROP CONSTRAINT fk_in_test1
+DROP TABLE test2
+ALTER TABLE test1 ADD COLUMN col3 INT64
+CREATE TABLE test3 (col1 INT64) PRIMARY KEY (col1 ASC)
+CREATE INDEX index1 ON test1 (col3 ASC)
+ALTER TABLE test3 ADD CONSTRAINT fk_in_test3 FOREIGN KEY (col3) REFERENCES othertable (othercol)
+ALTER TABLE test1 ADD CONSTRAINT fk_in_test1 FOREIGN KEY (col3) REFERENCES othertable (othercol)
+
 ==

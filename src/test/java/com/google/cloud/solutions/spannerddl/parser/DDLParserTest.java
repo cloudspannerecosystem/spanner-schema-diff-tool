@@ -37,7 +37,9 @@ public class DDLParserTest {
             + "maxbytes bytes(max), "
             + "datecol date, "
             + "timestampcol timestamp options (allow_commit_timestamp = true), "
-            + "intarray array<int64>) "
+            + "intarray array<int64>, "
+            + "constraint fk_col_remote FOREIGN KEY(col1, col2) REFERENCES other_table(other_col1, other_col2)"
+            + ") "
             + "primary key (intcol ASC, floatcol desc, boolcol), "
             + "interleave in parent other_table on delete cascade ")
         .jjtGetChild(0);
@@ -45,16 +47,17 @@ public class DDLParserTest {
     assertThat(statement.toString()).isEqualTo(
         "CREATE TABLE test ("
             + "boolcol BOOL, "
-            + "intcol INT64 NOT NULL, "
+            + "datecol DATE, "
             + "floatcol FLOAT64, "
-            + "sizedstring STRING(55), "
+            + "intarray ARRAY<INT64>, "
+            + "intcol INT64 NOT NULL, "
+            + "maxbytes BYTES(MAX), "
             + "maxstring STRING(MAX), "
             + "sizedbytes BYTES(55), "
-            + "maxbytes BYTES(MAX), "
-            + "datecol DATE, "
+            + "sizedstring STRING(55), "
             + "timestampcol TIMESTAMP OPTIONS (allow_commit_timestamp=TRUE), "
-            + "intarray ARRAY<INT64>) "
-            + "PRIMARY KEY (intcol ASC, floatcol DESC, boolcol ASC), "
+            + "CONSTRAINT fk_col_remote FOREIGN KEY (col1, col2) REFERENCES other_table (other_col1, other_col2)"
+            + ") PRIMARY KEY (intcol ASC, floatcol DESC, boolcol ASC), "
             + "INTERLEAVE IN PARENT other_table ON DELETE CASCADE");
 
     // Test re-parse of toString output.
@@ -62,7 +65,6 @@ public class DDLParserTest {
         .jjtGetChild(0);
     assertThat(statement).isEqualTo(statement2);
   }
-
 
   @Test
   public void parseCreateIndex() throws ParseException {

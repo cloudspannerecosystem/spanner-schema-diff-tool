@@ -16,18 +16,18 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-/** Abstract Syntax Tree parser object for "create_table_statement" token */
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.common.base.Joiner;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 
+/**
+ * Abstract Syntax Tree parser object for "create_table_statement" token
+ */
 public class ASTcreate_table_statement extends SimpleNode {
-
-  private ASTprimary_Key primaryKey;
-  private List<ASTcolumn_def> columnDef;
-  private Optional<ASTtable_interleave_clause> interleaveIn;
 
   public ASTcreate_table_statement(int id) {
     super(id);
@@ -52,8 +52,20 @@ public class ASTcreate_table_statement extends SimpleNode {
     return columns;
   }
 
-  public synchronized ASTprimary_Key getPrimaryKey() {
-    return ASTTreeUtils.getChildByType(children, ASTprimary_Key.class);
+  public TreeMap<String, ASTforeign_key> getForeignKeys() {
+    TreeMap<String, ASTforeign_key> foreignKeys = new TreeMap<>();
+    for (Node child : children) {
+      if (child instanceof ASTforeign_key) {
+        ASTforeign_key foreignKey = (ASTforeign_key) child;
+        foreignKeys.put(foreignKey.getName(), foreignKey);
+      }
+    }
+    return foreignKeys;
+  }
+
+
+  public synchronized ASTprimary_key getPrimaryKey() {
+    return ASTTreeUtils.getChildByType(children, ASTprimary_key.class);
   }
 
   public synchronized Optional<ASTtable_interleave_clause> getInterleaveClause() {
@@ -71,25 +83,18 @@ public class ASTcreate_table_statement extends SimpleNode {
     // child 0 is name
     ret.append(getTableName());
     ret.append(" (");
-    // append column definitions.
-    int i = 1;
-    while (i < children.length && children[i] instanceof ASTcolumn_def) {
-      ret.append(children[i]);
-      if (i < children.length - 1 && children[i + 1] instanceof ASTcolumn_def) {
-        ret.append(", ");
-      }
-      i++;
-    }
+    // append column and FK definitions.
+    List<SimpleNode> tableElements = new ArrayList<>();
+    tableElements.addAll(getColumns().values());
+    tableElements.addAll(getForeignKeys().values());
+    ret.append(Joiner.on(", ").join(tableElements));
     ret.append(") ");
-    ret.append(children[i]); // primary key obligatory
-    i++;
-    if (i < children.length) {
+    ret.append(getPrimaryKey());
+
+    Optional<ASTtable_interleave_clause> interleaveClause = getInterleaveClause();
+    if (interleaveClause.isPresent()) {
       ret.append(", ");
-      ret.append(children[i]); // interleave optional
-    }
-    i++;
-    if (i < children.length) {
-      throw new IllegalArgumentException("Unexpected Node " + children[i]);
+      ret.append(interleaveClause.get()); // interleave optional
     }
     return ret.toString();
   }

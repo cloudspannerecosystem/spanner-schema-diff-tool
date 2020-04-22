@@ -115,11 +115,13 @@ TOKEN:
   | <BYTES:                  "bytes">
   | <CASCADE:                "cascade">
   | <COLUMN:                 "column">
+  | <CONSTRAINT:             "constraint">
   | <DATABASE:               "database">
   | <DATE:                   "date">
   | <DELETE:                 "delete">
   | <DROP:                   "drop">
   | <FLOAT64:                "float64">
+  | <FOREIGN:                "foreign">
   | <INDEX:                  "index">
   | <INT64:                  "int64">
   | <INTERLEAVE:             "interleave">
@@ -129,6 +131,7 @@ TOKEN:
   | <OPTIONS:                "options">
   | <PARENT:                 "parent">
   | <PRIMARY:                "primary">
+  | <REFERENCES:             "references">
   | <STORING:                "storing">
   | <STRING:                 "string">
   | <TABLE:                  "table">
@@ -156,6 +159,13 @@ void identifier() #void :
   | <QUOTED_ID>
   | pseudoReservedWord()
 }
+
+void identifier_list() :
+{}
+{
+  (identifier() #identifier) ("," identifier() #identifier)*
+}
+
 void pseudoReservedWord() #void :
 {}
 {
@@ -166,11 +176,13 @@ void pseudoReservedWord() #void :
   | <BYTES>
   | <CASCADE>
   | <COLUMN>
+  | <CONSTRAINT>
   | <DATABASE>
   | <DATE>
   | <DELETE>
   | <DROP>
   | <FLOAT64>
+  | <FOREIGN>
   | <INDEX>
   | <INT64>
   | <INTERLEAVE>
@@ -180,6 +192,7 @@ void pseudoReservedWord() #void :
   | <OPTIONS>
   | <PARENT>
   | <PRIMARY>
+  | <REFERENCES>
   | <STORING>
   | <STRING>
   | <TABLE>
@@ -196,6 +209,7 @@ void int_value() :
 {
   <INTEGER_LITERAL>
 }
+
 void ddl_statement() :
 {}
 {
@@ -209,8 +223,7 @@ void create_statement() #void :
 {}
 {
   <CREATE>
-  (   create_database_statement()
-    | create_table_statement()
+  ( create_table_statement()
     | create_index_statement()
   )
 }
@@ -219,32 +232,22 @@ void options_clause() :
 {
   <OPTIONS> option_list()
 }
-void create_database_statement() :
-{}
-{
-  <DATABASE>
-  identifier() #db_name
-  [ "(" ")" ]
-}
 void create_table_statement() :
 {}
 {
-  <TABLE>
-  create_table_clause()
-}
-void create_table_clause() #void :
-{}
-{
-  identifier() #name
-  "("
-    [ column_def()
-      ( LOOKAHEAD(2) "," column_def() )*
-      [ "," ]
-    ]
-  ")"
-  <PRIMARY> <KEY> (key() #primary_Key)
+  <TABLE> identifier() #name
+  "(" [ table_element() ( LOOKAHEAD(2) "," table_element() )* [ "," ] ] ")"
+  primary_key()
   [ LOOKAHEAD(2) "," table_interleave_clause() ]
 }
+
+void table_element() #void :
+{}
+{
+    LOOKAHEAD(3) foreign_key()
+  | column_def()
+}
+
 void column_def() :
 {}
 {
@@ -282,6 +285,23 @@ void column_length() :
 {
   <MAX> | int_value()
 }
+
+void primary_key() #void :
+{}
+{
+  <PRIMARY> <KEY> (key() #primary_key)
+}
+
+void foreign_key() :
+{}
+{
+  [ <CONSTRAINT> identifier() #constraint_name ]
+  <FOREIGN> <KEY>
+    "(" identifier_list() #constrained_columns ")"
+  <REFERENCES> identifier() #referenced_table
+    "(" identifier_list() #referenced_columns ")"
+}
+
 void table_interleave_clause() :
 {}
 {
@@ -368,14 +388,19 @@ void alter_statement() #void :
   <ALTER>
   (   alter_table_statement()  )
 }
+
 void alter_table_statement() :
 {}
 {
   <TABLE> (identifier() #table_name)
-  (   <ADD> #add_column [LOOKAHEAD(2) <COLUMN>] column_def()
+  (   LOOKAHEAD(3) <ADD> #add_column [LOOKAHEAD(2) <COLUMN>] column_def()
+    | LOOKAHEAD(3) <DROP> <CONSTRAINT> #drop_constraint
+        identifier() #constraint_name
     | <DROP> #drop_column [LOOKAHEAD(2) <COLUMN>] (identifier() #column_name)
-    | <ALTER> #alter_column [LOOKAHEAD(2) <COLUMN>] (identifier() #name) column_def_alter()
+    | LOOKAHEAD(3) <ALTER> #alter_column [LOOKAHEAD(2) <COLUMN>]
+        (identifier() #name) column_def_alter()
     | <SET> #set_on_delete on_delete_clause()
+    | LOOKAHEAD(3) <ADD> foreign_key()
   )
 }
 TOKEN:

@@ -7,12 +7,13 @@ one schema to the other.
 This tool is intended to work in a CI/CD pipeline to update the schema of an
 existing Cloud Spanner database to a newer schema version.
 
-The tool can only make changes that are allowable by Cloud Spanner `ALTER`
-statements:
+The tool can only make changes that are allowable by Cloud Spanner's `CREATE`,
+`DROP` and `ALTER` statements:
 
-*   Add tables.
-*   Add indexes.
-*   Add columns to a table.
+*   Add or remove tables.
+*   Add or remove indexes.
+*   Add or remove table columns.
+*   Add or remove _named_ `FOREIGN KEY` constraints.
 *   Change length limits of `STRING` or `BYTES` columns (or `ARRAYS` of `STRING`
     or `BYTES` columns).
 *   Add or remove `NOT NULL` constraints on columns.
@@ -27,17 +28,33 @@ The tool relies on the DDL file being valid - specifically having the `CREATE`
 statements in the correct order in the file, so that child tables are created
 after their parents, and indexes are created after the table being indexed.
 
+The tool has no concept of the "structure" of the database, only of the
+statements in the DDL file. This has the following implications: 
+
+*   The tool relies on the DDL files being valid - specifically having the
+    `CREATE` statements in the correct order in the file, so that child tables
+    are created _after_ their parents, and indexes are created _after_ the table
+    being indexed.
+
+*   Tables and indexes must be creates with a single `CREATE` statement (not by
+    using `CREATE` then `ALTER` statements). The exception to this is when
+    foreign key constraints are created - the tool supports creating them in the
+    table creation DDL statement, and also using `ALTER` statements. 
+
 ### Note on dropped database objects.
 
 By default, to prevent accidental data loss, the tool _does not_ generate
 statements to drop existing tables, indexes or columns. This behavior can be
 overridden using the command line arguments `--allowDropStatements`, which
 allows the tool to additionally generate the following statements for any
-differences found.
+differences found:
 
 *   Drop Tables.
 *   Drop Indexes.
 *   Drop Columns in a Table.
+
+Foreign key constraints will always be dropped if they are not present in the
+new DDL.
 
 ### Note on modified indexes
 
@@ -47,29 +64,68 @@ indexes by first dropping then recreating them. This is a slow operation
 especially on large tables, so is disabled by default, and index differences
 will cause the tool to fail.
 
+### Note on FOREIGN KEY constraints
+
+`FOREIGN KEY` constraints _must_ be explicitly named, either within a 
+`CREATE TABLE` statement, or using an `ALTER TABLE` statement, using the syntax:
+
+```sql
+CONSTRAINT constraint_name FOREIGN KEY ...
+```
+
+This is because the constraint needs to be referenced by its _name_ when it is
+dropped.
+
+Anonymous FOREIGN KEY constraints of the form:
+ 
+```sql
+CREATE TABLE fk_dest (
+	key INT64,
+	source_key INT64,
+	FOREIGN KEY (source_key) REFERENCES fk_source(key)
+) PRIMARY KEY (key);
+```
+
+will be rejected when the DDL is parsed.
+ 
+Modifications to existing `FOREIGN KEY` constraints are not possible via `ALTER`
+statements, but if the `--allowRecreateForeignKeys` command line option is
+specified, the tool can modify foreign keys by first dropping then recreating
+them. This is a slow operation - especially on large tables - because the
+foreign key relationship is
+[backed by hidden indexes](https://cloud.google.com/spanner/docs/foreign-keys/overview#backing-indexes)
+which would also be dropped and recreated. Therefore this option is disabled by
+default, and FOREIGN KEY differences will cause the tool to fail.
+
 ## Usage:
 
-### Prerequsites:
+### Prerequisites:
 
-Install Maven and a JAVA JRE
+Install a [JAVA development kit](https://jdk.java.net/) (supporting Java 8
+or above) and [Apache Maven])(https://maven.apache.org/)
 
-### Compile and run from source:
+There are 2 options for running the tool: either compiling and running from 
+source, or by building a runnable JAR with all dependencies included and then 
+running that.
+
+The following commands direct the tool to read the original.ddl file, compare it
+to the new.ddl file, and generate an alter.ddl file. The options specify that 
+modified indexes and foreign keys will be dropped and recreated, but removed
+tables, columns and indexes will not be dropped. 
+
+### Compile and run directly from source:
 
 ```sh
 mvn generate-resources compile exec:java \
   -Dexec.mainClass=com.google.cloud.solutions.spannerddl.diff.DdlDiff \
   -Dexec.args="\
       --allowRecreateIndexes
+      --allowRecreateForeignKeys
       --originalDdlFile original.ddl
       --newDdlFile new.ddl
       --outputDdlFile alter.ddl
       "
 ```
-
-Where: * `original.ddl` is a file containing the original database schema. *
-`new.ddl` is a file containing the new/updated database schema. * `alter.ddl` is
-the output file containing the generated `ALTER` statements. *
-`--allowRecreateIndexes` allows index modifications by dropping/creating them.
 
 ### Generate JAR with dependencies and run from JAR file:
 
@@ -87,7 +143,7 @@ java -jar target/spanner-ddl-diff-*-jar-with-dependencies.jar \
 
 ### Original schema DDL input file
 
-```
+```sql
 create table test1 (
     col1 int64,
     col2 int64,
@@ -118,7 +174,7 @@ create index index3 on test4 (col2);
 
 ### New schema DDL input file
 
-```
+```sql
 create table test1 (
     col1 int64,
     col2 int64 NOT NULL,
@@ -151,7 +207,7 @@ The arguments to the tool included `--allowDropStatements` and
 `--allowRecreateIndexes`, so removed objects are dropped and modified indexes
 are dropped and recreated.
 
-```
+```sql
 DROP INDEX index3;
 
 DROP INDEX index1;
@@ -184,31 +240,36 @@ CREATE INDEX index2 ON test2 (col1 DESC);
 ## Help Text:
 
 ```
-usage: DdlDiff [--allowDropStatements] [--allowRecreateIndexes] [--help] --newDdlFile <FILE> --originalDdlFile <FILE> --outputDdlFile <FILE>
-
-Compares original and new DDL files and creates a DDL file with DROP, CREATE
+usage: DdlDiff [--allowDropStatements] [--allowRecreateForeignKeys] [--allowRecreateIndexes] [--help] --newDdlFile <FILE> --originalDdlFile <FILE> --outputDdlFile <FILE>
+Compares original and new DDL files and creates a DDL file with DROP, CREATE 
 and ALTER statements which convert the original Schema to the new Schema.
 
 Incompatible table changes (table hierarchy changes. column type changes) are
-not supported and will cause this tool to fail.
+ not supported and will cause this tool to fail.
 
 To prevent accidental data loss, DROP statements are not generated for removed
 tables, columns and indexes. This can be overridden using the
---allowDropStatements command line argument.
+ --allowDropStatements command line argument.
 
 By default, changes to indexes will also cause a failure. The
---allowRecreateIndexes command line option enables index changes by generating
-statements to drop and recreate the index.
+--allowRecreateIndexes command line option enables index changes by
+generating statements to drop and recreate the index.
 
-    --allowDropStatements       Enables output of DROP commands to delete
-                                columns, tables or indexes not used in the new
-                                DDL file.
-    --allowRecreateIndexes      Allows dropping and recreating secondary
-                                indexes to apply changes
-    --help                      Show help
-    --newDdlFile <FILE>         File path to the new DDL definition
-    --originalDdlFile <FILE>    File path to the original DDL definition
-    --outputDdlFile <FILE>      File path to the output DDL to write
+By default, changes to foreign key constraints will also cause a failure. The
+--allowRecreateForeignKeys command line option enables foreign key changes by
+generating statements to drop and recreate the constraint.
+
+    --allowDropStatements         Enables output of DROP commands to delete
+                                  columns, tables or indexes not used in the
+                                  new DDL file.
+    --allowRecreateForeignKeys    Allows dropping and recreating Foreign Keys
+                                  (and their backing Indexes) to apply changes.
+    --allowRecreateIndexes        Allows dropping and recreating secondary
+                                  Indexes to apply changes.
+    --help                        Show help.
+    --newDdlFile <FILE>           File path to the new DDL definition.
+    --originalDdlFile <FILE>      File path to the original DDL definition.
+    --outputDdlFile <FILE>        File path to the output DDL to write.
 ```
 
 ## Usage in a CI/CD pipeline.
@@ -238,13 +299,15 @@ UPDATED_SCHEMA_FILE="updated.ddl"
 set -e
 
 # Read schema into a file, removing comments and adding semicolons between the statements.
-gcloud spanner databases ddl describe "${SPANNER_DATABASE}" --instance="${SPANNER_INSTANCE}" \
-    | sed 's/--- |-/;/' \
-    > /tmp/original.ddl
+gcloud spanner databases ddl describe \
+    --instance="${SPANNER_INSTANCE}" "${SPANNER_DATABASE}" \
+    --format='value(format("{0};\
+    "))' > /tmp/original.ddl
 
 # Generate ALTER statements.
 java -jar target/spanner-ddl-diff-*-jar-with-dependencies.jar \
       --allowRecreateIndexes \
+      --allowRecreateForeignKeys \
       --originalDdlFile /tmp/original.ddl \
       --newDdlFile "${UPDATED_SCHEMA_FILE}" \
       --outputDdlFile /tmp/alter.ddl

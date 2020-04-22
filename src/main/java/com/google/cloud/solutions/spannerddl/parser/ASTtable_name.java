@@ -26,4 +26,9 @@ public class ASTtable_name extends SimpleNode {
   public ASTtable_name(DdlParser p, int id) {
     super(p, id);
   }
+
+  @Override
+  public String toString() {
+    return jjtGetFirstToken().toString();
+  }
 }

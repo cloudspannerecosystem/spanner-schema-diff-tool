@@ -96,13 +96,43 @@ ALTER TABLE test1 DROP CONSTRAINT fk_in_alter
 
 DROP INDEX index2
 DROP INDEX index1
+ALTER TABLE test2 DROP CONSTRAINT ch_in_test2
 ALTER TABLE test2 DROP CONSTRAINT fk_in_test2
+ALTER TABLE test1 DROP CONSTRAINT ch_in_test1
 ALTER TABLE test1 DROP CONSTRAINT fk_in_test1
 DROP TABLE test2
 ALTER TABLE test1 ADD COLUMN col3 INT64
 CREATE TABLE test3 (col1 INT64) PRIMARY KEY (col1 ASC)
 CREATE INDEX index1 ON test1 (col3 ASC)
+ALTER TABLE test3 ADD CONSTRAINT ch_in_test3 CHECK (col1 = col3 AND col1 > 100 AND col2 < -50)
 ALTER TABLE test3 ADD CONSTRAINT fk_in_test3 FOREIGN KEY (col3) REFERENCES othertable (othercol)
+ALTER TABLE test1 ADD CONSTRAINT ch_in_test1 CHECK (col1 = col3 AND col1 > 100 AND col2 < -50)
 ALTER TABLE test1 ADD CONSTRAINT fk_in_test1 FOREIGN KEY (col3) REFERENCES othertable (othercol)
+
+== TEST 16 add check constraint via alter statement
+
+ALTER TABLE test1 ADD CONSTRAINT ch_in_alter CHECK (col1 = col2 AND col1 > 100 AND col2 < -50)
+
+== TEST 17 modify check constraint in table
+
+ALTER TABLE test1 DROP CONSTRAINT ch_in_table
+ALTER TABLE test1 ADD CONSTRAINT ch_in_table CHECK (col1 = col2 AND col1 > 200 AND col2 < -500)
+
+== TEST 18 modify check constraint via alter statement
+
+ALTER TABLE test1 DROP CONSTRAINT ch_in_alter
+ALTER TABLE test1 ADD CONSTRAINT ch_in_alter CHECK (col1 = col2 AND col1 > 200 AND col2 < -500)
+
+== TEST 19 drop check constraint in table
+
+ALTER TABLE test1 DROP CONSTRAINT ch_in_table
+
+== TEST 20 drop check constraint via alter statement
+
+ALTER TABLE test1 DROP CONSTRAINT ch_in_alter
+
+== TEST 21 add generated col in table
+
+ALTER TABLE test_gen ADD COLUMN col3 INT64  AS ( col1 * col2 * 2 ) STORED
 
 ==

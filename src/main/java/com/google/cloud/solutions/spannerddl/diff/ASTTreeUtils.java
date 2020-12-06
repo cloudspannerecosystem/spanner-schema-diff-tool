@@ -16,24 +16,47 @@
 
 package com.google.cloud.solutions.spannerddl.diff;
 
+import com.google.cloud.solutions.spannerddl.parser.DdlParserConstants;
 import com.google.cloud.solutions.spannerddl.parser.Node;
+import com.google.cloud.solutions.spannerddl.parser.Token;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-/** Utility functions for getting and casting Nodes in the parsed AST. */
+/**
+ * Utility functions for getting and casting Nodes in the parsed AST.
+ */
 public class ASTTreeUtils {
 
-  /** Gets (and casts) the first found child of a specific node type */
-  public static <T> T getChildByType(Node[] children, Class<T> type) {
+  /**
+   * Gets (and casts) the first found child of a specific node type
+   */
+  public static <T> T getOptionalChildByType(Node[] children, Class<T> type) {
     for (Node child : children) {
       if (type.isInstance(child)) {
         return type.cast(child);
       }
     }
-    throw new IllegalArgumentException(
-        "Cannot find child of type " + type.getName() + " in " + Arrays.asList(children));
+    return null;
+  }
+
+  public static <T> T getChildByType(Node[] children, Class<T> type) {
+    T child = getOptionalChildByType(children, type);
+    if (child == null) {
+      throw new IllegalArgumentException(
+          "Cannot find child of type " + type.getName() + " in " + Arrays.asList(children));
+    }
+    return child;
+  }
+
+  private static Set<String> reservedWords = Arrays.stream(DdlParserConstants.tokenImage)
+      .filter(s -> s.charAt(0) == '"').map(s -> s.substring(1, s.length() - 1)).collect(
+          Collectors.toSet());
+
+  public static boolean isReservedWord(String word) {
+    return reservedWords.contains(word);
   }
 
   /**
@@ -47,5 +70,24 @@ public class ASTTreeUtils {
   }
 
   private ASTTreeUtils() {
+  }
+
+  public static String tokensToString(Token firstToken, Token lastToken) {
+    StringBuilder sb = new StringBuilder();
+    Token t = firstToken;
+    while (t != lastToken) {
+      String tok = t.toString();
+      sb.append(isReservedWord(tok) ? tok.toUpperCase() : tok);
+
+      if (t.next != null && !t.next.toString().equals(",") && !t.next.toString().equals(".") && !tok
+          .equals(".")) {
+        sb.append(" ");
+      }
+      t = t.next;
+    }
+    //append last token
+    String tok = t.toString();
+    sb.append(isReservedWord(tok) ? tok.toUpperCase() : tok);
+    return sb.toString();
   }
 }

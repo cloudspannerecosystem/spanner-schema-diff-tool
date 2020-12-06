@@ -70,12 +70,12 @@ public class DdlDiffTest {
   @Test
   public void parseDDLCreateTableSyntaxError() {
     parseDdlCheckDdlDiffException("Create table test1 ( col1 int64 )",
-        "Was expecting:\n\n\"primary\" ...");
+        "Was expecting:\n    \"primary\" ...");
   }
 
   @Test
   public void parseDDLCreateIndexSyntaxError() {
-    parseDdlCheckDdlDiffException("Create index index1 on test1", "Was expecting:\n\n\"(\" ...");
+    parseDdlCheckDdlDiffException("Create index index1 on test1", "Was expecting:\n    \"(\" ...");
   }
 
   private void parseDdlCheckDdlDiffException(String DDL, String exceptionContains) {
@@ -99,6 +99,21 @@ public class DdlDiffTest {
       fail("Expected exception not thrown");
     } catch (IllegalArgumentException e) {
       assertThat(e.getMessage()).containsMatch("anonymous FOREIGN KEY constraints");
+    }
+  }
+
+  @Test
+  public void parseCreateTable_anonCheckConstraint() throws DdlDiffException {
+    try {
+      DdlDiff.parseDDL(
+          "create table test ("
+              + "intcol int64 not null, "
+              + "check (intcol>1)"
+              + ")"
+              + "primary key (intcol ASC)");
+      fail("Expected exception not thrown");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage()).containsMatch("anonymous CHECK constraints");
     }
   }
 
@@ -336,6 +351,29 @@ public class DdlDiffTest {
         .containsExactly("ALTER TABLE test1 SET ON DELETE CASCADE");
   }
 
+  @Test
+  public void generateAlterTable_changeGenerationClause() throws DdlDiffException {
+    // remove interleave
+    getTableDiffCheckDdlDiffException(
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary key (col1)",
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1/col2 ) stored) primary key (col1)",
+        true,
+        "Cannot change generation clause of table test1 column col3 from  AS ");
+
+    // add generation
+    getTableDiffCheckDdlDiffException(
+        "create table test1 (col1 int64, col2 int64, col3 int64) primary key (col1)",
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary key (col1)",
+        true,
+        "Cannot change generation clause of table test1 column col3 from null ");
+
+    // remove generation
+    getTableDiffCheckDdlDiffException(
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary key (col1)",
+        "create table test1 (col1 int64, col2 int64, col3 int64) primary key (col1)",
+        true,
+        "Cannot change generation clause of table test1 column col3 from  AS");
+  }
 
   @Test
   public void generateAlterTable_alterStatementOrdering() throws DdlDiffException {
@@ -529,7 +567,6 @@ public class DdlDiffTest {
         assertWithMessage("Mismatch for section " + segmentName).that(diff)
             .isEqualTo(expectedDiff);
 
-
         // TEST PART 2: with allowDropStatements=false
 
         // build an expectedResults without any column or table drops.
@@ -558,6 +595,7 @@ public class DdlDiffTest {
             .isEqualTo(expectedDiffNoDrops);
       }
     } catch (Throwable e) {
+      e.printStackTrace(System.err);
       fail("Unexpected exception when processing segment " + segmentName + ": " + e);
     }
   }

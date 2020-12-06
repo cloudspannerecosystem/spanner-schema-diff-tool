@@ -139,7 +139,8 @@ create table test1 (
     col1 int64,
     col2 int64 NOT NULL,
     col3 int64,
-    constraint fk_in_test1 foreign key (col3) references othertable(othercol)
+    constraint fk_in_test1 foreign key (col3) references othertable(othercol),
+    constraint ch_in_test1 check (col1=col3 and col1 > 100 and col2 < -50)
 )
 primary key (col1);
 create index index1 on test1 (col3);
@@ -147,7 +148,62 @@ create index index1 on test1 (col3);
 create table test3 (
     col1 int64)
 primary key (col1);
-alter table test3 add constraint fk_in_test3 foreign key (col3) references othertable(othercol)
+alter table test3 add constraint fk_in_test3 foreign key (col3) references othertable(othercol);
+alter table test3 add constraint ch_in_test3 check (col1=col3 and col1 > 100 and col2 < -50);
 
+
+== TEST 16 add check constraint via alter statement
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+
+alter table test1 add constraint ch_in_alter check (col1=col2 and col1 > 100 and col2 < -50);
+
+== TEST 17 modify check constraint in table
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL,
+    constraint ch_in_table check (col1=col2 and col1 > 200 and col2 < -500)
+)
+primary key (col1);
+
+== TEST 18 modify check constraint via alter statement
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+
+alter table test1 add constraint ch_in_alter check (col1=col2 and col1 > 200 and col2 < -500);
+
+== TEST 19 drop check constraint in table
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+
+== TEST 20 drop check constraint via alter statement
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+
+== TEST 21 add generated col in table
+
+create table test_gen (
+  col1 int64,
+  col2 int64,
+  col3 int64 as ( col1 * col2 * 2) STORED
+) primary key (col1);
 
 ==
+

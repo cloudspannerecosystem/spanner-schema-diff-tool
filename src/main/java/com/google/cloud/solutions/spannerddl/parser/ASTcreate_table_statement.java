@@ -20,9 +20,9 @@ import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
 import com.google.common.base.Joiner;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.TreeMap;
 
 /**
  * Abstract Syntax Tree parser object for "create_table_statement" token
@@ -41,8 +41,8 @@ public class ASTcreate_table_statement extends SimpleNode {
     return children[0].toString();
   }
 
-  public TreeMap<String, ASTcolumn_def> getColumns() {
-    TreeMap<String, ASTcolumn_def> columns = new TreeMap<>();
+  public LinkedHashMap<String, ASTcolumn_def> getColumns() {
+    LinkedHashMap<String, ASTcolumn_def> columns = new LinkedHashMap<>();
     for (Node child : children) {
       if (child instanceof ASTcolumn_def) {
         ASTcolumn_def column = (ASTcolumn_def) child;
@@ -52,15 +52,19 @@ public class ASTcreate_table_statement extends SimpleNode {
     return columns;
   }
 
-  public TreeMap<String, ASTforeign_key> getForeignKeys() {
-    TreeMap<String, ASTforeign_key> foreignKeys = new TreeMap<>();
+  public LinkedHashMap<String, SimpleNode> getConstraints() {
+    LinkedHashMap<String, SimpleNode> constraints = new LinkedHashMap<>();
     for (Node child : children) {
       if (child instanceof ASTforeign_key) {
         ASTforeign_key foreignKey = (ASTforeign_key) child;
-        foreignKeys.put(foreignKey.getName(), foreignKey);
+        constraints.put(foreignKey.getName(), foreignKey);
+      }
+      if (child instanceof ASTcheck_constraint) {
+        ASTcheck_constraint checkConstraint = (ASTcheck_constraint) child;
+        constraints.put(checkConstraint.getName(), checkConstraint);
       }
     }
-    return foreignKeys;
+    return constraints;
   }
 
 
@@ -78,15 +82,16 @@ public class ASTcreate_table_statement extends SimpleNode {
 
   @Override
   public String toString() {
+    verifyTableElements();
     StringBuilder ret = new StringBuilder("CREATE TABLE");
     ret.append(" ");
     // child 0 is name
     ret.append(getTableName());
     ret.append(" (");
-    // append column and FK definitions.
+    // append column and constraint definitions.
     List<SimpleNode> tableElements = new ArrayList<>();
     tableElements.addAll(getColumns().values());
-    tableElements.addAll(getForeignKeys().values());
+    tableElements.addAll(getConstraints().values());
     ret.append(Joiner.on(", ").join(tableElements));
     ret.append(") ");
     ret.append(getPrimaryKey());
@@ -97,6 +102,21 @@ public class ASTcreate_table_statement extends SimpleNode {
       ret.append(interleaveClause.get()); // interleave optional
     }
     return ret.toString();
+  }
+
+  private void verifyTableElements() {
+    for (Node child : children) {
+      if (!(child instanceof ASTcolumn_def)
+          && !(child instanceof ASTforeign_key)
+          && !(child instanceof ASTname)
+          && !(child instanceof ASTcheck_constraint)
+          && !(child instanceof ASTprimary_key)
+          && !(child instanceof ASTtable_interleave_clause)
+      ) {
+        throw new IllegalArgumentException(
+            "Unknown child type " + child.getClass().getSimpleName() + " - " + child);
+      }
+    }
   }
 
   public static Comparator<ASTcreate_table_statement> COMPARE_BY_NAME =

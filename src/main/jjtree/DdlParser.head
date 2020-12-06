@@ -1,0 +1,77 @@
+/*
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+/*
+Grammar for Cloud Spanner DDL.
+
+If not using Maven, generate parser code using the following:
+
+cat src/main/jjtree/DdlParser.head       \
+      src/main/jjtree/ddl_whitespace.jjt \
+      src/main/jjtree/ddl_keywords.jjt   \
+      src/main/jjtree/ddl_string_bytes_tokens.jjt \
+      src/main/jjtree/ddl_expression.jjt \
+      src/main/jjtree/ddl_parser.jjt     \
+   > src/main/jjtree/DdlParser.jjt
+
+java -cp ${PATH_TO_JAVACC_6}/bin/lib/javacc.jar jjtree \
+    -GRAMMAR_ENCODING=UTF-8 \
+    -OUTPUT_ENCODING=utf-8 \
+    -JDK_VERSION=1.8 \
+    -OUTPUT_DIRECTORY=src/main/java/com/google/cloud/solutions/spannerddl/parser \
+    src/main/jjtree/DdlParser.jjt
+
+java -cp ${PATH_TO_JAVACC_6}/bin/lib/javacc.jar javacc \
+    -GRAMMAR_ENCODING=UTF-8 \
+    -OUTPUT_ENCODING=utf-8 \
+    -JDK_VERSION=1.8 \
+    -OUTPUT_DIRECTORY=src/main/java/com/google/cloud/solutions/spannerddl/parser \
+    src/main/java/com/google/cloud/solutions/spannerddl/parser/DdlParser.jj
+
+*/
+
+options {
+  MULTI = true;
+  STATIC = false;
+  IGNORE_CASE = true;
+  NODE_PACKAGE = "com.google.cloud.solutions.spannerddl.parser";
+  UNICODE_INPUT =  true;
+  TRACK_TOKENS =  true;
+  GRAMMAR_ENCODING = "UTF-8";
+
+}
+PARSER_BEGIN(DdlParser)
+package com.google.cloud.solutions.spannerddl.parser;
+import java.io.InputStream;import java.io.StringReader;import java.util.*;
+
+public class DdlParser {
+  public static ASTddl_statement parseDdlStatement(String in)
+    throws ParseException {
+    StringReader reader = null;
+    try {
+      reader=new StringReader(in);
+      DdlParser parser = new DdlParser(reader);
+      parser.ddl_statement();
+      return (ASTddl_statement)parser.jjtree.rootNode();
+    } finally{
+       if(reader != null) {
+         reader.close();
+       }
+    }
+  }
+}
+PARSER_END(DdlParser)

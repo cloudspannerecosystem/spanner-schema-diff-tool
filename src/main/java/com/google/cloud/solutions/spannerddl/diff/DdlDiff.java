@@ -19,6 +19,7 @@ package com.google.cloud.solutions.spannerddl.diff;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.cloud.solutions.spannerddl.parser.ASTalter_table_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcheck_constraint;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_def;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_type;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
@@ -29,6 +30,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASToptions_clause;
 import com.google.cloud.solutions.spannerddl.parser.DdlParser;
 import com.google.cloud.solutions.spannerddl.parser.DdlParserTreeConstants;
 import com.google.cloud.solutions.spannerddl.parser.ParseException;
+import com.google.cloud.solutions.spannerddl.parser.SimpleNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -46,6 +48,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -87,22 +90,32 @@ public class DdlDiff {
 
   private final MapDifference<String, ASTcreate_index_statement> indexDifferences;
   private final MapDifference<String, ASTcreate_table_statement> tableDifferences;
-  private final MapDifference<String, ForeignKeyWrapper> foreignKeyDifferences;
+  private final MapDifference<String, ConstraintWrapper> foreignKeyDifferences;
   private final Map<String, ASTcreate_table_statement> newTablesCreationOrder;
   private final Map<String, ASTcreate_table_statement> originalTablesCreationOrder;
 
-  private static class ForeignKeyWrapper {
+  private static class ConstraintWrapper {
 
     private final String tableName;
-    private final ASTforeign_key foreignKey;
+    private final SimpleNode constraint;
 
-    private ForeignKeyWrapper(String tableName, ASTforeign_key fk) {
+    private ConstraintWrapper(String tableName, SimpleNode constraint) {
       this.tableName = tableName;
-      this.foreignKey = fk;
+      this.constraint = constraint;
+      if (!(constraint instanceof ASTforeign_key) && !(constraint instanceof ASTcheck_constraint)) {
+        throw new IllegalArgumentException(
+            "not a valid constraint type : " + constraint.toString());
+      }
     }
 
     private String getName() {
-      return foreignKey.getName();
+      if (constraint instanceof ASTcheck_constraint) {
+        return ((ASTcheck_constraint) constraint).getName();
+      }
+      if (constraint instanceof ASTforeign_key) {
+        return ((ASTforeign_key) constraint).getName();
+      }
+      throw new IllegalArgumentException("not a valid constraint type : " + constraint.toString());
     }
   }
 
@@ -111,7 +124,7 @@ public class DdlDiff {
       Map<String, ASTcreate_table_statement> originalTablesCreationOrder,
       Map<String, ASTcreate_table_statement> newTablesCreationOrder,
       MapDifference<String, ASTcreate_index_statement> indexDifferences,
-      MapDifference<String, ForeignKeyWrapper> foreignKeyDifferences) {
+      MapDifference<String, ConstraintWrapper> foreignKeyDifferences) {
     this.tableDifferences = tableDifferences;
     this.originalTablesCreationOrder = originalTablesCreationOrder;
     this.newTablesCreationOrder = newTablesCreationOrder;
@@ -157,13 +170,13 @@ public class DdlDiff {
     }
 
     // Drop deleted foreign keys
-    for (ForeignKeyWrapper fk : foreignKeyDifferences.entriesOnlyOnLeft().values()) {
+    for (ConstraintWrapper fk : foreignKeyDifferences.entriesOnlyOnLeft().values()) {
       output
           .add("ALTER TABLE " + fk.tableName + " DROP CONSTRAINT " + fk.getName());
     }
 
     // Drop modified foreign keys that need to be re-created...
-    for (ValueDifference<ForeignKeyWrapper> fkDiff : foreignKeyDifferences.entriesDiffering()
+    for (ValueDifference<ConstraintWrapper> fkDiff : foreignKeyDifferences.entriesDiffering()
         .values()) {
       output
           .add("ALTER TABLE " + fkDiff.leftValue().tableName + " DROP CONSTRAINT " + fkDiff
@@ -214,16 +227,16 @@ public class DdlDiff {
       output.add(difference.rightValue().toString());
     }
 
-    // Create new Foreign Keys.
-    for (ForeignKeyWrapper fk : foreignKeyDifferences.entriesOnlyOnRight().values()) {
-      output.add("ALTER TABLE " + fk.tableName + " ADD " + fk.foreignKey.toString());
+    // Create new constrants.
+    for (ConstraintWrapper fk : foreignKeyDifferences.entriesOnlyOnRight().values()) {
+      output.add("ALTER TABLE " + fk.tableName + " ADD " + fk.constraint.toString());
     }
 
     // Re-create modified Foreign Keys.
-    for (ValueDifference<ForeignKeyWrapper> fkDiff : foreignKeyDifferences.entriesDiffering()
+    for (ValueDifference<ConstraintWrapper> fkDiff : foreignKeyDifferences.entriesDiffering()
         .values()) {
       output.add(
-          "ALTER TABLE " + fkDiff.rightValue().tableName + " ADD " + fkDiff.rightValue().foreignKey
+          "ALTER TABLE " + fkDiff.rightValue().tableName + " ADD " + fkDiff.rightValue().constraint
               .toString());
     }
     return output.build();
@@ -337,11 +350,28 @@ public class DdlDiff {
                 + tableName
                 + " column "
                 + columnDiff.leftValue().getColumnName()
-                + "from "
+                + " from "
                 + columnDiff.leftValue().getColumnTypeString()
                 + " to "
                 + columnDiff.rightValue().getColumnTypeString());
       }
+    }
+
+    // check generated column diffs
+    // check for compatible type changes.
+    if (!Objects.equals(Objects.toString(columnDiff
+            .leftValue()
+            .getGenerationClause()),
+        Objects.toString(columnDiff.rightValue().getGenerationClause()))) {
+      throw new DdlDiffException(
+          "Cannot change generation clause of table "
+              + tableName
+              + " column "
+              + columnDiff.leftValue().getColumnName()
+              + " from "
+              + columnDiff.leftValue().getGenerationClause()
+              + " to "
+              + columnDiff.rightValue().getGenerationClause());
     }
 
     // Not null or type length limit change.
@@ -408,19 +438,19 @@ public class DdlDiff {
 
     Map<String, ASTcreate_table_statement> originalTablesCreationOrder = new LinkedHashMap<>();
     Map<String, ASTcreate_index_statement> originalIndexes = new TreeMap<>();
-    Map<String, ForeignKeyWrapper> originalForeignKeys = new TreeMap<>();
+    Map<String, ConstraintWrapper> originalConstraints = new TreeMap<>();
 
-    separateTablesIndexesForeignKeys(originalStatements, originalTablesCreationOrder,
-        originalIndexes, originalForeignKeys);
+    separateTablesIndexesConstraints(originalStatements, originalTablesCreationOrder,
+        originalIndexes, originalConstraints);
     Map<String, ASTcreate_table_statement> originalTablesNameOrder =
         new TreeMap<>(originalTablesCreationOrder);
 
     Map<String, ASTcreate_table_statement> newTablesCreationOrder = new LinkedHashMap<>();
     Map<String, ASTcreate_index_statement> newIndexes = new TreeMap<>();
-    Map<String, ForeignKeyWrapper> newForeignKeys = new TreeMap<>();
+    Map<String, ConstraintWrapper> newConstraints = new TreeMap<>();
 
-    separateTablesIndexesForeignKeys(newStatements, newTablesCreationOrder, newIndexes,
-        newForeignKeys);
+    separateTablesIndexesConstraints(newStatements, newTablesCreationOrder, newIndexes,
+        newConstraints);
     Map<String, ASTcreate_table_statement> newTablesNameOrder =
         new TreeMap<>(newTablesCreationOrder);
 
@@ -429,25 +459,24 @@ public class DdlDiff {
         originalTablesCreationOrder,
         newTablesCreationOrder,
         Maps.difference(originalIndexes, newIndexes),
-        Maps.difference(originalForeignKeys, newForeignKeys));
+        Maps.difference(originalConstraints, newConstraints));
   }
 
-  private static void separateTablesIndexesForeignKeys(
+  private static void separateTablesIndexesConstraints(
       List<ASTddl_statement> statements,
       Map<String, ASTcreate_table_statement> tables,
       Map<String, ASTcreate_index_statement> indexes,
-      Map<String, ForeignKeyWrapper> foreignKeys) {
+      Map<String, ConstraintWrapper> constraints) {
     for (ASTddl_statement statement : statements) {
       if (statement.jjtGetChild(0) instanceof ASTcreate_table_statement) {
         ASTcreate_table_statement createTable =
             (ASTcreate_table_statement) statement.jjtGetChild(0);
         tables.put(createTable.getTableName(), createTable);
-        // convert embedded foreign key statements into wrapper object with table name
+        // convert embedded constraint statements into wrapper object with table name
         // use a single map for all foreign keys, whether created in table or externally
-        createTable.getForeignKeys().values().stream()
-            .map(fk -> new ForeignKeyWrapper(createTable.getTableName(), fk))
-            .forEach(fk -> foreignKeys.put(fk.getName(), fk));
-
+        createTable.getConstraints().values().stream()
+            .map(c -> new ConstraintWrapper(createTable.getTableName(), c))
+            .forEach(c -> constraints.put(c.getName(), c));
       } else if (statement.jjtGetChild(0) instanceof ASTcreate_index_statement) {
         ASTcreate_index_statement createIndex =
             (ASTcreate_index_statement) statement.jjtGetChild(0);
@@ -455,11 +484,12 @@ public class DdlDiff {
 
       } else if (statement.jjtGetChild(0) instanceof ASTalter_table_statement &&
           // use a single map for all foreign keys, whether created in table or externally
-          statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTforeign_key) {
+          (statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTforeign_key ||
+              statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTcheck_constraint)) {
         ASTalter_table_statement alterTable = (ASTalter_table_statement) statement.jjtGetChild(0);
-        ForeignKeyWrapper fk = new ForeignKeyWrapper(alterTable.jjtGetChild(0).toString(),
-            (ASTforeign_key) alterTable.jjtGetChild(1));
-        foreignKeys.put(fk.getName(), fk);
+        ConstraintWrapper constraint = new ConstraintWrapper(alterTable.jjtGetChild(0).toString(),
+            (SimpleNode) alterTable.jjtGetChild(1));
+        constraints.put(constraint.getName(), constraint);
       } else {
         throw new IllegalArgumentException(
             "Unsupported statement type: "
@@ -495,7 +525,8 @@ public class DdlDiff {
               .jjtGetChild(0);
           // child 0 = table name
           // child 1 = alter statement. Only ASTforeign_key is supported
-          if (!(alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key)) {
+          if (!(alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key) &&
+              !(alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
                     + statement
@@ -503,8 +534,26 @@ public class DdlDiff {
                     + "'ALTER TABLE table_name ADD CONSTRAINT' DDL statements");
           }
           // only foreign key statements here:
-          if (((ASTforeign_key) alterTableStatement.jjtGetChild(1)).getName()
-              .equals(ASTforeign_key.ANONYMOUS_NAME)) {
+          if (alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key &&
+              ((ASTforeign_key) alterTableStatement.jjtGetChild(1)).getName()
+                  .equals(ASTforeign_key.ANONYMOUS_NAME)) {
+            throw new IllegalArgumentException(
+                "Unsupported statement:\n"
+                    + statement
+                    + "\nCan not create diffs when anonymous FOREIGN KEY constraints are used.");
+          }
+          if (alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint &&
+              ((ASTcheck_constraint) alterTableStatement.jjtGetChild(1)).getName()
+                  .equals(ASTcheck_constraint.ANONYMOUS_NAME)) {
+            throw new IllegalArgumentException(
+                "Unsupported statement:\n"
+                    + statement
+                    + "\nCan not create diffs when anonymous CHECK constraints are used.");
+          }
+        }
+        if (statementType == DdlParserTreeConstants.JJTCREATE_TABLE_STATEMENT) {
+          if (((ASTcreate_table_statement) ddlStatement.jjtGetChild(0)).getConstraints()
+              .containsKey(ASTforeign_key.ANONYMOUS_NAME)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
                     + statement
@@ -512,12 +561,12 @@ public class DdlDiff {
           }
         }
         if (statementType == DdlParserTreeConstants.JJTCREATE_TABLE_STATEMENT) {
-          if (((ASTcreate_table_statement) ddlStatement.jjtGetChild(0)).getForeignKeys()
-              .containsKey(ASTforeign_key.ANONYMOUS_NAME)) {
+          if (((ASTcreate_table_statement) ddlStatement.jjtGetChild(0)).getConstraints()
+              .containsKey(ASTcheck_constraint.ANONYMOUS_NAME)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
                     + statement
-                    + "\nCan not create diffs when anonymous FOREIGN KEY constraints are used.");
+                    + "\nCan not create diffs when anonymous CHECK constraints are used.");
           }
         }
         ddlStatements.add(ddlStatement);

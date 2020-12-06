@@ -17,6 +17,7 @@
 package com.google.cloud.solutions.spannerddl.parser;
 
 /** Abstract Syntax Tree parser object for "column_def" token */
+import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
 import java.util.Comparator;
 import javax.annotation.Nullable;
 
@@ -42,14 +43,23 @@ public class ASTcolumn_def extends SimpleNode {
     return (ASTcolumn_type) children[1];
   }
 
+  public ASTgeneration_clause getGenerationClause() {
+    return ASTTreeUtils.getOptionalChildByType(children, ASTgeneration_clause.class);
+  }
+
   public boolean isNotNull() {
     return (children.length > 2 && children[2] instanceof ASTnot_null);
   }
 
-  public @Nullable ASToptions_clause getOptionsClause() {
+  public @Nullable
+  ASToptions_clause getOptionsClause() {
     int index = 2; // skip name and type
     if (index < children.length && children[index] instanceof ASTnot_null) {
       // skip NOT NULL
+      index++;
+    }
+    if (index < children.length && children[index] instanceof ASTgeneration_clause) {
+      // skip generated
       index++;
     }
     // Options should be last, but check for any unknown children.
@@ -76,10 +86,19 @@ public class ASTcolumn_def extends SimpleNode {
     if (isNotNull()) {
       ret.append(" NOT NULL");
     }
-    // getOptions also checks for unknown children.
-    if (getOptionsClause() != null) {
+
+    ASTgeneration_clause generated = ASTTreeUtils
+        .getOptionalChildByType(children, ASTgeneration_clause.class);
+    if (generated != null) {
       ret.append(" ");
-      ret.append(getOptionsClause().toString());
+      ret.append(generated.toString());
+    }
+
+    // getOptions also checks for unknown children.
+    ASToptions_clause optionsClause = getOptionsClause();
+    if (optionsClause != null) {
+      ret.append(" ");
+      ret.append(optionsClause.toString());
     }
     return ret.toString().trim();
   }

@@ -48,7 +48,7 @@ class ASTforeign_key extends SimpleNode {
 
   public List<String> getConstrainedColumnNames() {
     return identifierListToStringList(
-        (ASTidentifier_list) ((ASTconstrained_columns) children[1]).children[0]);
+        (ASTidentifier_list) ((ASTreferencing_columns) children[1]).children[0]);
   }
 
   private List<String> identifierListToStringList(ASTidentifier_list idList) {

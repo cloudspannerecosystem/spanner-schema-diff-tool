@@ -18,21 +18,29 @@
 /*
 Grammar for Cloud Spanner DDL.
 
-If not using Maven, denerate parser code using the following:
+If not using Maven, generate parser code using the following:
+
+cat src/main/jjtree/DdlParser.head       \
+      src/main/jjtree/ddl_whitespace.jjt \
+      src/main/jjtree/ddl_keywords.jjt   \
+      src/main/jjtree/ddl_string_bytes_tokens.jjt \
+      src/main/jjtree/ddl_expression.jjt \
+      src/main/jjtree/ddl_parser.jjt     \
+   > src/main/jjtree/DdlParser.jjt
 
 java -cp ${PATH_TO_JAVACC_6}/bin/lib/javacc.jar jjtree \
     -GRAMMAR_ENCODING=UTF-8 \
     -OUTPUT_ENCODING=utf-8 \
     -JDK_VERSION=1.8 \
-    -OUTPUT_DIRECTORY=src/main/java/com/google/cloud/solutions/spannerddl \
+    -OUTPUT_DIRECTORY=src/main/java/com/google/cloud/solutions/spannerddl/parser \
     src/main/jjtree/DdlParser.jjt
 
 java -cp ${PATH_TO_JAVACC_6}/bin/lib/javacc.jar javacc \
     -GRAMMAR_ENCODING=UTF-8 \
     -OUTPUT_ENCODING=utf-8 \
     -JDK_VERSION=1.8 \
-    -OUTPUT_DIRECTORY=src/main/java/com/google/cloud/solutions/spannerddl \
-    src/main/java/com/google/cloud/solutions/spannerddl/DdlParser.jj
+    -OUTPUT_DIRECTORY=src/main/java/com/google/cloud/solutions/spannerddl/parser \
+    src/main/java/com/google/cloud/solutions/spannerddl/parser/DdlParser.jj
 
 */
 
@@ -67,9 +75,22 @@ public class DdlParser {
   }
 }
 PARSER_END(DdlParser)
-TOKEN_MGR_DECLS:
-{
-}
+//
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 SKIP:
 {
     <WHITE_SPACE: (" " | "\n" | "\r" | "\t" | "\b" | "\f" |
@@ -91,53 +112,499 @@ SKIP:
         "\u3000" | "\343\200\200"
     )>
 }
+
 TOKEN:
 {
-  <ARRAY:                   "array">
-  | <ASC:                     "asc">
-  | <CREATE:                  "create">
-  | <DESC:                    "desc">
-  | <FALSE:                   "false">
-  | <IN:                      "in">
-  | <NO:                      "no">
-  | <NOT:                     "not">
-  | <NULLL:                   "null">
-  | <ON:                      "on">
-  | <SET:                     "set">
-  | <TRUE:                    "true">
+    <ALL:                  "all">
+  | <AND:                  "and">
+  | <ANY:                  "any">
+  | <ARRAY:                "array">
+  | <AS:                   "as">
+  | <ASC:                  "asc">
+  | <ASSERT_ROWS_MODIFIED: "assert_rows_modified">
+  | <AT:                   "at">
+  | <BETWEEN:              "between">
+  | <BY:                   "by">
+  | <CASE:                 "case">
+  | <CAST:                 "cast">
+  | <COLLATE:              "collate">
+  | <CONTAINS:             "contains">
+  | <CREATE:               "create">
+  | <CROSS:                "cross">
+  | <CUBE:                 "cube">
+  | <CURRENT:              "current">
+  | <DEFAULTT:             "default">
+  | <DEFINE:               "define">
+  | <DESC:                 "desc">
+  | <DISTINCT:             "distinct">
+  | <ELSE:                 "else">
+  | <END:                  "end">
+  | <ENUM:                 "enum">
+  | <ESCAPE:               "escape">
+  | <EXCEPT:               "except">
+  | <EXCLUDE:              "exclude">
+  | <EXISTS:               "exists">
+  | <EXTRACT:              "extract">
+  | <FALSE:                "false">
+  | <FETCH:                "fetch">
+  | <FOLLOWING:            "following">
+  | <FOR:                  "for">
+  | <FROM:                 "from">
+  | <FULL:                 "full">
+  | <GROUP:                "group">
+  | <GROUPING:             "grouping">
+  | <GROUPS:               "groups">
+  | <HASH:                 "hash">
+  | <HAVING:               "having">
+  | <IF:                   "if">
+  | <IGNORE:               "ignore">
+  | <IN:                   "in">
+  | <INNER:                "inner">
+  | <INTERSECT:            "intersect">
+  | <INTERVAL:             "interval">
+  | <INTO:                 "into">
+  | <IS:                   "is">
+  | <JOIN:                 "join">
+  | <LATERAL:              "lateral">
+  | <LEFT:                 "left">
+  | <LIKE:                 "like">
+  | <LIMIT:                "limit">
+  | <LOOKUP:               "lookup">
+  | <MERGE:                "merge">
+  | <NATURAL:              "natural">
+  | <NEW:                  "new">
+  | <NO:                   "no">
+  | <NOT:                  "not">
+  | <NULLL:                "null">
+  | <NULLS:                "nulls">
+  | <OF:                   "of">
+  | <ON:                   "on">
+  | <OR:                   "or">
+  | <ORDER:                "order">
+  | <OUTER:                "outer">
+  | <OVER:                 "over">
+  | <PARTITION:            "partition">
+  | <PRECEDING:            "preceding">
+  | <PROTO:                "proto">
+  | <RANGE:                "range">
+  | <RECURSIVE:            "recursive">
+  | <RESPECT:              "respect">
+  | <RIGHT:                "right">
+  | <ROLLUP:               "rollup">
+  | <ROWS:                 "rows">
+  | <SELECT:               "select">
+  | <SET:                  "set">
+  | <SOME:                 "some">
+  | <STRUCT:               "struct">
+  | <TABLESAMPLE:          "tablesample">
+  | <THEN:                 "then">
+  | <TO:                   "to">
+  | <TREAT:                "treat">
+  | <TRUE:                 "true">
+  | <UNBOUNDED:            "unbounded">
+  | <UNION:                "union">
+  | <UNNEST:               "unnest">
+  | <USING:                "using">
+  | <WHEN:                 "when">
+  | <WHERE:                "where">
+  | <WINDOW:               "window">
+  | <WITH:                 "with">
+  | <WITHIN:               "within">
+}
+
+TOKEN:
+{
+    <ACTION:                   "action">
+  | <ADD:                      "add">
+  | <ALTER:                    "alter">
+  | <BOOL:                     "bool">
+  | <BYTES:                    "bytes">
+  | <CASCADE:                  "cascade">
+  | <CHECK:                    "check">
+  | <COLUMN:                   "column">
+  | <CONSTRAINT:               "constraint">
+  | <DATABASE:                 "database">
+  | <DATE:                     "date">
+  | <DELETE:                   "delete">
+  | <DROP:                     "drop">
+  | <FLOAT64:                  "float64">
+  | <FOREIGN:                  "foreign">
+  | <INDEX:                    "index">
+  | <INT64:                    "int64">
+  | <INTERLEAVE:               "interleave">
+  | <KEY:                      "key">
+  | <MAX:                      "max">
+  | <NULL_FILTERED:            "null_filtered">
+  | <NUMERIC:                  "numeric">
+  | <OPTIONS:                  "options">
+  | <PARENT:                   "parent">
+  | <PRIMARY:                  "primary">
+  | <REFERENCES:               "references">
+  | <STORED:                   "stored">
+  | <STORING:                  "storing">
+  | <STRING:                   "string">
+  | <TABLE:                    "table">
+  | <TIMESTAMP:                "timestamp">
+  | <UNIQUE:                   "unique">
+}
+
+void pseudoReservedWord() #void :
+{}
+{
+    <ACTION>
+  | <ADD>
+  | <ALTER>
+  | <BOOL>
+  | <BYTES>
+  | <CASCADE>
+  | <CHECK>
+  | <COLUMN>
+  | <CONSTRAINT>
+  | <DATABASE>
+  | <DATE>
+  | <DELETE>
+  | <DROP>
+  | <FLOAT64>
+  | <FOREIGN>
+  | <INDEX>
+  | <INT64>
+  | <INTERLEAVE>
+  | <KEY>
+  | <MAX>
+  | <NULL_FILTERED>
+  | <NUMERIC>
+  | <OPTIONS>
+  | <PARENT>
+  | <PRIMARY>
+  | <REFERENCES>
+  | <STORED>
+  | <STORING>
+  | <STRING>
+  | <TABLE>
+  | <TIMESTAMP>
+  | <UNIQUE>
+}
+
+void any_reserved_word() :
+{}
+{
+    <ALL>
+  | <AND>
+  | <ANY>
+  | <ARRAY>
+  | <AS>
+  | <ASC>
+  | <ASSERT_ROWS_MODIFIED>
+  | <AT>
+  | <BETWEEN>
+  | <BY>
+  | <CASE>
+  | <CAST>
+  | <COLLATE>
+  | <CONTAINS>
+  | <CREATE>
+  | <CROSS>
+  | <CUBE>
+  | <CURRENT>
+  | <DEFAULTT>
+  | <DEFINE>
+  | <DESC>
+  | <DISTINCT>
+  | <ELSE>
+  | <END>
+  | <ENUM>
+  | <ESCAPE>
+  | <EXCEPT>
+  | <EXCLUDE>
+  | <EXISTS>
+  | <EXTRACT>
+  | <FALSE>
+  | <FETCH>
+  | <FOLLOWING>
+  | <FOR>
+  | <FROM>
+  | <FULL>
+  | <GROUP>
+  | <GROUPING>
+  | <GROUPS>
+  | <HASH>
+  | <HAVING>
+  | <IF>
+  | <IGNORE>
+  | <IN>
+  | <INNER>
+  | <INTERSECT>
+  | <INTERVAL>
+  | <INTO>
+  | <IS>
+  | <JOIN>
+  | <LATERAL>
+  | <LEFT>
+  | <LIKE>
+  | <LIMIT>
+  | <LOOKUP>
+  | <MERGE>
+  | <NATURAL>
+  | <NEW>
+  | <NO>
+  | <NOT>
+  | <NULLL>
+  | <NULLS>
+  | <OF>
+  | <ON>
+  | <OR>
+  | <ORDER>
+  | <OUTER>
+  | <OVER>
+  | <PARTITION>
+  | <PRECEDING>
+  | <PROTO>
+  | <RANGE>
+  | <RECURSIVE>
+  | <RESPECT>
+  | <RIGHT>
+  | <ROLLUP>
+  | <ROWS>
+  | <SELECT>
+  | <SET>
+  | <SOME>
+  | <STRUCT>
+  | <TABLESAMPLE>
+  | <THEN>
+  | <TO>
+  | <TREAT>
+  | <TRUE>
+  | <UNBOUNDED>
+  | <UNION>
+  | <UNNEST>
+  | <USING>
+  | <WHEN>
+  | <WHERE>
+  | <WINDOW>
+  | <WITH>
+  | <WITHIN>
+}
+//
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+
+TOKEN:
+{
+    <#QUOTE_S_CONTENTS:  (~["\\", "'", "\n", "\r"] | "\\" ~[])>
+  | <#QUOTE_D_CONTENTS:  (~["\\", "\"", "\n", "\r"] | "\\" ~[])>
+  | <#QUOTE_S3_CONTENTS: (   ~["\\", "'"]
+                           | "\\" ~[]
+                           | "'" ~["\\", "'"]
+                           | "'\\" ~[]
+                           | "''" ~["\\", "'"]
+                           | "''\\" ~[]
+                         )>
+  | <#QUOTE_D3_CONTENTS: (   ~["\\", "\""]
+                           | "\\" ~[]
+                           | "\"" ~["\\", "\""]
+                           | "\"\\" ~[]
+                           | "\"\"" ~["\\", "\""]
+                           | "\"\"\\" ~[]
+                         )>
+}
+<DEFAULT> MORE : { "'''" : QUOTE_S3_BODY }
+<QUOTE_S3_BODY> TOKEN :
+{
+  <STRING_S3_LITERAL: (<QUOTE_S3_CONTENTS>)* "'''">
+  {  } : DEFAULT
+}
+
+<DEFAULT> MORE : { "\"\"\"" : QUOTE_D3_BODY }
+<QUOTE_D3_BODY> TOKEN :
+{
+  <STRING_D3_LITERAL: (<QUOTE_D3_CONTENTS>)* "\"\"\"">
+  {  } : DEFAULT
+}
+<DEFAULT> MORE : { "r'''" : QUOTE_SR3_BODY }
+<QUOTE_SR3_BODY> TOKEN :
+{
+  <STRING_SR3_LITERAL: (<QUOTE_S3_CONTENTS>)* "'''">
+  {  } : DEFAULT
+}
+
+<DEFAULT> MORE : { "r\"\"\"" : QUOTE_DR3_BODY }
+<QUOTE_DR3_BODY> TOKEN :
+{
+  <STRING_DR3_LITERAL: (<QUOTE_D3_CONTENTS>)* "\"\"\"">
+  {  } : DEFAULT
+}
+<DEFAULT> MORE : { "b'''" : QUOTE_SB3_BODY }
+<QUOTE_SB3_BODY> TOKEN :
+{
+  <BYTES_S3_LITERAL: (<QUOTE_S3_CONTENTS>)* "'''">
+  {  } : DEFAULT
+}
+
+<DEFAULT> MORE : { "b\"\"\"" : QUOTE_DB3_BODY }
+<QUOTE_DB3_BODY> TOKEN :
+{
+  <BYTES_D3_LITERAL: (<QUOTE_D3_CONTENTS>)* "\"\"\"">
+  {  } : DEFAULT
+}
+<DEFAULT> MORE : { "rb'''" : QUOTE_SRB3_BODY }
+<DEFAULT> MORE : { "br'''" : QUOTE_SRB3_BODY }
+<QUOTE_SRB3_BODY> TOKEN :
+{
+  <BYTES_SR3_LITERAL: (<QUOTE_S3_CONTENTS>)* "'''">
+  {  } : DEFAULT
+}
+
+<DEFAULT> MORE : { "rb\"\"\"" : QUOTE_DRB3_BODY }
+<DEFAULT> MORE : { "br\"\"\"" : QUOTE_DRB3_BODY }
+<QUOTE_DRB3_BODY> TOKEN :
+{
+  <BYTES_DR3_LITERAL: (<QUOTE_D3_CONTENTS>)* "\"\"\"">
+  {  } : DEFAULT
+}
+<QUOTE_S3_BODY, QUOTE_SR3_BODY, QUOTE_SB3_BODY, QUOTE_SRB3_BODY> TOKEN :
+{
+  <UNCLOSED_SQ3: (<QUOTE_S3_CONTENTS>)* ("'" | "''")?> : DEFAULT
+}
+<QUOTE_D3_BODY, QUOTE_DR3_BODY, QUOTE_DB3_BODY, QUOTE_DRB3_BODY> TOKEN :
+{
+  <UNCLOSED_DQ3: (<QUOTE_D3_CONTENTS>)* ("\"" | "\"\"")?> : DEFAULT
 }
 TOKEN:
 {
-    <ACTION:                 "action">
-  | <ADD:                    "add">
-  | <ALTER:                  "alter">
-  | <BOOL:                   "bool">
-  | <BYTES:                  "bytes">
-  | <CASCADE:                "cascade">
-  | <COLUMN:                 "column">
-  | <CONSTRAINT:             "constraint">
-  | <DATABASE:               "database">
-  | <DATE:                   "date">
-  | <DELETE:                 "delete">
-  | <DROP:                   "drop">
-  | <FLOAT64:                "float64">
-  | <FOREIGN:                "foreign">
-  | <INDEX:                  "index">
-  | <INT64:                  "int64">
-  | <INTERLEAVE:             "interleave">
-  | <KEY:                    "key">
-  | <MAX:                    "max">
-  | <NULL_FILTERED:          "null_filtered">
-  | <OPTIONS:                "options">
-  | <PARENT:                 "parent">
-  | <PRIMARY:                "primary">
-  | <REFERENCES:             "references">
-  | <STORING:                "storing">
-  | <STRING:                 "string">
-  | <TABLE:                  "table">
-  | <TIMESTAMP:              "timestamp">
-  | <UNIQUE:                 "unique">
+    <STRING_LITERAL:        (   ( "'" (<QUOTE_S_CONTENTS>)* "'" )
+                              | ( "\"" (<QUOTE_D_CONTENTS>)* "\"" ))>
+    {    }
+  | <STRING_R_LITERAL:  "r" (   ( "'" (<QUOTE_S_CONTENTS>)* "'" )
+                              | ( "\"" (<QUOTE_D_CONTENTS>)* "\""))>
+    {    }
+  | <BYTES_LITERAL:     "b" (   ( "'" (<QUOTE_S_CONTENTS>)* "'" )
+                              | ("\"" (<QUOTE_D_CONTENTS>)* "\""))>
+    {    }
+  | <BYTES_R_LITERAL:   ("rb" | "br")
+                              ( ( "'" (<QUOTE_S_CONTENTS>)* "'" )
+                              | ( "\"" (<QUOTE_D_CONTENTS>)* "\"" ))>
+    {    }
 }
+
+void any_string_literal() :
+{}
+{
+      <STRING_LITERAL>
+    | <STRING_R_LITERAL>
+    | <STRING_S3_LITERAL>
+    | <STRING_D3_LITERAL>
+    | <STRING_SR3_LITERAL>
+    | <STRING_DR3_LITERAL>
+}
+
+void any_bytes_literal() :
+{}
+{
+      <BYTES_LITERAL>
+    | <BYTES_R_LITERAL>
+    | <BYTES_S3_LITERAL>
+    | <BYTES_D3_LITERAL>
+    | <BYTES_SR3_LITERAL>
+    | <BYTES_DR3_LITERAL>
+}
+//
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+void expression() :
+{}
+{
+  ( ( statement_token_no_paren() ) [ expression() ] )
+  | ( "("  [ expression() ] ")" [ expression() ] )
+}
+
+void googlesql_operator() :
+{}
+{
+    "+"
+  | "-"
+  | "*"
+  | "/"
+  | "="
+  | "!="
+  | "<>"
+  | "<"
+  | "<="
+  | ">"
+  | ">="
+  | "~"
+  | "|"
+  | "^"
+  | "&"
+}
+
+void googlesql_punctuation_no_paren() :
+{}
+{
+    ","
+  | "."
+  | "["
+  | "]"
+  | ":"
+  | "@"
+  | "{"
+  | "}"
+  | "?"
+}
+
+void googlesql_statement_token_no_paren() :
+{}
+{
+  (   <INTEGER_LITERAL>
+    | any_string_literal()
+    | any_bytes_literal()
+    | identifier()
+    | any_reserved_word()
+    | googlesql_operator()
+    | googlesql_punctuation_no_paren() )
+}
+//
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+
 TOKEN:
 {
     <#DEC_DIGIT:            ["0"-"9"]>
@@ -145,6 +612,7 @@ TOKEN:
   | <#LETTER_OR_UNDERSCORE: ["a"-"z","A"-"Z","_"]>
   | <#SCALE_FACTOR:         "e" (["+", "-"])? ( <DEC_DIGIT> )+ >
 }
+
 TOKEN:
 {
     <ID: (<LETTER_OR_UNDERSCORE>) (<LETTER_OR_UNDERSCORE> | <DEC_DIGIT>)* >
@@ -166,39 +634,6 @@ void identifier_list() :
   (identifier() #identifier) ("," identifier() #identifier)*
 }
 
-void pseudoReservedWord() #void :
-{}
-{
-    <ACTION>
-  | <ADD>
-  | <ALTER>
-  | <BOOL>
-  | <BYTES>
-  | <CASCADE>
-  | <COLUMN>
-  | <CONSTRAINT>
-  | <DATABASE>
-  | <DATE>
-  | <DELETE>
-  | <DROP>
-  | <FLOAT64>
-  | <FOREIGN>
-  | <INDEX>
-  | <INT64>
-  | <INTERLEAVE>
-  | <KEY>
-  | <MAX>
-  | <NULL_FILTERED>
-  | <OPTIONS>
-  | <PARENT>
-  | <PRIMARY>
-  | <REFERENCES>
-  | <STORING>
-  | <STRING>
-  | <TABLE>
-  | <TIMESTAMP>
-  | <UNIQUE>
-}
 void path() :
 {}
 {
@@ -209,7 +644,11 @@ void int_value() :
 {
   <INTEGER_LITERAL>
 }
-
+void string_value() :
+{}
+{
+  any_string_literal()
+}
 void ddl_statement() :
 {}
 {
@@ -219,19 +658,31 @@ void ddl_statement() :
   )
   <EOF>
 }
+
 void create_statement() #void :
 {}
 {
   <CREATE>
-  ( create_table_statement()
+  (   create_database_statement()
+    | create_table_statement()
     | create_index_statement()
   )
 }
+
 void options_clause() :
 {}
 {
   <OPTIONS> option_list()
 }
+
+void create_database_statement() :
+{}
+{
+  <DATABASE>
+  identifier() #db_name
+  [ options_clause() ]
+}
+
 void create_table_statement() :
 {}
 {
@@ -245,6 +696,7 @@ void table_element() #void :
 {}
 {
     LOOKAHEAD(3) foreign_key()
+  | LOOKAHEAD(3) check_constraint()
   | column_def()
 }
 
@@ -254,20 +706,25 @@ void column_def() :
   identifier() #name
   column_type()
   [ <NOT> <NULLL> #not_null ]
+  [ generation_clause() ]
   [ options_clause() ]
 }
+
 void column_def_alter_attrs() :
 {}
 {
   column_type()
   [ <NOT> <NULLL> #not_null ]
+  [ generation_clause() ]
 }
+
 void column_def_alter() :
 {}
 {
     <SET> #set_options_clause options_clause()
   | column_def_alter_attrs()
 }
+
 void column_type() :
 {}
 {
@@ -278,12 +735,21 @@ void column_type() :
   | <BYTES> "(" column_length() #length ")"
   | <TIMESTAMP>
   | <DATE>
+  | <NUMERIC>
   | <ARRAY> "<" column_type() ">"
 }
+
 void column_length() :
 {}
 {
   <MAX> | int_value()
+}
+
+void generation_clause() :
+{}
+{
+  <AS> "(" expression() #expression ")"
+  [<STORED> #stored]
 }
 
 void primary_key() #void :
@@ -297,9 +763,22 @@ void foreign_key() :
 {
   [ <CONSTRAINT> identifier() #constraint_name ]
   <FOREIGN> <KEY>
-    "(" identifier_list() #constrained_columns ")"
+    "(" identifier_list() #referencing_columns ")"
   <REFERENCES> identifier() #referenced_table
     "(" identifier_list() #referenced_columns ")"
+}
+
+void statement_token_no_paren() :
+{}
+{
+  googlesql_statement_token_no_paren()
+}
+
+void check_constraint() :
+{}
+{
+  [ <CONSTRAINT> identifier() #constraint_name ]
+  <CHECK> "(" expression() #check_constraint_expression ")"
 }
 
 void table_interleave_clause() :
@@ -308,11 +787,13 @@ void table_interleave_clause() :
   <INTERLEAVE> <IN> <PARENT> identifier() #interleave_in
     [ on_delete_clause() ]
 }
+
 void on_delete_clause() :
 {}
 {
   <ON> <DELETE> ( <CASCADE> #cascade | <NO> <ACTION> #no_action )
 }
+
 void create_index_statement() :
 {}
 {
@@ -324,11 +805,13 @@ void create_index_statement() :
   [ <STORING> stored_column_list() ]
   [ LOOKAHEAD(2) "," index_interleave_clause() ]
 }
+
 void index_interleave_clause() :
 {}
 {
   <INTERLEAVE> <IN> identifier() #interleave_in
 }
+
 void key() #void :
 {}
 {
@@ -339,6 +822,7 @@ void key() #void :
     ]
   ")"
 }
+
 void key_part() :
 {}
 {
@@ -347,11 +831,13 @@ void key_part() :
     | <DESC> #desc
   ]
 }
+
 void stored_column() :
 {}
 {
   path()
 }
+
 void stored_column_list() :
 {}
 {
@@ -359,6 +845,7 @@ void stored_column_list() :
     ( "," stored_column() )*
   ")"
 }
+
 void option_list() #void :
 {}
 {
@@ -366,6 +853,7 @@ void option_list() #void :
   option_key_val() ( LOOKAHEAD(2) "," option_key_val() )*
   ")"
 }
+
 void option_key_val() :
 {}
 {
@@ -375,35 +863,50 @@ void option_key_val() :
     | <TRUE> #bool_true_val
     | <FALSE> #bool_false_val
     | <INTEGER_LITERAL> #integer_val
+    | string_value()  #str_val
   )
 }
+
 void drop_statement() :
 {}
 {
   <DROP> ( <TABLE> #table | <INDEX> #index ) identifier() #name
 }
+
 void alter_statement() #void :
 {}
 {
   <ALTER>
-  (   alter_table_statement()  )
+  (   alter_database_statement()
+    | alter_table_statement()
+  )
+}
+
+void alter_database_statement() :
+{}
+{
+  <DATABASE> (identifier() #database_name) <SET> options_clause()
 }
 
 void alter_table_statement() :
 {}
 {
   <TABLE> (identifier() #table_name)
-  (   LOOKAHEAD(3) <ADD> #add_column [LOOKAHEAD(2) <COLUMN>] column_def()
+  (   LOOKAHEAD(3) <ADD> #add_column <COLUMN> column_def()
     | LOOKAHEAD(3) <DROP> <CONSTRAINT> #drop_constraint
         identifier() #constraint_name
-    | <DROP> #drop_column [LOOKAHEAD(2) <COLUMN>] (identifier() #column_name)
-    | LOOKAHEAD(3) <ALTER> #alter_column [LOOKAHEAD(2) <COLUMN>]
+    | <DROP> #drop_column <COLUMN> (identifier() #column_name)
+    | LOOKAHEAD(3) <ALTER> #alter_column <COLUMN>
         (identifier() #name) column_def_alter()
     | <SET> #set_on_delete on_delete_clause()
-    | LOOKAHEAD(3) <ADD> foreign_key()
+    | LOOKAHEAD(4) <ADD> foreign_key()
+    | <ADD> check_constraint()
   )
 }
+
 TOKEN:
 {
   <UNEXPECTED_CHARACTER: ~[]>
+  | <ILLEGAL_STRING_ESCAPE: "\\" ~[]> : DEFAULT
+  | <ILLEGAL_BYTES_ESCAPE: "\\" ~[]> : DEFAULT
 }

@@ -106,6 +106,4 @@ public class DDLParserTest {
       return (ASTddl_statement) parser.jjtree.rootNode();
     }
   }
-
-
 }

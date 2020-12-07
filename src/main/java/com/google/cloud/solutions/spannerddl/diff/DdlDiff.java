@@ -84,13 +84,13 @@ public class DdlDiff {
   public static final String NEW_DDL_FILE_OPT = "newDdlFile";
   public static final String OUTPUT_DDL_FILE_OPT = "outputDdlFile";
   public static final String ALLOW_RECREATE_INDEXES_OPT = "allowRecreateIndexes";
-  public static final String ALLOW_RECREATE_FOREIGN_KEYS_OPT = "allowRecreateForeignKeys";
+  public static final String ALLOW_RECREATE_CONSTRAINTS_OPT = "allowRecreateConstraints";
   public static final String ALLOW_DROP_STATEMENTS_OPT = "allowDropStatements";
   public static final String HELP_OPT = "help";
 
   private final MapDifference<String, ASTcreate_index_statement> indexDifferences;
   private final MapDifference<String, ASTcreate_table_statement> tableDifferences;
-  private final MapDifference<String, ConstraintWrapper> foreignKeyDifferences;
+  private final MapDifference<String, ConstraintWrapper> constraintDifferences;
   private final Map<String, ASTcreate_table_statement> newTablesCreationOrder;
   private final Map<String, ASTcreate_table_statement> originalTablesCreationOrder;
 
@@ -124,12 +124,12 @@ public class DdlDiff {
       Map<String, ASTcreate_table_statement> originalTablesCreationOrder,
       Map<String, ASTcreate_table_statement> newTablesCreationOrder,
       MapDifference<String, ASTcreate_index_statement> indexDifferences,
-      MapDifference<String, ConstraintWrapper> foreignKeyDifferences) {
+      MapDifference<String, ConstraintWrapper> constraintDifferences) {
     this.tableDifferences = tableDifferences;
     this.originalTablesCreationOrder = originalTablesCreationOrder;
     this.newTablesCreationOrder = newTablesCreationOrder;
     this.indexDifferences = indexDifferences;
-    this.foreignKeyDifferences = foreignKeyDifferences;
+    this.constraintDifferences = constraintDifferences;
   }
 
 
@@ -147,11 +147,11 @@ public class DdlDiff {
               + Joiner.on(", ").join(indexDifferences.entriesDiffering().keySet()));
     }
 
-    if (!foreignKeyDifferences.entriesDiffering().isEmpty() && !options
-        .get(ALLOW_RECREATE_FOREIGN_KEYS_OPT)) {
+    if (!constraintDifferences.entriesDiffering().isEmpty() && !options
+        .get(ALLOW_RECREATE_CONSTRAINTS_OPT)) {
       throw new DdlDiffException(
           "At least one FOREIGN KEY constraint differs, and allowRecreateForeignKeys is not set.\n"
-              + Joiner.on(", ").join(foreignKeyDifferences.entriesDiffering().keySet()));
+              + Joiner.on(", ").join(constraintDifferences.entriesDiffering().keySet()));
     }
 
     // Drop deleted indexes.
@@ -170,13 +170,13 @@ public class DdlDiff {
     }
 
     // Drop deleted foreign keys
-    for (ConstraintWrapper fk : foreignKeyDifferences.entriesOnlyOnLeft().values()) {
+    for (ConstraintWrapper fk : constraintDifferences.entriesOnlyOnLeft().values()) {
       output
           .add("ALTER TABLE " + fk.tableName + " DROP CONSTRAINT " + fk.getName());
     }
 
     // Drop modified foreign keys that need to be re-created...
-    for (ValueDifference<ConstraintWrapper> fkDiff : foreignKeyDifferences.entriesDiffering()
+    for (ValueDifference<ConstraintWrapper> fkDiff : constraintDifferences.entriesDiffering()
         .values()) {
       output
           .add("ALTER TABLE " + fkDiff.leftValue().tableName + " DROP CONSTRAINT " + fkDiff
@@ -228,12 +228,12 @@ public class DdlDiff {
     }
 
     // Create new constrants.
-    for (ConstraintWrapper fk : foreignKeyDifferences.entriesOnlyOnRight().values()) {
+    for (ConstraintWrapper fk : constraintDifferences.entriesOnlyOnRight().values()) {
       output.add("ALTER TABLE " + fk.tableName + " ADD " + fk.constraint.toString());
     }
 
     // Re-create modified Foreign Keys.
-    for (ValueDifference<ConstraintWrapper> fkDiff : foreignKeyDifferences.entriesDiffering()
+    for (ValueDifference<ConstraintWrapper> fkDiff : constraintDifferences.entriesDiffering()
         .values()) {
       output.add(
           "ALTER TABLE " + fkDiff.rightValue().tableName + " ADD " + fkDiff.rightValue().constraint
@@ -589,7 +589,7 @@ public class DdlDiff {
       Map<String, Boolean> options = ImmutableMap.of(
           ALLOW_RECREATE_INDEXES_OPT, commandLine.hasOption(ALLOW_RECREATE_INDEXES_OPT),
           ALLOW_DROP_STATEMENTS_OPT, commandLine.hasOption(ALLOW_DROP_STATEMENTS_OPT),
-          ALLOW_RECREATE_FOREIGN_KEYS_OPT, commandLine.hasOption(ALLOW_RECREATE_FOREIGN_KEYS_OPT)
+          ALLOW_RECREATE_CONSTRAINTS_OPT, commandLine.hasOption(ALLOW_RECREATE_CONSTRAINTS_OPT)
       );
       List<String> alterStatements =
           DdlDiff.build(
@@ -664,9 +664,9 @@ public class DdlDiff {
             .build());
     options.addOption(
         Option.builder()
-            .longOpt(ALLOW_RECREATE_FOREIGN_KEYS_OPT)
-            .desc("Allows dropping and recreating Foreign Keys (and their backing Indexes) to "
-                + "apply changes.")
+            .longOpt(ALLOW_RECREATE_CONSTRAINTS_OPT)
+            .desc("Allows dropping and recreating Check and Foreign Keys constrainys (and their "
+                + "backing Indexes) to apply changes.")
             .build());
     options.addOption(
         Option.builder()
@@ -702,8 +702,8 @@ public class DdlDiff {
                   + " generating statements to drop and recreate the index.\n\n"
                   + "By default, changes to foreign key constraints will also cause a failure. The"
                   + " --"
-                  + ALLOW_RECREATE_FOREIGN_KEYS_OPT
-                  + " command line option enables foreign key changes by"
+                  + ALLOW_RECREATE_CONSTRAINTS_OPT
+                  + " command line option enables constraint and foreign key changes by"
                   + " generating statements to drop and recreate the constraint.\n\n",
               buildOptions(),
               1,

@@ -36,7 +36,7 @@
     <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
     <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-    <ph-javacc-maven-plugin.version>4.1.3</ph-javacc-maven-plugin.version>
+    <ph-javacc-maven-plugin.version>4.1.4</ph-javacc-maven-plugin.version>
     <truth.version>1.0</truth.version>
     <junit.version>4.13.1</junit.version>
   </properties>
@@ -108,19 +108,50 @@
     </pluginManagement>
     <plugins>
       <plugin>
+        <artifactId>exec-maven-plugin</artifactId>
+        <groupId>org.codehaus.mojo</groupId>
+        <version>1.6.0</version>
+        <executions>
+          <execution>
+            <id>jjt-2-concat</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>bash</executable>
+              <arguments>
+                <argument>-c</argument>
+                <argument>
+                  mkdir -p ${project.build.directory}/generated-sources/jjtree-src \
+                  &amp;&amp; /bin/cat \
+                  src/main/jjtree-sources/DdlParser.head \
+                  src/main/jjtree-sources/ddl_whitespace.jjt \
+                  src/main/jjtree-sources/ddl_keywords.jjt \
+                  src/main/jjtree-sources/ddl_string_bytes_tokens.jjt \
+                  src/main/jjtree-sources/ddl_expression.jjt \
+                  src/main/jjtree-sources/ddl_parser.jjt \
+                  > ${project.build.directory}/generated-sources/jjtree-src/DdlParser.jjt
+                </argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>com.helger.maven</groupId>
         <artifactId>ph-javacc-maven-plugin</artifactId>
         <version>${ph-javacc-maven-plugin.version}</version>
         <executions>
           <execution>
-            <id>jjtree-javacc</id>
+            <id>jjt-2-compile</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>jjtree-javacc</goal>
             </goals>
             <configuration>
               <jdkVersion>${maven.compiler.source}</jdkVersion>
-              <sourceDirectory>src/main/jjtree</sourceDirectory>
+              <sourceDirectory>${project.build.directory}/generated-sources/jjtree-src</sourceDirectory>
               <excludes>
                 <exclude>**/AST*</exclude>
               </excludes>

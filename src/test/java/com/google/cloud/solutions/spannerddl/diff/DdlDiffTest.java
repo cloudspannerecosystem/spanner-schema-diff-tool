@@ -17,7 +17,7 @@
 package com.google.cloud.solutions.spannerddl.diff;
 
 import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_DROP_STATEMENTS_OPT;
-import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_RECREATE_FOREIGN_KEYS_OPT;
+import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_RECREATE_CONSTRAINTS_OPT;
 import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_RECREATE_INDEXES_OPT;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -70,12 +70,12 @@ public class DdlDiffTest {
   @Test
   public void parseDDLCreateTableSyntaxError() {
     parseDdlCheckDdlDiffException("Create table test1 ( col1 int64 )",
-        "Was expecting:\n    \"primary\" ...");
+        "Was expecting:\n\n\"primary\" ...");
   }
 
   @Test
   public void parseDDLCreateIndexSyntaxError() {
-    parseDdlCheckDdlDiffException("Create index index1 on test1", "Was expecting:\n    \"(\" ...");
+    parseDdlCheckDdlDiffException("Create index index1 on test1", "Was expecting:\n\n\"(\" ...");
   }
 
   private void parseDdlCheckDdlDiffException(String DDL, String exceptionContains) {
@@ -438,7 +438,7 @@ public class DdlDiffTest {
     return DdlDiff
         .generateAlterTableStatements((ASTcreate_table_statement) ddl1.get(0).jjtGetChild(0),
             (ASTcreate_table_statement) ddl2.get(0).jjtGetChild(0),
-            ImmutableMap.of(ALLOW_RECREATE_FOREIGN_KEYS_OPT, true, ALLOW_DROP_STATEMENTS_OPT,
+            ImmutableMap.of(ALLOW_RECREATE_CONSTRAINTS_OPT, true, ALLOW_DROP_STATEMENTS_OPT,
                 allowDropStatements));
   }
 
@@ -562,7 +562,7 @@ public class DdlDiffTest {
         // Run diff with allowRecreateIndexes and allowDropStatements
         List<String> diff = ddlDiff.generateDifferenceStatements(
             ImmutableMap.of(ALLOW_RECREATE_INDEXES_OPT, true, ALLOW_DROP_STATEMENTS_OPT, true,
-                ALLOW_RECREATE_FOREIGN_KEYS_OPT, true));
+                ALLOW_RECREATE_CONSTRAINTS_OPT, true));
         // check expected results.
         assertWithMessage("Mismatch for section " + segmentName).that(diff)
             .isEqualTo(expectedDiff);
@@ -589,7 +589,7 @@ public class DdlDiffTest {
 
         diff = ddlDiff.generateDifferenceStatements(
             ImmutableMap.of(ALLOW_RECREATE_INDEXES_OPT, true, ALLOW_DROP_STATEMENTS_OPT, false,
-                ALLOW_RECREATE_FOREIGN_KEYS_OPT, true));
+                ALLOW_RECREATE_CONSTRAINTS_OPT, true));
         // check expected results.
         assertWithMessage("Mismatch for section (noDrops)" + segmentName).that(diff)
             .isEqualTo(expectedDiffNoDrops);

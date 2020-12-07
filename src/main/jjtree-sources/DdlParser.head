@@ -20,12 +20,12 @@ Grammar for Cloud Spanner DDL.
 
 If not using Maven, generate parser code using the following:
 
-cat src/main/jjtree/DdlParser.head       \
-      src/main/jjtree/ddl_whitespace.jjt \
-      src/main/jjtree/ddl_keywords.jjt   \
-      src/main/jjtree/ddl_string_bytes_tokens.jjt \
-      src/main/jjtree/ddl_expression.jjt \
-      src/main/jjtree/ddl_parser.jjt     \
+cat src/main/jjtree-sources/DdlParser.head       \
+      src/main/jjtree-sources/ddl_whitespace.jjt \
+      src/main/jjtree-sources/ddl_keywords.jjt   \
+      src/main/jjtree-sources/ddl_string_bytes_tokens.jjt \
+      src/main/jjtree-sources/ddl_expression.jjt \
+      src/main/jjtree-sources/ddl_parser.jjt     \
    > src/main/jjtree/DdlParser.jjt
 
 java -cp ${PATH_TO_JAVACC_6}/bin/lib/javacc.jar jjtree \

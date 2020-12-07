@@ -13,7 +13,7 @@ The tool can only make changes that are allowable by Cloud Spanner's `CREATE`,
 *   Add or remove tables.
 *   Add or remove indexes.
 *   Add or remove table columns.
-*   Add or remove _named_ `FOREIGN KEY` constraints.
+*   Add or remove _named_ `FOREIGN KEY` and `CHECK` constraints.
 *   Change length limits of `STRING` or `BYTES` columns (or `ARRAYS` of `STRING`
     or `BYTES` columns).
 *   Add or remove `NOT NULL` constraints on columns.
@@ -36,7 +36,11 @@ statements in the DDL file. This has the following implications:
     are created _after_ their parents, and indexes are created _after_ the table
     being indexed.
 
-*   Tables and indexes must be creates with a single `CREATE` statement (not by
+*   The tool relies on the expressions in `CHECK` constraints and generated
+    columns being valid - it itself does noy understand SQL expressions and 
+    just performs text comparison.
+
+*   Tables and indexes must be created with a single `CREATE` statement (not by
     using `CREATE` then `ALTER` statements). The exception to this is when
     foreign key constraints are created - the tool supports creating them in the
     table creation DDL statement, and also using `ALTER` statements. 
@@ -64,19 +68,20 @@ indexes by first dropping then recreating them. This is a slow operation
 especially on large tables, so is disabled by default, and index differences
 will cause the tool to fail.
 
-### Note on FOREIGN KEY constraints
+### Note on constraints
 
-`FOREIGN KEY` constraints _must_ be explicitly named, either within a 
+`FOREIGN KEY` amd `CHECK` constraints _must_ be explicitly named, either within a 
 `CREATE TABLE` statement, or using an `ALTER TABLE` statement, using the syntax:
 
 ```sql
-CONSTRAINT constraint_name FOREIGN KEY ...
+CONSTRAINT fk_constraint_name FOREIGN KEY ...
+CONSTRAINT ck_constraint_name CHECK ...
 ```
 
 This is because the constraint needs to be referenced by its _name_ when it is
 dropped.
 
-Anonymous FOREIGN KEY constraints of the form:
+Anonymous `FOREIGN KEY` or `CHECK` constraints of the form:
  
 ```sql
 CREATE TABLE fk_dest (

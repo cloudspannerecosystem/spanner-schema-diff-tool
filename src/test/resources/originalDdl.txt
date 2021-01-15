@@ -3,8 +3,9 @@
 #
 # Format:
 # '#' = line comment, skipped when file is read.
-# '== SOME TEXT ' = section separator. Tests are run on each section individually.
-#                   SOME TEXT should be the same on all 3 DDL files
+# '== TEST NAME ' = section name/separator.
+#                   Tests are run on each section individually.
+#                   "TEST NAME" should be the same on all 3 DDL files
 # '--' DDL line comment - skipped by parser.
 ###############################################################################
    #

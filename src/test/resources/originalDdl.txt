@@ -211,6 +211,14 @@ create table test_gen (
   col2 int64,
 ) primary key (col1);
 
+== TEST 22 drop generated col in table
+
+create table test_gen (
+  col1 int64,
+  col2 int64,
+  col3 int64 as ( col1 * col2 * 2) STORED
+) primary key (col1);
+
 ==
 
 

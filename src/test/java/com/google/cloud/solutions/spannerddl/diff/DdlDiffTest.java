@@ -17,7 +17,7 @@
 package com.google.cloud.solutions.spannerddl.diff;
 
 import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_DROP_STATEMENTS_OPT;
-import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_RECREATE_FOREIGN_KEYS_OPT;
+import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_RECREATE_CONSTRAINTS_OPT;
 import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_RECREATE_INDEXES_OPT;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -99,6 +99,21 @@ public class DdlDiffTest {
       fail("Expected exception not thrown");
     } catch (IllegalArgumentException e) {
       assertThat(e.getMessage()).containsMatch("anonymous FOREIGN KEY constraints");
+    }
+  }
+
+  @Test
+  public void parseCreateTable_anonCheckConstraint() throws DdlDiffException {
+    try {
+      DdlDiff.parseDDL(
+          "create table test ("
+              + "intcol int64 not null, "
+              + "check (intcol>1)"
+              + ")"
+              + "primary key (intcol ASC)");
+      fail("Expected exception not thrown");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage()).containsMatch("anonymous CHECK constraints");
     }
   }
 
@@ -336,6 +351,29 @@ public class DdlDiffTest {
         .containsExactly("ALTER TABLE test1 SET ON DELETE CASCADE");
   }
 
+  @Test
+  public void generateAlterTable_changeGenerationClause() throws DdlDiffException {
+    // remove interleave
+    getTableDiffCheckDdlDiffException(
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary key (col1)",
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1/col2 ) stored) primary key (col1)",
+        true,
+        "Cannot change generation clause of table test1 column col3 from  AS ");
+
+    // add generation
+    getTableDiffCheckDdlDiffException(
+        "create table test1 (col1 int64, col2 int64, col3 int64) primary key (col1)",
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary key (col1)",
+        true,
+        "Cannot change generation clause of table test1 column col3 from null ");
+
+    // remove generation
+    getTableDiffCheckDdlDiffException(
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary key (col1)",
+        "create table test1 (col1 int64, col2 int64, col3 int64) primary key (col1)",
+        true,
+        "Cannot change generation clause of table test1 column col3 from  AS");
+  }
 
   @Test
   public void generateAlterTable_alterStatementOrdering() throws DdlDiffException {
@@ -400,7 +438,7 @@ public class DdlDiffTest {
     return DdlDiff
         .generateAlterTableStatements((ASTcreate_table_statement) ddl1.get(0).jjtGetChild(0),
             (ASTcreate_table_statement) ddl2.get(0).jjtGetChild(0),
-            ImmutableMap.of(ALLOW_RECREATE_FOREIGN_KEYS_OPT, true, ALLOW_DROP_STATEMENTS_OPT,
+            ImmutableMap.of(ALLOW_RECREATE_CONSTRAINTS_OPT, true, ALLOW_DROP_STATEMENTS_OPT,
                 allowDropStatements));
   }
 
@@ -524,11 +562,10 @@ public class DdlDiffTest {
         // Run diff with allowRecreateIndexes and allowDropStatements
         List<String> diff = ddlDiff.generateDifferenceStatements(
             ImmutableMap.of(ALLOW_RECREATE_INDEXES_OPT, true, ALLOW_DROP_STATEMENTS_OPT, true,
-                ALLOW_RECREATE_FOREIGN_KEYS_OPT, true));
+                ALLOW_RECREATE_CONSTRAINTS_OPT, true));
         // check expected results.
         assertWithMessage("Mismatch for section " + segmentName).that(diff)
             .isEqualTo(expectedDiff);
-
 
         // TEST PART 2: with allowDropStatements=false
 
@@ -552,12 +589,13 @@ public class DdlDiffTest {
 
         diff = ddlDiff.generateDifferenceStatements(
             ImmutableMap.of(ALLOW_RECREATE_INDEXES_OPT, true, ALLOW_DROP_STATEMENTS_OPT, false,
-                ALLOW_RECREATE_FOREIGN_KEYS_OPT, true));
+                ALLOW_RECREATE_CONSTRAINTS_OPT, true));
         // check expected results.
         assertWithMessage("Mismatch for section (noDrops)" + segmentName).that(diff)
             .isEqualTo(expectedDiffNoDrops);
       }
     } catch (Throwable e) {
+      e.printStackTrace(System.err);
       fail("Unexpected exception when processing segment " + segmentName + ": " + e);
     }
   }

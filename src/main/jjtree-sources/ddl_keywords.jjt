@@ -133,6 +133,7 @@ TOKEN:
   | <INDEX:                    "index">
   | <INT64:                    "int64">
   | <INTERLEAVE:               "interleave">
+  | <JSON:                     "json">
   | <KEY:                      "key">
   | <MAX:                      "max">
   | <NULL_FILTERED:            "null_filtered">

@@ -147,6 +147,7 @@ void column_type() :
   | <DATE>
   | <NUMERIC>
   | <ARRAY> "<" column_type() ">"
+  | <JSON>
 }
 
 void column_length() :

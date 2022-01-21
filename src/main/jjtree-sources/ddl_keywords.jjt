@@ -171,6 +171,7 @@ void pseudoReservedWord() #void :
   | <INDEX>
   | <INT64>
   | <INTERLEAVE>
+  | <JSON>
   | <KEY>
   | <MAX>
   | <NULL_FILTERED>

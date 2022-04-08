@@ -140,5 +140,8 @@ ALTER TABLE test_gen ADD COLUMN col3 INT64  AS ( col1 * col2 * 2 ) STORED
 
 ALTER TABLE test_gen DROP COLUMN col3
 
+== TEST 23 no modification of foreign key in table
+
+ALTER TABLE test1 DROP COLUMN col2
 ==
 

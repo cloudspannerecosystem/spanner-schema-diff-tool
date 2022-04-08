@@ -117,6 +117,14 @@ public class DdlDiff {
       }
       throw new IllegalArgumentException("not a valid constraint type : " + constraint.toString());
     }
+
+    @Override
+    public boolean equals(Object other) {
+      if (other instanceof ConstraintWrapper) {
+        return this.constraint.equals(((ConstraintWrapper) other).constraint);
+      }
+      return false;
+    }
   }
 
   private DdlDiff(

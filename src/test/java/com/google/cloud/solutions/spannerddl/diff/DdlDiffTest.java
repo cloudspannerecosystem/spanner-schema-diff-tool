@@ -556,7 +556,9 @@ public class DdlDiffTest {
             .isEqualTo(segmentName);
         assertWithMessage("mismatched section names in expectedDdlDiff.txt")
             .that(expectedOutput.getKey()).isEqualTo(segmentName);
-        List<String> expectedDiff = Arrays.asList(expectedOutput.getValue().split("\n"));
+        List<String> expectedDiff = expectedOutput.getValue() != null
+            ? Arrays.asList(expectedOutput.getValue().split("\n"))
+            : Arrays.asList();
 
         DdlDiff ddlDiff = DdlDiff.build(originalSegment.getValue(), newSegment.getValue());
         // Run diff with allowRecreateIndexes and allowDropStatements
@@ -620,7 +622,7 @@ public class DdlDiffTest {
           // new section
           if (sectionName != null) {
             // add closed section.
-            output.put(sectionName, section.toString());
+              output.put(sectionName, section.length() > 0 ? section.toString() : null);
           }
           sectionName = line;
           section = new StringBuilder();
@@ -629,9 +631,6 @@ public class DdlDiffTest {
           throw new IOException("no section name before first statement");
         }
         section.append(line).append('\n');
-      }
-      if (section.length() > 0) {
-        output.put(sectionName, section.toString());
       }
       return output;
     }

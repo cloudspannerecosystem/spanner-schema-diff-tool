@@ -187,8 +187,8 @@ public class DdlDiffTest {
     assertThat(
             getTableDiff(
                 "create table test1 (col1 int64) primary key (col1);",
-                "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null) "
-                    + "primary key (col1);",
+                "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null)"
+                    + " primary key (col1);",
                 true))
         .containsExactly(
             "ALTER TABLE test1 ADD COLUMN col2 STRING(MAX)",
@@ -214,16 +214,16 @@ public class DdlDiffTest {
     // Add multiple rows.
     assertThat(
             getTableDiff(
-                "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null) "
-                    + "primary key (col1);",
+                "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null)"
+                    + " primary key (col1);",
                 "create table test1 (col1 int64) primary key (col1);",
                 true))
         .containsExactly(
             "ALTER TABLE test1 DROP COLUMN col2", "ALTER TABLE test1 DROP COLUMN col3");
     assertThat(
             getTableDiff(
-                "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null) "
-                    + "primary key (col1);",
+                "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null)"
+                    + " primary key (col1);",
                 "create table test1 (col1 int64) primary key (col1);",
                 false))
         .isEmpty();
@@ -244,10 +244,10 @@ public class DdlDiffTest {
     // Options added and removed
     assertThat(
             getTableDiff(
-                "create table test1 (col1 timestamp options(allow_commit_timestamp=true), col2 timestamp) "
-                    + "primary key (col1);",
-                "create table test1 (col1 timestamp, col2 timestamp options(allow_commit_timestamp=true)) "
-                    + "primary key (col1);",
+                "create table test1 (col1 timestamp options(allow_commit_timestamp=true), col2"
+                    + " timestamp) primary key (col1);",
+                "create table test1 (col1 timestamp, col2 timestamp"
+                    + " options(allow_commit_timestamp=true)) primary key (col1);",
                 true))
         .containsExactly(
             "ALTER TABLE test1 ALTER COLUMN col1 SET OPTIONS (allow_commit_timestamp=NULL)",
@@ -379,21 +379,25 @@ public class DdlDiffTest {
   public void generateAlterTable_changeGenerationClause() throws DdlDiffException {
     // remove interleave
     getTableDiffCheckDdlDiffException(
-        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary key (col1)",
-        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1/col2 ) stored) primary key (col1)",
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary"
+            + " key (col1)",
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1/col2 ) stored) primary"
+            + " key (col1)",
         true,
         "Cannot change generation clause of table test1 column col3 from  AS ");
 
     // add generation
     getTableDiffCheckDdlDiffException(
         "create table test1 (col1 int64, col2 int64, col3 int64) primary key (col1)",
-        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary key (col1)",
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary"
+            + " key (col1)",
         true,
         "Cannot change generation clause of table test1 column col3 from null ");
 
     // remove generation
     getTableDiffCheckDdlDiffException(
-        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary key (col1)",
+        "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary"
+            + " key (col1)",
         "create table test1 (col1 int64, col2 int64, col3 int64) primary key (col1)",
         true,
         "Cannot change generation clause of table test1 column col3 from  AS");
@@ -581,7 +585,10 @@ public class DdlDiffTest {
         assertWithMessage("mismatched section names in expectedDdlDiff.txt")
             .that(expectedOutput.getKey())
             .isEqualTo(segmentName);
-        List<String> expectedDiff = Arrays.asList(expectedOutput.getValue().split("\n"));
+        List<String> expectedDiff =
+            expectedOutput.getValue() != null
+                ? Arrays.asList(expectedOutput.getValue().split("\n"))
+                : Arrays.asList();
 
         DdlDiff ddlDiff = DdlDiff.build(originalSegment.getValue(), newSegment.getValue());
         // Run diff with allowRecreateIndexes and allowDropStatements
@@ -658,7 +665,7 @@ public class DdlDiffTest {
           // new section
           if (sectionName != null) {
             // add closed section.
-            output.put(sectionName, section.toString());
+            output.put(sectionName, section.length() > 0 ? section.toString() : null);
           }
           sectionName = line;
           section = new StringBuilder();
@@ -667,9 +674,6 @@ public class DdlDiffTest {
           throw new IOException("no section name before first statement");
         }
         section.append(line).append('\n');
-      }
-      if (section.length() > 0) {
-        output.put(sectionName, section.toString());
       }
       return output;
     }

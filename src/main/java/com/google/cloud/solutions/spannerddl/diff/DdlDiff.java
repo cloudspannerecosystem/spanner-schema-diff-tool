@@ -121,7 +121,6 @@ public class DdlDiff {
     @Override
     public boolean equals(Object other) {
       if (other instanceof ConstraintWrapper) {
-        LOG.info("Comparing {} vs {}", this.getName(), ((ConstraintWrapper) other).getName());
         return this.constraint.equals(((ConstraintWrapper) other).constraint);
       }
       return false;

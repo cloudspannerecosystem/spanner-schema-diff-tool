@@ -224,6 +224,18 @@ create table test_gen (
 
 create table test1 (
     col1 int64,
+    constraint fk_in_table foreign key (col1) references othertable(othercol1)
+)
+primary key (col1);
+
+== TEST 24 add foreign key via create table
+
+-- Nothing here
+
+== TEST 25 move foreign key out of create table
+
+create table test1 (
+    col1 int64,
     col2 int64 NOT NULL,
     constraint fk_in_table foreign key (col1) references othertable(othercol1)
 )

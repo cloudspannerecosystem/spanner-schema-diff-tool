@@ -221,5 +221,22 @@ create table test1 (
 )
 primary key (col1);
 
+== TEST 24 add foreign key via create table
+
+CREATE TABLE test_fkey (
+  col1 INT64,
+  col2 INT64,
+  CONSTRAINT fk_col1 FOREIGN KEY (col1) REFERENCES test1(col1)
+) PRIMARY KEY (col1 ASC)
+
+== TEST 25 move foreign key out of create table
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL,
+)
+primary key (col1);
+alter table test1 add constraint fk_in_table foreign key (col1) references othertable(othercol1)
+
 ==
 

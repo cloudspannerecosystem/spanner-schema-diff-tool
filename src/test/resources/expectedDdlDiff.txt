@@ -142,6 +142,14 @@ ALTER TABLE test_gen DROP COLUMN col3
 
 == TEST 23 no modification of foreign key in table
 
-ALTER TABLE test1 DROP COLUMN col2
+# No change
+
+== TEST 24 add foreign key via create table
+
+CREATE TABLE test_fkey (col1 INT64, col2 INT64) PRIMARY KEY (col1 ASC)
+ALTER TABLE test_fkey ADD CONSTRAINT fk_col1 FOREIGN KEY (col1) REFERENCES test1 (col1)
+
+== TEST 25 move foreign key out of create table
+# No change
 ==
 

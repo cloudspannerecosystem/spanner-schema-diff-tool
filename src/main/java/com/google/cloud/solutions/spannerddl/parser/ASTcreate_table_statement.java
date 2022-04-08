@@ -28,6 +28,7 @@ import java.util.Optional;
  * Abstract Syntax Tree parser object for "create_table_statement" token
  */
 public class ASTcreate_table_statement extends SimpleNode {
+  private boolean withConstraints = true;
 
   public ASTcreate_table_statement(int id) {
     super(id);
@@ -67,7 +68,6 @@ public class ASTcreate_table_statement extends SimpleNode {
     return constraints;
   }
 
-
   public synchronized ASTprimary_key getPrimaryKey() {
     return ASTTreeUtils.getChildByType(children, ASTprimary_key.class);
   }
@@ -78,6 +78,11 @@ public class ASTcreate_table_statement extends SimpleNode {
     } catch (IllegalArgumentException e) {
       return Optional.empty();
     }
+  }
+
+  public ASTcreate_table_statement clearConstraints() {
+      this.withConstraints = false;
+      return this;
   }
 
   @Override
@@ -91,7 +96,10 @@ public class ASTcreate_table_statement extends SimpleNode {
     // append column and constraint definitions.
     List<SimpleNode> tableElements = new ArrayList<>();
     tableElements.addAll(getColumns().values());
-    tableElements.addAll(getConstraints().values());
+
+    if (this.withConstraints) {
+        tableElements.addAll(getConstraints().values());
+    }
     ret.append(Joiner.on(", ").join(tableElements));
     ret.append(") ");
     ret.append(getPrimaryKey());

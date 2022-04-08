@@ -213,5 +213,13 @@ create table test_gen (
   col2 int64,
 ) primary key (col1);
 
+== TEST 23 no modification of foreign key in table
+
+create table test1 (
+    col1 int64,
+    constraint fk_in_table foreign key (col1) references othertable(othercol1)
+)
+primary key (col1);
+
 ==
 

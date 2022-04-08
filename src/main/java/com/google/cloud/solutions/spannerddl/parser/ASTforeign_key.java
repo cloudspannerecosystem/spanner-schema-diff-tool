@@ -88,7 +88,7 @@ public class ASTforeign_key extends SimpleNode {
 
   @Override
   public boolean equals(Object other) {
-    if (other instanceof ASTcolumn_def) {
+    if (other instanceof ASTforeign_key) {
       return this.toString().equals(other.toString());
     }
     return false;

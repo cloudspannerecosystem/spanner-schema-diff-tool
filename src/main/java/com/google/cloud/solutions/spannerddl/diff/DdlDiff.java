@@ -286,7 +286,7 @@ public class DdlDiff {
       throw new DdlDiffException("Cannot change primary key of table " + left.getTableName());
     }
 
-    // On delete changed
+    // On delete changed for interleave clause
     if (left.getInterleaveClause().isPresent()
         && !(left.getInterleaveClause()
         .get()
@@ -297,6 +297,38 @@ public class DdlDiff {
               + left.getTableName()
               + " SET "
               + right.getInterleaveClause().get().getOnDelete());
+    }
+
+    // Row Deletion Policy - Modified
+    // TODO add support for ALTER TABLE statements too, deduped like fkey statements.
+    if (left.getRowDeletionPolicyClause().isPresent()
+        && right.getRowDeletionPolicyClause().isPresent()
+        && !(left.getRowDeletionPolicyClause().get()
+             .equals(right.getRowDeletionPolicyClause().get()))) {
+        alterStatements.add(
+                            "ALTER TABLE "
+                            + left.getTableName()
+                            + " REPLACE "
+                            + right.getRowDeletionPolicyClause().get());
+    }
+
+    // Row Deletion Policy - Dropped
+    if (left.getRowDeletionPolicyClause().isPresent()
+        && !right.getRowDeletionPolicyClause().isPresent()) {
+        alterStatements.add(
+                            "ALTER TABLE "
+                            + left.getTableName()
+                            + " DROP ROW DELETION POLICY");
+    }
+
+    // Row Deletion Policy - Added
+    if (!left.getRowDeletionPolicyClause().isPresent()
+        && right.getRowDeletionPolicyClause().isPresent()) {
+        alterStatements.add(
+                            "ALTER TABLE "
+                            + left.getTableName()
+                            + " ADD "
+                            +right.getRowDeletionPolicyClause().get());
     }
 
     // compare columns.

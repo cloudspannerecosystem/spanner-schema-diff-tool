@@ -238,5 +238,29 @@ create table test1 (
 primary key (col1);
 alter table test1 add constraint fk_in_table foreign key (col1) references othertable(othercol1)
 
+== TEST 26 create table with row deletion policy
+
+create table test_rdp (
+  col1 int64,
+  col2 int64,
+  created_at timestamp,
+) primary key (col1), row deletion policy (older_than(created_at, interval 2 DAY));
+
+== TEST 27 drop row deletion policy
+
+create table test_rdp (
+  col1 int64,
+  col2 int64,
+  created_at timestamp,
+) primary key (col1);
+
+== TEST 28 modify row deletion policy
+
+create table test_rdp (
+  col1 int64,
+  col2 int64,
+  created_at timestamp,
+) primary key (col1), row deletion policy (older_than(created_at, interval 99 DAY));
+
 ==
 

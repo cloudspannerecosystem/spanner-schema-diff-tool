@@ -151,5 +151,18 @@ ALTER TABLE test_fkey ADD CONSTRAINT fk_col1 FOREIGN KEY (col1) REFERENCES test1
 
 == TEST 25 move foreign key out of create table
 # No change
+
+== TEST 26 create table with row deletion policy
+# No change
+
+
+== TEST 27 drop row deletion policy
+
+ALTER TABLE test_rdp DROP ROW DELETION POLICY
+
+== TEST 28 modify row deletion policy
+
+ALTER TABLE test_rdp REPLACE ROW DELETION POLICY (older_than(created_at, INTERVAL 99 DAY))
+
 ==
 

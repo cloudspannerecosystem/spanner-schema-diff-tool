@@ -80,6 +80,14 @@ public class ASTcreate_table_statement extends SimpleNode {
     }
   }
 
+    public synchronized Optional<ASTrow_deletion_policy_clause> getRowDeletionPolicyClause() {
+        try {
+            return Optional.of(ASTTreeUtils.getChildByType(children, ASTrow_deletion_policy_clause.class));
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
+    }
+
   public ASTcreate_table_statement clearConstraints() {
       this.withConstraints = false;
       return this;
@@ -109,6 +117,12 @@ public class ASTcreate_table_statement extends SimpleNode {
       ret.append(", ");
       ret.append(interleaveClause.get()); // interleave optional
     }
+
+    Optional<ASTrow_deletion_policy_clause> rowDeletionPolicyClause = getRowDeletionPolicyClause();
+    if (rowDeletionPolicyClause.isPresent()) {
+        ret.append(", ");
+        ret.append(rowDeletionPolicyClause.get());
+    }
     return ret.toString();
   }
 
@@ -120,6 +134,7 @@ public class ASTcreate_table_statement extends SimpleNode {
           && !(child instanceof ASTcheck_constraint)
           && !(child instanceof ASTprimary_key)
           && !(child instanceof ASTtable_interleave_clause)
+          && !(child instanceof ASTrow_deletion_policy_clause)
       ) {
         throw new IllegalArgumentException(
             "Unknown child type " + child.getClass().getSimpleName() + " - " + child);

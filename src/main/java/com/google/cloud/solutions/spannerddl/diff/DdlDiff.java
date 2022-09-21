@@ -117,6 +117,14 @@ public class DdlDiff {
       }
       throw new IllegalArgumentException("not a valid constraint type : " + constraint.toString());
     }
+
+    @Override
+    public boolean equals(Object other) {
+      if (other instanceof ConstraintWrapper) {
+        return this.constraint.equals(((ConstraintWrapper) other).constraint);
+      }
+      return false;
+    }
   }
 
   private DdlDiff(
@@ -469,7 +477,10 @@ public class DdlDiff {
       if (statement.jjtGetChild(0) instanceof ASTcreate_table_statement) {
         ASTcreate_table_statement createTable =
             (ASTcreate_table_statement) statement.jjtGetChild(0);
-        tables.put(createTable.getTableName(), createTable);
+        // Remove embedded constraint statements from the CreateTable node
+        // as they are taken into account via `constraints`
+        tables.put(createTable.getTableName(), createTable.clearConstraints());
+
         // convert embedded constraint statements into wrapper object with table name
         // use a single map for all foreign keys, whether created in table or externally
         createTable.getConstraints().values().stream()

@@ -51,8 +51,7 @@ public class ASTcolumn_def extends SimpleNode {
     return (children.length > 2 && children[2] instanceof ASTnot_null);
   }
 
-  public @Nullable
-  ASToptions_clause getOptionsClause() {
+  public @Nullable ASToptions_clause getOptionsClause() {
     int index = 2; // skip name and type
     if (index < children.length && children[index] instanceof ASTnot_null) {
       // skip NOT NULL
@@ -87,8 +86,8 @@ public class ASTcolumn_def extends SimpleNode {
       ret.append(" NOT NULL");
     }
 
-    ASTgeneration_clause generated = ASTTreeUtils
-        .getOptionalChildByType(children, ASTgeneration_clause.class);
+    ASTgeneration_clause generated =
+        ASTTreeUtils.getOptionalChildByType(children, ASTgeneration_clause.class);
     if (generated != null) {
       ret.append(" ");
       ret.append(generated.toString());

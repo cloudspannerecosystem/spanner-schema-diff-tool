@@ -64,11 +64,11 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Example usage:
  *
- * <p>Pass the original and new DDL text to the {@link #build(String, String)}
- * function, and call {@link #generateDifferenceStatements(Map)} to generate the list of {@code
- * ALTER} statements.
+ * <p>Pass the original and new DDL text to the {@link #build(String, String)} function, and call
+ * {@link #generateDifferenceStatements(Map)} to generate the list of {@code ALTER} statements.
  *
  * <p>eg:
+ *
  * <pre>
  * List&lt;String&gt; statements = DdlDiff.build(originalDDL, newDDL)
  *    .generateDifferenceStatements(true, true);
@@ -132,23 +132,22 @@ public class DdlDiff {
     this.constraintDifferences = constraintDifferences;
   }
 
-
   public List<String> generateDifferenceStatements(Map<String, Boolean> options)
       throws DdlDiffException {
     ImmutableList.Builder<String> output = ImmutableList.builder();
 
     boolean allowDropStatements = options.get(ALLOW_DROP_STATEMENTS_OPT);
 
-    if (!indexDifferences.entriesDiffering().isEmpty() && !options
-        .get(ALLOW_RECREATE_INDEXES_OPT)) {
+    if (!indexDifferences.entriesDiffering().isEmpty()
+        && !options.get(ALLOW_RECREATE_INDEXES_OPT)) {
       throw new DdlDiffException(
           "At least one Index differs, and allowRecreateIndexes is not set.\n"
               + "Indexes: "
               + Joiner.on(", ").join(indexDifferences.entriesDiffering().keySet()));
     }
 
-    if (!constraintDifferences.entriesDiffering().isEmpty() && !options
-        .get(ALLOW_RECREATE_CONSTRAINTS_OPT)) {
+    if (!constraintDifferences.entriesDiffering().isEmpty()
+        && !options.get(ALLOW_RECREATE_CONSTRAINTS_OPT)) {
       throw new DdlDiffException(
           "At least one FOREIGN KEY constraint differs, and allowRecreateForeignKeys is not set.\n"
               + Joiner.on(", ").join(constraintDifferences.entriesDiffering().keySet()));
@@ -171,16 +170,17 @@ public class DdlDiff {
 
     // Drop deleted foreign keys
     for (ConstraintWrapper fk : constraintDifferences.entriesOnlyOnLeft().values()) {
-      output
-          .add("ALTER TABLE " + fk.tableName + " DROP CONSTRAINT " + fk.getName());
+      output.add("ALTER TABLE " + fk.tableName + " DROP CONSTRAINT " + fk.getName());
     }
 
     // Drop modified foreign keys that need to be re-created...
-    for (ValueDifference<ConstraintWrapper> fkDiff : constraintDifferences.entriesDiffering()
-        .values()) {
-      output
-          .add("ALTER TABLE " + fkDiff.leftValue().tableName + " DROP CONSTRAINT " + fkDiff
-              .leftValue().getName());
+    for (ValueDifference<ConstraintWrapper> fkDiff :
+        constraintDifferences.entriesDiffering().values()) {
+      output.add(
+          "ALTER TABLE "
+              + fkDiff.leftValue().tableName
+              + " DROP CONSTRAINT "
+              + fkDiff.leftValue().getName());
     }
 
     if (allowDropStatements) {
@@ -200,9 +200,7 @@ public class DdlDiff {
         tableDifferences.entriesDiffering().values()) {
       LOG.info("Altering modified table: {}", difference.leftValue().getTableName());
       output.addAll(
-          generateAlterTableStatements(
-              difference.leftValue(), difference.rightValue(),
-              options));
+          generateAlterTableStatements(difference.leftValue(), difference.rightValue(), options));
     }
 
     // Create new tables. Must be done in the order of creation in the new DDL.
@@ -233,11 +231,13 @@ public class DdlDiff {
     }
 
     // Re-create modified Foreign Keys.
-    for (ValueDifference<ConstraintWrapper> fkDiff : constraintDifferences.entriesDiffering()
-        .values()) {
+    for (ValueDifference<ConstraintWrapper> fkDiff :
+        constraintDifferences.entriesDiffering().values()) {
       output.add(
-          "ALTER TABLE " + fkDiff.rightValue().tableName + " ADD " + fkDiff.rightValue().constraint
-              .toString());
+          "ALTER TABLE "
+              + fkDiff.rightValue().tableName
+              + " ADD "
+              + fkDiff.rightValue().constraint.toString());
     }
     return output.build();
   }
@@ -266,9 +266,9 @@ public class DdlDiff {
 
     if (left.getInterleaveClause().isPresent()
         && !(left.getInterleaveClause()
-        .get()
-        .getParentTableName()
-        .equals(right.getInterleaveClause().get().getParentTableName()))) {
+            .get()
+            .getParentTableName()
+            .equals(right.getInterleaveClause().get().getParentTableName()))) {
       throw new DdlDiffException(
           "Cannot change interleaved parent of table " + left.getTableName());
     }
@@ -281,9 +281,9 @@ public class DdlDiff {
     // On delete changed
     if (left.getInterleaveClause().isPresent()
         && !(left.getInterleaveClause()
-        .get()
-        .getOnDelete()
-        .equals(right.getInterleaveClause().get().getOnDelete()))) {
+            .get()
+            .getOnDelete()
+            .equals(right.getInterleaveClause().get().getOnDelete()))) {
       alterStatements.add(
           "ALTER TABLE "
               + left.getTableName()
@@ -344,7 +344,7 @@ public class DdlDiff {
       if (leftArrayDepth != rightArrayDepth
           || !leftRootType.getTypeName().equals(rightRootType.getTypeName())
           || (!leftRootType.getTypeName().equals("STRING")
-          && !leftRootType.getTypeName().equals("BYTES"))) {
+              && !leftRootType.getTypeName().equals("BYTES"))) {
         throw new DdlDiffException(
             "Cannot change type of table "
                 + tableName
@@ -359,9 +359,8 @@ public class DdlDiff {
 
     // check generated column diffs
     // check for compatible type changes.
-    if (!Objects.equals(Objects.toString(columnDiff
-            .leftValue()
-            .getGenerationClause()),
+    if (!Objects.equals(
+        Objects.toString(columnDiff.leftValue().getGenerationClause()),
         Objects.toString(columnDiff.rightValue().getGenerationClause()))) {
       throw new DdlDiffException(
           "Cannot change generation clause of table "
@@ -377,9 +376,9 @@ public class DdlDiff {
     // Not null or type length limit change.
     if (columnDiff.leftValue().isNotNull() != columnDiff.rightValue().isNotNull()
         || !columnDiff
-        .leftValue()
-        .getColumnTypeString()
-        .equals(columnDiff.rightValue().getColumnTypeString())) {
+            .leftValue()
+            .getColumnTypeString()
+            .equals(columnDiff.rightValue().getColumnTypeString())) {
       alterStatements.add(
           Joiner.on(" ")
               .skipNulls()
@@ -431,8 +430,7 @@ public class DdlDiff {
     }
   }
 
-  static DdlDiff build(String originalDDL, String newDDL)
-      throws DdlDiffException {
+  static DdlDiff build(String originalDDL, String newDDL) throws DdlDiffException {
     List<ASTddl_statement> originalStatements = parseDDL(originalDDL);
     List<ASTddl_statement> newStatements = parseDDL(newDDL);
 
@@ -440,8 +438,8 @@ public class DdlDiff {
     Map<String, ASTcreate_index_statement> originalIndexes = new TreeMap<>();
     Map<String, ConstraintWrapper> originalConstraints = new TreeMap<>();
 
-    separateTablesIndexesConstraints(originalStatements, originalTablesCreationOrder,
-        originalIndexes, originalConstraints);
+    separateTablesIndexesConstraints(
+        originalStatements, originalTablesCreationOrder, originalIndexes, originalConstraints);
     Map<String, ASTcreate_table_statement> originalTablesNameOrder =
         new TreeMap<>(originalTablesCreationOrder);
 
@@ -449,8 +447,8 @@ public class DdlDiff {
     Map<String, ASTcreate_index_statement> newIndexes = new TreeMap<>();
     Map<String, ConstraintWrapper> newConstraints = new TreeMap<>();
 
-    separateTablesIndexesConstraints(newStatements, newTablesCreationOrder, newIndexes,
-        newConstraints);
+    separateTablesIndexesConstraints(
+        newStatements, newTablesCreationOrder, newIndexes, newConstraints);
     Map<String, ASTcreate_table_statement> newTablesNameOrder =
         new TreeMap<>(newTablesCreationOrder);
 
@@ -482,13 +480,15 @@ public class DdlDiff {
             (ASTcreate_index_statement) statement.jjtGetChild(0);
         indexes.put(createIndex.getIndexName(), createIndex);
 
-      } else if (statement.jjtGetChild(0) instanceof ASTalter_table_statement &&
+      } else if (statement.jjtGetChild(0) instanceof ASTalter_table_statement
+          &&
           // use a single map for all foreign keys, whether created in table or externally
-          (statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTforeign_key ||
-              statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTcheck_constraint)) {
+          (statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTforeign_key
+              || statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTcheck_constraint)) {
         ASTalter_table_statement alterTable = (ASTalter_table_statement) statement.jjtGetChild(0);
-        ConstraintWrapper constraint = new ConstraintWrapper(alterTable.jjtGetChild(0).toString(),
-            (SimpleNode) alterTable.jjtGetChild(1));
+        ConstraintWrapper constraint =
+            new ConstraintWrapper(
+                alterTable.jjtGetChild(0).toString(), (SimpleNode) alterTable.jjtGetChild(1));
         constraints.put(constraint.getName(), constraint);
       } else {
         throw new IllegalArgumentException(
@@ -521,12 +521,12 @@ public class DdlDiff {
         }
 
         if (statementType == DdlParserTreeConstants.JJTALTER_TABLE_STATEMENT) {
-          ASTalter_table_statement alterTableStatement = (ASTalter_table_statement) ddlStatement
-              .jjtGetChild(0);
+          ASTalter_table_statement alterTableStatement =
+              (ASTalter_table_statement) ddlStatement.jjtGetChild(0);
           // child 0 = table name
           // child 1 = alter statement. Only ASTforeign_key is supported
-          if (!(alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key) &&
-              !(alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint)) {
+          if (!(alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key)
+              && !(alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
                     + statement
@@ -534,16 +534,18 @@ public class DdlDiff {
                     + "'ALTER TABLE table_name ADD CONSTRAINT' DDL statements");
           }
           // only foreign key statements here:
-          if (alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key &&
-              ((ASTforeign_key) alterTableStatement.jjtGetChild(1)).getName()
+          if (alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key
+              && ((ASTforeign_key) alterTableStatement.jjtGetChild(1))
+                  .getName()
                   .equals(ASTforeign_key.ANONYMOUS_NAME)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
                     + statement
                     + "\nCan not create diffs when anonymous FOREIGN KEY constraints are used.");
           }
-          if (alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint &&
-              ((ASTcheck_constraint) alterTableStatement.jjtGetChild(1)).getName()
+          if (alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint
+              && ((ASTcheck_constraint) alterTableStatement.jjtGetChild(1))
+                  .getName()
                   .equals(ASTcheck_constraint.ANONYMOUS_NAME)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
@@ -552,7 +554,8 @@ public class DdlDiff {
           }
         }
         if (statementType == DdlParserTreeConstants.JJTCREATE_TABLE_STATEMENT) {
-          if (((ASTcreate_table_statement) ddlStatement.jjtGetChild(0)).getConstraints()
+          if (((ASTcreate_table_statement) ddlStatement.jjtGetChild(0))
+              .getConstraints()
               .containsKey(ASTforeign_key.ANONYMOUS_NAME)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
@@ -561,7 +564,8 @@ public class DdlDiff {
           }
         }
         if (statementType == DdlParserTreeConstants.JJTCREATE_TABLE_STATEMENT) {
-          if (((ASTcreate_table_statement) ddlStatement.jjtGetChild(0)).getConstraints()
+          if (((ASTcreate_table_statement) ddlStatement.jjtGetChild(0))
+              .getConstraints()
               .containsKey(ASTcheck_constraint.ANONYMOUS_NAME)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
@@ -586,21 +590,22 @@ public class DdlDiff {
       if (commandLine.hasOption(HELP_OPT)) {
         printHelpAndExit(0);
       }
-      Map<String, Boolean> options = ImmutableMap.of(
-          ALLOW_RECREATE_INDEXES_OPT, commandLine.hasOption(ALLOW_RECREATE_INDEXES_OPT),
-          ALLOW_DROP_STATEMENTS_OPT, commandLine.hasOption(ALLOW_DROP_STATEMENTS_OPT),
-          ALLOW_RECREATE_CONSTRAINTS_OPT, commandLine.hasOption(ALLOW_RECREATE_CONSTRAINTS_OPT)
-      );
+      Map<String, Boolean> options =
+          ImmutableMap.of(
+              ALLOW_RECREATE_INDEXES_OPT, commandLine.hasOption(ALLOW_RECREATE_INDEXES_OPT),
+              ALLOW_DROP_STATEMENTS_OPT, commandLine.hasOption(ALLOW_DROP_STATEMENTS_OPT),
+              ALLOW_RECREATE_CONSTRAINTS_OPT,
+                  commandLine.hasOption(ALLOW_RECREATE_CONSTRAINTS_OPT));
       List<String> alterStatements =
           DdlDiff.build(
-              new String(
-                  Files.readAllBytes(
-                      new File(commandLine.getOptionValue(ORIGINAL_DDL_FILE_OPT)).toPath()),
-                  UTF_8),
-              new String(
-                  Files.readAllBytes(
-                      new File(commandLine.getOptionValue(NEW_DDL_FILE_OPT)).toPath()),
-                  UTF_8))
+                  new String(
+                      Files.readAllBytes(
+                          new File(commandLine.getOptionValue(ORIGINAL_DDL_FILE_OPT)).toPath()),
+                      UTF_8),
+                  new String(
+                      Files.readAllBytes(
+                          new File(commandLine.getOptionValue(NEW_DDL_FILE_OPT)).toPath()),
+                      UTF_8))
               .generateDifferenceStatements(options);
 
       StringBuilder output = new StringBuilder();
@@ -665,8 +670,9 @@ public class DdlDiff {
     options.addOption(
         Option.builder()
             .longOpt(ALLOW_RECREATE_CONSTRAINTS_OPT)
-            .desc("Allows dropping and recreating Check and Foreign Keys constrainys (and their "
-                + "backing Indexes) to apply changes.")
+            .desc(
+                "Allows dropping and recreating Check and Foreign Keys constrainys (and their "
+                    + "backing Indexes) to apply changes.")
             .build());
     options.addOption(
         Option.builder()

@@ -4,8 +4,7 @@ package com.google.cloud.solutions.spannerddl.parser;
 
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
 
-public
-class ASTcheck_constraint_expression extends SimpleNode {
+public class ASTcheck_constraint_expression extends SimpleNode {
 
   public ASTcheck_constraint_expression(int id) {
     super(id);

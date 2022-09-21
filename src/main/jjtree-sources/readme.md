@@ -30,3 +30,4 @@ diff bazel-bin/backend/schema/parser/ddl_keywords.jjt ../spanner-schema-diff-too
 diff backend/schema/parser/ddl_parser.jjt ../spanner-schema-diff-tool/src/main/jjtree-sources/ddl_parser.jjt
 diff backend/schema/parser/ddl_string_bytes_tokens.jjt ../spanner-schema-diff-tool/src/main/jjtree-sources/ddl_string_bytes_tokens.jjt
 ```
+

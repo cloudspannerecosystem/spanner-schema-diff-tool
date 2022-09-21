@@ -14,18 +14,13 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <groupId>com.google.cloud.solutions</groupId>
   <artifactId>spanner-ddl-diff</artifactId>
   <version>1.0</version>
   <name>spanner-ddl-diff</name>
   <description>Spanner DDL parser and differ</description>
-
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>8</maven.compiler.source>
@@ -39,91 +34,81 @@
     <ph-javacc-maven-plugin.version>4.1.4</ph-javacc-maven-plugin.version>
     <truth.version>1.0</truth.version>
     <junit.version>4.13.1</junit.version>
+    <spotless.version>2.27.0</spotless.version>
   </properties>
-
   <dependencies>
-
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
-
     <dependency>
       <groupId>commons-cli</groupId>
       <artifactId>commons-cli</artifactId>
       <version>${commons-cli.version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
-
     <dependency>
       <groupId>com.google.truth</groupId>
       <artifactId>truth</artifactId>
       <version>${truth.version}</version>
       <scope>test</scope>
     </dependency>
-
-
   </dependencies>
-
   <build>
     <pluginManagement>
-        <plugins>
-          <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
-          <plugin>
-            <artifactId>maven-clean-plugin</artifactId>
-            <version>${maven-clean-plugin.version}</version>
-          </plugin>
-          <plugin>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>${maven-compiler-plugin.version}</version>
-          </plugin>
-          <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${maven-surefire-plugin.version}</version>
-          </plugin>
-          <plugin>
-            <artifactId>maven-failsafe-plugin</artifactId>
-            <version>${maven-surefire-plugin.version}</version>
-          </plugin>
-        </plugins>
+      <plugins>
+        <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>${maven-clean-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${maven-compiler-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${maven-surefire-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${maven-surefire-plugin.version}</version>
+        </plugin>
+      </plugins>
     </pluginManagement>
     <plugins>
       <plugin>
-        <artifactId>exec-maven-plugin</artifactId>
         <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
         <version>1.6.0</version>
         <executions>
           <execution>
             <id>jjt-2-concat</id>
-            <phase>generate-sources</phase>
             <goals>
               <goal>exec</goal>
             </goals>
+            <phase>generate-sources</phase>
             <configuration>
               <executable>bash</executable>
               <arguments>
                 <argument>-c</argument>
-                <argument>
-                  mkdir -p ${project.build.directory}/generated-sources/jjtree-src \
+                <argument>mkdir -p ${project.build.directory}/generated-sources/jjtree-src \
                   &amp;&amp; /bin/cat \
                   src/main/jjtree-sources/DdlParser.head \
                   src/main/jjtree-sources/ddl_whitespace.jjt \
@@ -131,8 +116,7 @@
                   src/main/jjtree-sources/ddl_string_bytes_tokens.jjt \
                   src/main/jjtree-sources/ddl_expression.jjt \
                   src/main/jjtree-sources/ddl_parser.jjt \
-                  > ${project.build.directory}/generated-sources/jjtree-src/DdlParser.jjt
-                </argument>
+                  &gt; ${project.build.directory}/generated-sources/jjtree-src/DdlParser.jjt</argument>
               </arguments>
             </configuration>
           </execution>
@@ -145,31 +129,27 @@
         <executions>
           <execution>
             <id>jjt-2-compile</id>
-            <phase>generate-sources</phase>
             <goals>
               <goal>jjtree-javacc</goal>
             </goals>
+            <phase>generate-sources</phase>
             <configuration>
               <jdkVersion>${maven.compiler.source}</jdkVersion>
               <sourceDirectory>${project.build.directory}/generated-sources/jjtree-src</sourceDirectory>
               <excludes>
                 <exclude>**/AST*</exclude>
               </excludes>
-              <outputDirectory>
-                ${project.build.directory}/generated-sources/jjtree
-              </outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-sources/jjtree</outputDirectory>
             </configuration>
           </execution>
         </executions>
       </plugin>
-
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.google.cloud.solutions.spannerddl.diff.DdlDiff
-              </mainClass>
+              <mainClass>com.google.cloud.solutions.spannerddl.diff.DdlDiff</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
@@ -181,7 +161,38 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
       </plugin>
-
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${spotless.version}</version>
+        <configuration>
+          <markdown>
+            <includes>
+              <include>**/*.md</include>
+            </includes>
+            <flexmark></flexmark>
+          </markdown>
+          <pom>
+            <includes>
+              <include>pom.xml</include>
+            </includes>
+            <sortPom></sortPom>
+          </pom>
+          <java>
+            <googleJavaFormat>
+              <style>GOOGLE</style>
+            </googleJavaFormat>
+          </java>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
+
   </build>
 </project>

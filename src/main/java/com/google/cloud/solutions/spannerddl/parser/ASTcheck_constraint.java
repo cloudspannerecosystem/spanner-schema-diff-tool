@@ -4,8 +4,7 @@ package com.google.cloud.solutions.spannerddl.parser;
 
 import java.util.Comparator;
 
-public
-class ASTcheck_constraint extends SimpleNode {
+public class ASTcheck_constraint extends SimpleNode {
 
   public static final String ANONYMOUS_NAME = "ANONYMOUS_CHECK_CONSTRAINT_NOT_SUPPORTED";
 
@@ -16,7 +15,6 @@ class ASTcheck_constraint extends SimpleNode {
   public ASTcheck_constraint(DdlParser p, int id) {
     super(p, id);
   }
-
 
   public String getName() {
     // name is optional
@@ -35,14 +33,9 @@ class ASTcheck_constraint extends SimpleNode {
     return ((ASTcheck_constraint_expression) children[child]).toString();
   }
 
-
   public String toString() {
 
-    return "CONSTRAINT "
-        + getName()
-        + " CHECK ("
-        + getExpression()
-        + ")";
+    return "CONSTRAINT " + getName() + " CHECK (" + getExpression() + ")";
   }
 
   @Override

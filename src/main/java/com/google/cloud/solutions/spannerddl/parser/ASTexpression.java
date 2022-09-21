@@ -4,8 +4,7 @@ package com.google.cloud.solutions.spannerddl.parser;
 
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
 
-public
-class ASTexpression extends SimpleNode {
+public class ASTexpression extends SimpleNode {
 
   public ASTexpression(int id) {
     super(id);
@@ -15,11 +14,9 @@ class ASTexpression extends SimpleNode {
     super(p, id);
   }
 
-
   @Override
   public String toString() {
     return ASTTreeUtils.tokensToString(this.firstToken, this.lastToken);
   }
-
 }
 /* JavaCC - OriginalChecksum=70d81a28578367794ced22b054b7898b (do not edit this line) */

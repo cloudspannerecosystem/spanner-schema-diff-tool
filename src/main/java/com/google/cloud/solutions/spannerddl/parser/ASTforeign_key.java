@@ -24,8 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public
-class ASTforeign_key extends SimpleNode {
+public class ASTforeign_key extends SimpleNode {
 
   public static final String ANONYMOUS_NAME = "ANONYMOUS_FOREIGN_KEY_NOT_SUPPORTED";
 
@@ -64,7 +63,6 @@ class ASTforeign_key extends SimpleNode {
     }
     return ((ASTreferenced_table) children[child]).jjtGetFirstToken().toString();
   }
-
 
   public List<String> getReferencedColumnNames() {
     int child = 2;

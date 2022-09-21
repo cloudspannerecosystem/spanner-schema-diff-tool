@@ -10,15 +10,15 @@ existing Cloud Spanner database to a newer schema version.
 The tool can only make changes that are allowable by Cloud Spanner's `CREATE`,
 `DROP` and `ALTER` statements:
 
-*   Add or remove tables.
-*   Add or remove indexes.
-*   Add or remove table columns.
-*   Add or remove _named_ `FOREIGN KEY` and `CHECK` constraints.
-*   Change length limits of `STRING` or `BYTES` columns (or `ARRAYS` of `STRING`
-    or `BYTES` columns).
-*   Add or remove `NOT NULL` constraints on columns.
-*   Add or remove column `OPTIONS` clauses.
-*   Modify `ON DELETE` rules on interleaved child tables.
+* Add or remove tables.
+* Add or remove indexes.
+* Add or remove table columns.
+* Add or remove _named_ `FOREIGN KEY` and `CHECK` constraints.
+* Change length limits of `STRING` or `BYTES` columns (or `ARRAYS` of `STRING`
+  or `BYTES` columns).
+* Add or remove `NOT NULL` constraints on columns.
+* Add or remove column `OPTIONS` clauses.
+* Modify `ON DELETE` rules on interleaved child tables.
 
 If the tool cannot parse the DDL files, or the changes between the two DDL files
 cannot be made using ALTER statements (eg, change of column type, change of
@@ -29,21 +29,21 @@ statements in the correct order in the file, so that child tables are created
 after their parents, and indexes are created after the table being indexed.
 
 The tool has no concept of the "structure" of the database, only of the
-statements in the DDL file. This has the following implications: 
+statements in the DDL file. This has the following implications:
 
-*   The tool relies on the DDL files being valid - specifically having the
-    `CREATE` statements in the correct order in the file, so that child tables
-    are created _after_ their parents, and indexes are created _after_ the table
-    being indexed.
+* The tool relies on the DDL files being valid - specifically having the
+  `CREATE` statements in the correct order in the file, so that child tables
+  are created _after_ their parents, and indexes are created _after_ the table
+  being indexed.
 
-*   The tool relies on the expressions in `CHECK` constraints and generated
-    columns being valid - it itself does noy understand SQL expressions and 
-    just performs text comparison.
+* The tool relies on the expressions in `CHECK` constraints and generated
+  columns being valid - it itself does noy understand SQL expressions and
+  just performs text comparison.
 
-*   Tables and indexes must be created with a single `CREATE` statement (not by
-    using `CREATE` then `ALTER` statements). The exception to this is when
-    foreign key constraints are created - the tool supports creating them in the
-    table creation DDL statement, and also using `ALTER` statements. 
+* Tables and indexes must be created with a single `CREATE` statement (not by
+  using `CREATE` then `ALTER` statements). The exception to this is when
+  foreign key constraints are created - the tool supports creating them in the
+  table creation DDL statement, and also using `ALTER` statements.
 
 ### Note on dropped database objects.
 
@@ -53,9 +53,9 @@ overridden using the command line arguments `--allowDropStatements`, which
 allows the tool to additionally generate the following statements for any
 differences found:
 
-*   Drop Tables.
-*   Drop Indexes.
-*   Drop Columns in a Table.
+* Drop Tables.
+* Drop Indexes.
+* Drop Columns in a Table.
 
 Foreign key constraints will always be dropped if they are not present in the
 new DDL.
@@ -70,7 +70,7 @@ will cause the tool to fail.
 
 ### Note on constraints
 
-`FOREIGN KEY` amd `CHECK` constraints _must_ be explicitly named, either within a 
+`FOREIGN KEY` amd `CHECK` constraints _must_ be explicitly named, either within a
 `CREATE TABLE` statement, or using an `ALTER TABLE` statement, using the syntax:
 
 ```sql
@@ -82,7 +82,7 @@ This is because the constraint needs to be referenced by its _name_ when it is
 dropped.
 
 Anonymous `FOREIGN KEY` or `CHECK` constraints of the form:
- 
+
 ```sql
 CREATE TABLE fk_dest (
 	key INT64,
@@ -92,7 +92,7 @@ CREATE TABLE fk_dest (
 ```
 
 will be rejected when the DDL is parsed.
- 
+
 Modifications to existing `FOREIGN KEY` constraints are not possible via `ALTER`
 statements, but if the `--allowRecreateForeignKeys` command line option is
 specified, the tool can modify foreign keys by first dropping then recreating
@@ -109,14 +109,14 @@ default, and FOREIGN KEY differences will cause the tool to fail.
 Install a [JAVA development kit](https://jdk.java.net/) (supporting Java 8
 or above) and [Apache Maven])(https://maven.apache.org/)
 
-There are 2 options for running the tool: either compiling and running from 
-source, or by building a runnable JAR with all dependencies included and then 
+There are 2 options for running the tool: either compiling and running from
+source, or by building a runnable JAR with all dependencies included and then
 running that.
 
 The following commands direct the tool to read the original.ddl file, compare it
-to the new.ddl file, and generate an alter.ddl file. The options specify that 
+to the new.ddl file, and generate an alter.ddl file. The options specify that
 modified indexes and foreign keys will be dropped and recreated, but removed
-tables, columns and indexes will not be dropped. 
+tables, columns and indexes will not be dropped.
 
 ### Compile and run directly from source:
 
@@ -281,14 +281,14 @@ generating statements to drop and recreate the constraint.
 
 In a CI/CD pipeline, the tool should be run as follows:
 
-*   Read the existing database schema into a file using the
-    [`gcloud spanner databases ddl describe`](https://cloud.google.com/sdk/gcloud/reference/spanner/databases/ddl/describe)
-    command.
-*   Run the tool comparing the existing schema to the updated schema, writing
-    the `ALTER` statements to a temp file.
-*   Apply the ALTER statements to the existing database using the
-    [`gcloud spanner databases ddl update`](https://cloud.google.com/sdk/gcloud/reference/spanner/databases/ddl/update)
-    command.
+* Read the existing database schema into a file using the
+  [`gcloud spanner databases ddl describe`](https://cloud.google.com/sdk/gcloud/reference/spanner/databases/ddl/describe)
+  command.
+* Run the tool comparing the existing schema to the updated schema, writing
+  the `ALTER` statements to a temp file.
+* Apply the ALTER statements to the existing database using the
+  [`gcloud spanner databases ddl update`](https://cloud.google.com/sdk/gcloud/reference/spanner/databases/ddl/update)
+  command.
 
 For example, the following script:
 
@@ -340,3 +340,4 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+

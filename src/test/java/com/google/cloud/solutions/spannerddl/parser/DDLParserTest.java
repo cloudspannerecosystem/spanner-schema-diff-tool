@@ -26,78 +26,84 @@ public class DDLParserTest {
   @Test
   public void parseCreateTable() throws ParseException {
 
-    ASTcreate_table_statement statement = (ASTcreate_table_statement) parse(
-        "create table test ("
-            + "boolcol bool, "
-            + "intcol int64 not null, "
-            + "floatcol float64, "
-            + "sizedstring string(55), "
-            + "maxstring string(max), "
-            + "sizedbytes bytes(55), "
-            + "maxbytes bytes(max), "
-            + "datecol date, "
-            + "timestampcol timestamp options (allow_commit_timestamp = true), "
-            + "intarray array<int64>, "
-            + "numericcol numeric,"
-            + "jsoncol json,"
-            + "generatedcol string(max) as (sizedstring+ strstr(maxstring,strpos(maxstring,'xxx'),length(maxstring)) +2.0) STORED, "
-            + "constraint fk_col_remote FOREIGN KEY(col1, col2) REFERENCES other_table(other_col1, other_col2), "
-            + "constraint check_some_value CHECK ((length(sizedstring)>100 or sizedstring= \"xxx\") AND boolcol= true and intcol > -123.4 and numericcol < 1.5)"
-            + ") "
-            + "primary key (intcol ASC, floatcol desc, boolcol), "
-            + "interleave in parent other_table on delete cascade ")
-        .jjtGetChild(0);
+    ASTcreate_table_statement statement =
+        (ASTcreate_table_statement)
+            parse(
+                    "create table test ("
+                        + "boolcol bool, "
+                        + "intcol int64 not null, "
+                        + "floatcol float64, "
+                        + "sizedstring string(55), "
+                        + "maxstring string(max), "
+                        + "sizedbytes bytes(55), "
+                        + "maxbytes bytes(max), "
+                        + "datecol date, "
+                        + "timestampcol timestamp options (allow_commit_timestamp = true), "
+                        + "intarray array<int64>, "
+                        + "numericcol numeric,"
+                        + "jsoncol json,"
+                        + "generatedcol string(max) as (sizedstring+ strstr(maxstring,strpos(maxstring,'xxx'),length(maxstring)) +2.0) STORED, "
+                        + "constraint fk_col_remote FOREIGN KEY(col1, col2) REFERENCES other_table(other_col1, other_col2), "
+                        + "constraint check_some_value CHECK ((length(sizedstring)>100 or sizedstring= \"xxx\") AND boolcol= true and intcol > -123.4 and numericcol < 1.5)"
+                        + ") "
+                        + "primary key (intcol ASC, floatcol desc, boolcol), "
+                        + "interleave in parent other_table on delete cascade ")
+                .jjtGetChild(0);
 
-    assertThat(statement.toString()).isEqualTo(
-        "CREATE TABLE test ("
-            + "boolcol BOOL, "
-            + "intcol INT64 NOT NULL, "
-            + "floatcol FLOAT64, "
-            + "sizedstring STRING(55), "
-            + "maxstring STRING(MAX), "
-            + "sizedbytes BYTES(55), "
-            + "maxbytes BYTES(MAX), "
-            + "datecol DATE, "
-            + "timestampcol TIMESTAMP OPTIONS (allow_commit_timestamp=TRUE), "
-            + "intarray ARRAY<INT64>, "
-            + "numericcol NUMERIC, "
-            + "jsoncol JSON, "
-            + "generatedcol STRING(MAX)  AS ( sizedstring + strstr ( maxstring, strpos ( maxstring, 'xxx' ), length ( maxstring ) ) + 2.0 ) STORED, "
-            + "CONSTRAINT fk_col_remote FOREIGN KEY (col1, col2) REFERENCES other_table (other_col1, other_col2), "
-            + "CONSTRAINT check_some_value CHECK (( length ( sizedstring ) > 100 OR sizedstring = \"xxx\" ) AND boolcol = TRUE AND intcol > -123.4 AND numericcol < 1.5)"
-            + ") PRIMARY KEY (intcol ASC, floatcol DESC, boolcol ASC), "
-            + "INTERLEAVE IN PARENT other_table ON DELETE CASCADE");
+    assertThat(statement.toString())
+        .isEqualTo(
+            "CREATE TABLE test ("
+                + "boolcol BOOL, "
+                + "intcol INT64 NOT NULL, "
+                + "floatcol FLOAT64, "
+                + "sizedstring STRING(55), "
+                + "maxstring STRING(MAX), "
+                + "sizedbytes BYTES(55), "
+                + "maxbytes BYTES(MAX), "
+                + "datecol DATE, "
+                + "timestampcol TIMESTAMP OPTIONS (allow_commit_timestamp=TRUE), "
+                + "intarray ARRAY<INT64>, "
+                + "numericcol NUMERIC, "
+                + "jsoncol JSON, "
+                + "generatedcol STRING(MAX)  AS ( sizedstring + strstr ( maxstring, strpos ( maxstring, 'xxx' ), length ( maxstring ) ) + 2.0 ) STORED, "
+                + "CONSTRAINT fk_col_remote FOREIGN KEY (col1, col2) REFERENCES other_table (other_col1, other_col2), "
+                + "CONSTRAINT check_some_value CHECK (( length ( sizedstring ) > 100 OR sizedstring = \"xxx\" ) AND boolcol = TRUE AND intcol > -123.4 AND numericcol < 1.5)"
+                + ") PRIMARY KEY (intcol ASC, floatcol DESC, boolcol ASC), "
+                + "INTERLEAVE IN PARENT other_table ON DELETE CASCADE");
 
     // Test re-parse of toString output.
-    ASTcreate_table_statement statement2 = (ASTcreate_table_statement) parse(statement.toString())
-        .jjtGetChild(0);
+    ASTcreate_table_statement statement2 =
+        (ASTcreate_table_statement) parse(statement.toString()).jjtGetChild(0);
     assertThat(statement).isEqualTo(statement2);
   }
 
   @Test
   public void parseCreateIndex() throws ParseException {
 
-    ASTcreate_index_statement statement = (ASTcreate_index_statement) parse(
-        "create unique null_filtered index testindex on testtable("
-            + "col1, "
-            + "col2 desc, "
-            + "col3 asc) "
-            + "storing ( "
-            + "col4, "
-            + "col5, "
-            + "col6), "
-            + "interleave in other_table")
-        .jjtGetChild(0);
+    ASTcreate_index_statement statement =
+        (ASTcreate_index_statement)
+            parse(
+                    "create unique null_filtered index testindex on testtable("
+                        + "col1, "
+                        + "col2 desc, "
+                        + "col3 asc) "
+                        + "storing ( "
+                        + "col4, "
+                        + "col5, "
+                        + "col6), "
+                        + "interleave in other_table")
+                .jjtGetChild(0);
 
-    assertThat(statement.toString()).isEqualTo(
-        "CREATE UNIQUE NULL_FILTERED INDEX testindex ON testtable "
-            + "(col1 ASC, col2 DESC, col3 ASC) "
-            + "STORING (col4, col5, col6), "
-            + "INTERLEAVE IN other_table");
+    assertThat(statement.toString())
+        .isEqualTo(
+            "CREATE UNIQUE NULL_FILTERED INDEX testindex ON testtable "
+                + "(col1 ASC, col2 DESC, col3 ASC) "
+                + "STORING (col4, col5, col6), "
+                + "INTERLEAVE IN other_table");
 
     // Test re-parse of toString output.
-    ASTcreate_index_statement statement2 = (ASTcreate_index_statement) parse(statement.toString())
-        .jjtGetChild(0);
+    ASTcreate_index_statement statement2 =
+        (ASTcreate_index_statement) parse(statement.toString()).jjtGetChild(0);
     assertThat(statement).isEqualTo(statement2);
   }
 

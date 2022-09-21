@@ -24,9 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Abstract Syntax Tree parser object for "create_table_statement" token
- */
+/** Abstract Syntax Tree parser object for "create_table_statement" token */
 public class ASTcreate_table_statement extends SimpleNode {
 
   public ASTcreate_table_statement(int id) {
@@ -66,7 +64,6 @@ public class ASTcreate_table_statement extends SimpleNode {
     }
     return constraints;
   }
-
 
   public synchronized ASTprimary_key getPrimaryKey() {
     return ASTTreeUtils.getChildByType(children, ASTprimary_key.class);
@@ -111,8 +108,7 @@ public class ASTcreate_table_statement extends SimpleNode {
           && !(child instanceof ASTname)
           && !(child instanceof ASTcheck_constraint)
           && !(child instanceof ASTprimary_key)
-          && !(child instanceof ASTtable_interleave_clause)
-      ) {
+          && !(child instanceof ASTtable_interleave_clause)) {
         throw new IllegalArgumentException(
             "Unknown child type " + child.getClass().getSimpleName() + " - " + child);
       }

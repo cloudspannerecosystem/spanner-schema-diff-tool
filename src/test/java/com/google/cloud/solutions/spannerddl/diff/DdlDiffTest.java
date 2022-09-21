@@ -39,19 +39,21 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.junit.Test;
+
 public class DdlDiffTest {
 
   @Test
   public void parseDDL() throws DdlDiffException {
-    String DDL = "create table test1 (col1 int64) primary key (col1);\n\n"
-        + "-- comment ; with semicolon.\n"
-        + "create table test2 (col2 float64) primary key (col2);\n\n"
-        + "create table test3 (col3 STRING(max) -- inline comment\n"
-        + ") primary key (col3), interleave in parent testparent \n"
-        + "on delete no action;\n\n"
-        + "create index index1 on table1 (col1);\n"
-        + "-- more comment\n"
-        + "; -- stray semicolon";
+    String DDL =
+        "create table test1 (col1 int64) primary key (col1);\n\n"
+            + "-- comment ; with semicolon.\n"
+            + "create table test2 (col2 float64) primary key (col2);\n\n"
+            + "create table test3 (col3 STRING(max) -- inline comment\n"
+            + ") primary key (col3), interleave in parent testparent \n"
+            + "on delete no action;\n\n"
+            + "create index index1 on table1 (col1);\n"
+            + "-- more comment\n"
+            + "; -- stray semicolon";
 
     List<ASTddl_statement> result = DdlDiff.parseDDL(DDL);
 
@@ -61,16 +63,17 @@ public class DdlDiffTest {
         .isEqualTo("CREATE TABLE test1 (col1 INT64) PRIMARY KEY (col1 ASC)");
     assertThat(result.get(1).toString())
         .isEqualTo("CREATE TABLE test2 (col2 FLOAT64) PRIMARY KEY (col2 ASC)");
-    assertThat(result.get(2).toString()).isEqualTo(
-        "CREATE TABLE test3 (col3 STRING(MAX)) PRIMARY KEY (col3 ASC), "
-            + "INTERLEAVE IN PARENT testparent ON DELETE NO ACTION");
+    assertThat(result.get(2).toString())
+        .isEqualTo(
+            "CREATE TABLE test3 (col3 STRING(MAX)) PRIMARY KEY (col3 ASC), "
+                + "INTERLEAVE IN PARENT testparent ON DELETE NO ACTION");
     assertThat(result.get(3).toString()).isEqualTo("CREATE INDEX index1 ON table1 (col1 ASC)");
   }
 
   @Test
   public void parseDDLCreateTableSyntaxError() {
-    parseDdlCheckDdlDiffException("Create table test1 ( col1 int64 )",
-        "Was expecting:\n\n\"primary\" ...");
+    parseDdlCheckDdlDiffException(
+        "Create table test1 ( col1 int64 )", "Was expecting:\n\n\"primary\" ...");
   }
 
   @Test
@@ -158,7 +161,6 @@ public class DdlDiffTest {
     DdlDiff.parseDDL(DDL);
   }
 
-
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoDropTable() throws DdlDiffException {
     String DDL = "drop table test1";
@@ -171,21 +173,25 @@ public class DdlDiffTest {
     DdlDiff.parseDDL(DDL);
   }
 
-
   @Test
   public void generateAlterTable_AddColumn() throws DdlDiffException {
     // Add single row.
-    assertThat(getTableDiff("create table test1 (col1 int64) primary key (col1);",
-        "create table test1 (col1 int64, col2 int64 not null) primary key (col1);",
-        true))
+    assertThat(
+            getTableDiff(
+                "create table test1 (col1 int64) primary key (col1);",
+                "create table test1 (col1 int64, col2 int64 not null) primary key (col1);",
+                true))
         .containsExactly("ALTER TABLE test1 ADD COLUMN col2 INT64 NOT NULL");
 
     // Add multiple rows.
-    assertThat(getTableDiff("create table test1 (col1 int64) primary key (col1);",
-        "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null) "
-            + "primary key (col1);",
-        true))
-        .containsExactly("ALTER TABLE test1 ADD COLUMN col2 STRING(MAX)",
+    assertThat(
+            getTableDiff(
+                "create table test1 (col1 int64) primary key (col1);",
+                "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null) "
+                    + "primary key (col1);",
+                true))
+        .containsExactly(
+            "ALTER TABLE test1 ADD COLUMN col2 STRING(MAX)",
             "ALTER TABLE test1 ADD COLUMN col3 ARRAY<BYTES(100)> NOT NULL");
   }
 
@@ -193,25 +199,33 @@ public class DdlDiffTest {
   public void generateAlterTable_DropColumn() throws DdlDiffException {
     // Add single row.
     assertThat(
-        getTableDiff("create table test1 (col1 int64, col2 int64 not null) primary key (col1);",
-            "create table test1 (col1 int64) primary key (col1);", true))
+            getTableDiff(
+                "create table test1 (col1 int64, col2 int64 not null) primary key (col1);",
+                "create table test1 (col1 int64) primary key (col1);",
+                true))
         .containsExactly("ALTER TABLE test1 DROP COLUMN col2");
     assertThat(
-        getTableDiff("create table test1 (col1 int64, col2 int64 not null) primary key (col1);",
-            "create table test1 (col1 int64) primary key (col1);", false))
+            getTableDiff(
+                "create table test1 (col1 int64, col2 int64 not null) primary key (col1);",
+                "create table test1 (col1 int64) primary key (col1);",
+                false))
         .isEmpty();
 
     // Add multiple rows.
-    assertThat(getTableDiff(
-        "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null) "
-            + "primary key (col1);",
-        "create table test1 (col1 int64) primary key (col1);", true))
-        .containsExactly("ALTER TABLE test1 DROP COLUMN col2",
-            "ALTER TABLE test1 DROP COLUMN col3");
-    assertThat(getTableDiff(
-        "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null) "
-            + "primary key (col1);",
-        "create table test1 (col1 int64) primary key (col1);", false))
+    assertThat(
+            getTableDiff(
+                "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null) "
+                    + "primary key (col1);",
+                "create table test1 (col1 int64) primary key (col1);",
+                true))
+        .containsExactly(
+            "ALTER TABLE test1 DROP COLUMN col2", "ALTER TABLE test1 DROP COLUMN col3");
+    assertThat(
+            getTableDiff(
+                "create table test1 (col1 int64, col2 String(MAX), col3 Array<Bytes(100)> not null) "
+                    + "primary key (col1);",
+                "create table test1 (col1 int64) primary key (col1);",
+                false))
         .isEmpty();
   }
 
@@ -219,19 +233,22 @@ public class DdlDiffTest {
   public void generateAlterTable_AlterColumnAttrs() throws DdlDiffException {
     // Not null added and removed
     assertThat(
-        getTableDiff("create table test1 (col1 int64, col2 int64 not null) primary key (col1);",
-            "create table test1 (col1 int64 not null, col2 int64) primary key (col1);",
-            true))
-        .containsExactly("ALTER TABLE test1 ALTER COLUMN col1 INT64 NOT NULL",
+            getTableDiff(
+                "create table test1 (col1 int64, col2 int64 not null) primary key (col1);",
+                "create table test1 (col1 int64 not null, col2 int64) primary key (col1);",
+                true))
+        .containsExactly(
+            "ALTER TABLE test1 ALTER COLUMN col1 INT64 NOT NULL",
             "ALTER TABLE test1 ALTER COLUMN col2 INT64");
 
     // Options added and removed
-    assertThat(getTableDiff(
-        "create table test1 (col1 timestamp options(allow_commit_timestamp=true), col2 timestamp) "
-            + "primary key (col1);",
-        "create table test1 (col1 timestamp, col2 timestamp options(allow_commit_timestamp=true)) "
-            + "primary key (col1);",
-        true))
+    assertThat(
+            getTableDiff(
+                "create table test1 (col1 timestamp options(allow_commit_timestamp=true), col2 timestamp) "
+                    + "primary key (col1);",
+                "create table test1 (col1 timestamp, col2 timestamp options(allow_commit_timestamp=true)) "
+                    + "primary key (col1);",
+                true))
         .containsExactly(
             "ALTER TABLE test1 ALTER COLUMN col1 SET OPTIONS (allow_commit_timestamp=NULL)",
             "ALTER TABLE test1 ALTER COLUMN col2 SET OPTIONS (allow_commit_timestamp=TRUE)");
@@ -240,11 +257,13 @@ public class DdlDiffTest {
   @Test
   public void generateAlterTable_AlterColumnSize() throws DdlDiffException {
     // changes string()  size and array<bytes()> size
-    assertThat(getTableDiff(
-        "create table test1 (col1 String(100), col2 ARRAY<BYTES(100)>) primary key (col1);",
-        "create table test1 (col1 String(200), col2 ARRAY<BYTES(MAX)>) primary key (col1);",
-        true))
-        .containsExactly("ALTER TABLE test1 ALTER COLUMN col1 STRING(200)",
+    assertThat(
+            getTableDiff(
+                "create table test1 (col1 String(100), col2 ARRAY<BYTES(100)>) primary key (col1);",
+                "create table test1 (col1 String(200), col2 ARRAY<BYTES(MAX)>) primary key (col1);",
+                true))
+        .containsExactly(
+            "ALTER TABLE test1 ALTER COLUMN col1 STRING(200)",
             "ALTER TABLE test1 ALTER COLUMN col2 ARRAY<BYTES(MAX)>");
   }
 
@@ -265,19 +284,22 @@ public class DdlDiffTest {
         "Cannot change type of table test1 column col1");
 
     // change Array type
-    getTableDiffCheckDdlDiffException("create table test1 (col1 ARRAY<int64>) primary key (col1);",
+    getTableDiffCheckDdlDiffException(
+        "create table test1 (col1 ARRAY<int64>) primary key (col1);",
         "create table test1 (col1 ARRAY<float64>) primary key (col1);",
         true,
         "Cannot change type of table test1 column col1");
 
     // change sized type
-    getTableDiffCheckDdlDiffException("create table test1 (col1 BYTES(100)) primary key (col1);",
+    getTableDiffCheckDdlDiffException(
+        "create table test1 (col1 BYTES(100)) primary key (col1);",
         "create table test1 (col1 STRING(100)) primary key (col1);",
         true,
         "Cannot change type of table test1 column col1");
 
     // change type
-    getTableDiffCheckDdlDiffException("create table test1 (col1 int64) primary key (col1);",
+    getTableDiffCheckDdlDiffException(
+        "create table test1 (col1 int64) primary key (col1);",
         "create table test1 (col1 float64) primary key (col1);",
         true,
         "Cannot change type of table test1 column col1");
@@ -334,20 +356,22 @@ public class DdlDiffTest {
         "Cannot change interleaved parent of table test1");
 
     // change on delete
-    assertThat(getTableDiff(
-        "create table test1 (col1 int64, col2 int64) "
-            + "primary key (col1), interleave in parent testparent on delete cascade;",
-        "create table test1 (col1 int64, col2 int64) "
-            + "primary key (col1), interleave in parent testparent",
-        true))
+    assertThat(
+            getTableDiff(
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in parent testparent on delete cascade;",
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in parent testparent",
+                true))
         .containsExactly("ALTER TABLE test1 SET ON DELETE NO ACTION");
     // change on delete
-    assertThat(getTableDiff(
-        "create table test1 (col1 int64, col2 int64) "
-            + "primary key (col1), interleave in parent testparent on delete NO ACTION;",
-        "create table test1 (col1 int64, col2 int64) "
-            + "primary key (col1), interleave in parent testparent on delete cascade",
-        true))
+    assertThat(
+            getTableDiff(
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in parent testparent on delete NO ACTION;",
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in parent testparent on delete cascade",
+                true))
         .containsExactly("ALTER TABLE test1 SET ON DELETE CASCADE");
   }
 
@@ -377,28 +401,29 @@ public class DdlDiffTest {
 
   @Test
   public void generateAlterTable_alterStatementOrdering() throws DdlDiffException {
-    assertThat(getTableDiff(
-        "create table test1 ("
-            + "col1 int64, "
-            + "col2 int64, "
-            + "col3 int64 NOT NULL, "
-            + "col4 int64, "
-            + "col5 timestamp OPTIONS (allow_commit_timestamp=true), "
-            + "col6 timestamp, "
-            + "col7 STRING(100) ) "
-            + "primary key (col1), interleave in parent testparent",
-        "create table test1 ("
-            + "col1 int64, "
-            // remove col2
-            + "col3 int64, " // remove not null
-            + "col4 int64 NOT NULL, " // add not null
-            + "col5 timestamp, " // remove options
-            + "col6 timestamp OPTIONS (allow_commit_timestamp=true)," // add options
-            + "col7 STRING(200), " // change size
-            + "col8 float64 not null " // add column
-            + " ) primary key (col1), "
-            + "interleave in parent testparent on delete cascade", // on delete rule.
-        true)) // allow drop
+    assertThat(
+            getTableDiff(
+                "create table test1 ("
+                    + "col1 int64, "
+                    + "col2 int64, "
+                    + "col3 int64 NOT NULL, "
+                    + "col4 int64, "
+                    + "col5 timestamp OPTIONS (allow_commit_timestamp=true), "
+                    + "col6 timestamp, "
+                    + "col7 STRING(100) ) "
+                    + "primary key (col1), interleave in parent testparent",
+                "create table test1 ("
+                    + "col1 int64, "
+                    // remove col2
+                    + "col3 int64, " // remove not null
+                    + "col4 int64 NOT NULL, " // add not null
+                    + "col5 timestamp, " // remove options
+                    + "col6 timestamp OPTIONS (allow_commit_timestamp=true)," // add options
+                    + "col7 STRING(200), " // change size
+                    + "col8 float64 not null " // add column
+                    + " ) primary key (col1), "
+                    + "interleave in parent testparent on delete cascade", // on delete rule.
+                true)) // allow drop
         .containsExactly(
             // change table options.
             "ALTER TABLE test1 SET ON DELETE CASCADE",
@@ -414,9 +439,8 @@ public class DdlDiffTest {
             "ALTER TABLE test1 ALTER COLUMN col7 STRING(200)");
   }
 
-  private static void getTableDiffCheckDdlDiffException(String originalDdl, String newDdl,
-      boolean allowDropStatements,
-      String exceptionContains) {
+  private static void getTableDiffCheckDdlDiffException(
+      String originalDdl, String newDdl, boolean allowDropStatements, String exceptionContains) {
     try {
       getTableDiff(originalDdl, newDdl, allowDropStatements);
       fail("Expected DdlDiffException not thrown.");
@@ -425,30 +449,26 @@ public class DdlDiffTest {
     }
   }
 
-
-  private static List<String> getTableDiff(String originalDdl, String newDdl,
-      boolean allowDropStatements)
-      throws DdlDiffException {
-    List<ASTddl_statement> ddl1 = DdlDiff
-        .parseDDL(originalDdl);
-    List<ASTddl_statement> ddl2 = DdlDiff
-        .parseDDL(newDdl);
+  private static List<String> getTableDiff(
+      String originalDdl, String newDdl, boolean allowDropStatements) throws DdlDiffException {
+    List<ASTddl_statement> ddl1 = DdlDiff.parseDDL(originalDdl);
+    List<ASTddl_statement> ddl2 = DdlDiff.parseDDL(newDdl);
     assertThat(ddl1).hasSize(1);
     assertThat(ddl2).hasSize(1);
-    return DdlDiff
-        .generateAlterTableStatements((ASTcreate_table_statement) ddl1.get(0).jjtGetChild(0),
-            (ASTcreate_table_statement) ddl2.get(0).jjtGetChild(0),
-            ImmutableMap.of(ALLOW_RECREATE_CONSTRAINTS_OPT, true, ALLOW_DROP_STATEMENTS_OPT,
-                allowDropStatements));
+    return DdlDiff.generateAlterTableStatements(
+        (ASTcreate_table_statement) ddl1.get(0).jjtGetChild(0),
+        (ASTcreate_table_statement) ddl2.get(0).jjtGetChild(0),
+        ImmutableMap.of(
+            ALLOW_RECREATE_CONSTRAINTS_OPT, true, ALLOW_DROP_STATEMENTS_OPT, allowDropStatements));
   }
-
 
   @Test
   public void generateDifferences_dropTables() throws DdlDiffException {
-    DdlDiff diff = DdlDiff.build(
-        "Create table table1 (col1 int64) primary key (col1);"
-            + "Create table table2 (col2 int64) primary key (col2);",
-        "Create table table1 (col1 int64) primary key (col1);");
+    DdlDiff diff =
+        DdlDiff.build(
+            "Create table table1 (col1 int64) primary key (col1);"
+                + "Create table table2 (col2 int64) primary key (col2);",
+            "Create table table1 (col1 int64) primary key (col1);");
 
     assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true)))
         .containsExactly("DROP TABLE table2");
@@ -458,10 +478,11 @@ public class DdlDiffTest {
 
   @Test
   public void generateDifferences_dropIndexes() throws DdlDiffException {
-    DdlDiff diff = DdlDiff.build(
-        "Create index index1 on table1 (col1 desc);"
-            + "Create index index2 on table2 (col2 desc);",
-        "Create index index1 on table1 (col1 desc);");
+    DdlDiff diff =
+        DdlDiff.build(
+            "Create index index1 on table1 (col1 desc);"
+                + "Create index index2 on table2 (col2 desc);",
+            "Create index index1 on table1 (col1 desc);");
 
     assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true)))
         .containsExactly("DROP INDEX index2");
@@ -471,22 +492,12 @@ public class DdlDiffTest {
 
   @Test
   public void differentIndexesWithNoRecreate() {
-    Map<String, Boolean> options = ImmutableMap
-        .of(ALLOW_DROP_STATEMENTS_OPT, false, ALLOW_RECREATE_INDEXES_OPT, false);
+    Map<String, Boolean> options =
+        ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, false, ALLOW_RECREATE_INDEXES_OPT, false);
     try {
       DdlDiff.build(
-          "Create unique null_filtered index index1 on table1 (col1 desc)",
-          "Create unique null_filtered index index1 on table1 (col1 asc)")
-          .generateDifferenceStatements(
-              options);
-      fail("Expected exception not thrown");
-    } catch (DdlDiffException e) {
-      assertThat(e.getMessage()).containsMatch("one Index differs");
-    }
-    try {
-      DdlDiff.build(
-          "Create unique null_filtered index index1 on table1 (col1 desc)",
-          "Create unique null_filtered index index1 on table1 (col2 desc)")
+              "Create unique null_filtered index index1 on table1 (col1 desc)",
+              "Create unique null_filtered index index1 on table1 (col1 asc)")
           .generateDifferenceStatements(options);
       fail("Expected exception not thrown");
     } catch (DdlDiffException e) {
@@ -494,8 +505,17 @@ public class DdlDiffTest {
     }
     try {
       DdlDiff.build(
-          "Create unique null_filtered index index1 on table1 (col1 desc)",
-          "Create index index1 on table1 (col1 desc)")
+              "Create unique null_filtered index index1 on table1 (col1 desc)",
+              "Create unique null_filtered index index1 on table1 (col2 desc)")
+          .generateDifferenceStatements(options);
+      fail("Expected exception not thrown");
+    } catch (DdlDiffException e) {
+      assertThat(e.getMessage()).containsMatch("one Index differs");
+    }
+    try {
+      DdlDiff.build(
+              "Create unique null_filtered index index1 on table1 (col1 desc)",
+              "Create index index1 on table1 (col1 desc)")
           .generateDifferenceStatements(options);
       fail("Expected exception not thrown");
     } catch (DdlDiffException e) {
@@ -505,29 +525,33 @@ public class DdlDiffTest {
 
   @Test
   public void differentIndexesWithRecreate() throws DdlDiffException {
-    Map<String, Boolean> options = ImmutableMap
-        .of(ALLOW_DROP_STATEMENTS_OPT, true, ALLOW_RECREATE_INDEXES_OPT, true);
+    Map<String, Boolean> options =
+        ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true, ALLOW_RECREATE_INDEXES_OPT, true);
     assertThat(
-        DdlDiff.build(
-            "Create unique null_filtered index index1 on table1 (col1 desc)",
-            "Create unique null_filtered index index1 on table1 (col1 asc)")
-            .generateDifferenceStatements(
-                options)).isEqualTo(Arrays.asList("DROP INDEX index1",
-        "CREATE UNIQUE NULL_FILTERED INDEX index1 ON table1 (col1 ASC)"));
+            DdlDiff.build(
+                    "Create unique null_filtered index index1 on table1 (col1 desc)",
+                    "Create unique null_filtered index index1 on table1 (col1 asc)")
+                .generateDifferenceStatements(options))
+        .isEqualTo(
+            Arrays.asList(
+                "DROP INDEX index1",
+                "CREATE UNIQUE NULL_FILTERED INDEX index1 ON table1 (col1 ASC)"));
     assertThat(
-        DdlDiff.build(
-            "Create unique null_filtered index index1 on table1 (col1 desc)",
-            "Create unique null_filtered index index1 on table1 (col2 desc)")
-            .generateDifferenceStatements(options)).isEqualTo(Arrays.asList("DROP INDEX index1",
-        "CREATE UNIQUE NULL_FILTERED INDEX index1 ON table1 (col2 DESC)"));
+            DdlDiff.build(
+                    "Create unique null_filtered index index1 on table1 (col1 desc)",
+                    "Create unique null_filtered index index1 on table1 (col2 desc)")
+                .generateDifferenceStatements(options))
+        .isEqualTo(
+            Arrays.asList(
+                "DROP INDEX index1",
+                "CREATE UNIQUE NULL_FILTERED INDEX index1 ON table1 (col2 DESC)"));
     assertThat(
-        DdlDiff.build(
-            "Create unique null_filtered index index1 on table1 (col1 desc)",
-            "Create index index1 on table1 (col1 desc)")
-            .generateDifferenceStatements(options))
+            DdlDiff.build(
+                    "Create unique null_filtered index index1 on table1 (col1 desc)",
+                    "Create index index1 on table1 (col1 desc)")
+                .generateDifferenceStatements(options))
         .isEqualTo(Arrays.asList("DROP INDEX index1", "CREATE INDEX index1 ON table1 (col1 DESC)"));
   }
-
 
   @Test
   public void compareDddTextFiles() throws IOException {
@@ -538,8 +562,7 @@ public class DdlDiffTest {
     LinkedHashMap<String, String> newSegments = readDdlSegmentsFromFile("newDdl.txt");
     LinkedHashMap<String, String> expectedOutputs = readDdlSegmentsFromFile("expectedDdlDiff.txt");
 
-    Iterator<Map.Entry<String, String>> originalSegmentIt = originalSegments
-        .entrySet().iterator();
+    Iterator<Map.Entry<String, String>> originalSegmentIt = originalSegments.entrySet().iterator();
     Iterator<Map.Entry<String, String>> newSegmentIt = newSegments.entrySet().iterator();
     Iterator<Map.Entry<String, String>> expectedOutputIt = expectedOutputs.entrySet().iterator();
 
@@ -552,46 +575,62 @@ public class DdlDiffTest {
         Map.Entry<String, String> expectedOutput = expectedOutputIt.next();
 
         // verify segment name order for sanity.
-        assertWithMessage("mismatched section names in newDdl.txt").that(newSegment.getKey())
+        assertWithMessage("mismatched section names in newDdl.txt")
+            .that(newSegment.getKey())
             .isEqualTo(segmentName);
         assertWithMessage("mismatched section names in expectedDdlDiff.txt")
-            .that(expectedOutput.getKey()).isEqualTo(segmentName);
+            .that(expectedOutput.getKey())
+            .isEqualTo(segmentName);
         List<String> expectedDiff = Arrays.asList(expectedOutput.getValue().split("\n"));
 
         DdlDiff ddlDiff = DdlDiff.build(originalSegment.getValue(), newSegment.getValue());
         // Run diff with allowRecreateIndexes and allowDropStatements
-        List<String> diff = ddlDiff.generateDifferenceStatements(
-            ImmutableMap.of(ALLOW_RECREATE_INDEXES_OPT, true, ALLOW_DROP_STATEMENTS_OPT, true,
-                ALLOW_RECREATE_CONSTRAINTS_OPT, true));
+        List<String> diff =
+            ddlDiff.generateDifferenceStatements(
+                ImmutableMap.of(
+                    ALLOW_RECREATE_INDEXES_OPT,
+                    true,
+                    ALLOW_DROP_STATEMENTS_OPT,
+                    true,
+                    ALLOW_RECREATE_CONSTRAINTS_OPT,
+                    true));
         // check expected results.
-        assertWithMessage("Mismatch for section " + segmentName).that(diff)
-            .isEqualTo(expectedDiff);
+        assertWithMessage("Mismatch for section " + segmentName).that(diff).isEqualTo(expectedDiff);
 
         // TEST PART 2: with allowDropStatements=false
 
         // build an expectedResults without any column or table drops.
-        List<String> expectedDiffNoDrops = expectedDiff.stream().filter(statement -> ! statement.matches(".*DROP (TABLE|COLUMN).*"))
-            .collect(Collectors.toCollection(LinkedList::new));
+        List<String> expectedDiffNoDrops =
+            expectedDiff.stream()
+                .filter(statement -> !statement.matches(".*DROP (TABLE|COLUMN).*"))
+                .collect(Collectors.toCollection(LinkedList::new));
 
         // remove any drop indexes from the expectedResults if they do not have an equivalent
         // CREATE statement. This is because we are allowing recreation of indexes, but not allowing
         // dropping of removed indexes.
-        for (String statement : expectedDiff ){
-          if(statement.startsWith("DROP INDEX ")) {
+        for (String statement : expectedDiff) {
+          if (statement.startsWith("DROP INDEX ")) {
             String indexName = statement.split(" ")[2];
             // see if there is a matching create statement
-            Pattern p = Pattern.compile("CREATE .*INDEX "+indexName+" ");
-            if(expectedDiffNoDrops.stream().noneMatch(s -> p.matcher(s).find())) {
+            Pattern p = Pattern.compile("CREATE .*INDEX " + indexName + " ");
+            if (expectedDiffNoDrops.stream().noneMatch(s -> p.matcher(s).find())) {
               expectedDiffNoDrops.remove(statement);
             }
           }
         }
 
-        diff = ddlDiff.generateDifferenceStatements(
-            ImmutableMap.of(ALLOW_RECREATE_INDEXES_OPT, true, ALLOW_DROP_STATEMENTS_OPT, false,
-                ALLOW_RECREATE_CONSTRAINTS_OPT, true));
+        diff =
+            ddlDiff.generateDifferenceStatements(
+                ImmutableMap.of(
+                    ALLOW_RECREATE_INDEXES_OPT,
+                    true,
+                    ALLOW_DROP_STATEMENTS_OPT,
+                    false,
+                    ALLOW_RECREATE_CONSTRAINTS_OPT,
+                    true));
         // check expected results.
-        assertWithMessage("Mismatch for section (noDrops)" + segmentName).that(diff)
+        assertWithMessage("Mismatch for section (noDrops)" + segmentName)
+            .that(diff)
             .isEqualTo(expectedDiffNoDrops);
       }
     } catch (Throwable e) {
@@ -605,8 +644,7 @@ public class DdlDiffTest {
     File file = new File("src/test/resources/" + filename).getAbsoluteFile();
     LinkedHashMap<String, String> output = new LinkedHashMap<>();
 
-    try (BufferedReader in = new BufferedReader(
-        new FileReader(file))) {
+    try (BufferedReader in = new BufferedReader(new FileReader(file))) {
 
       String sectionName = null;
       StringBuilder section = new StringBuilder();
@@ -637,4 +675,3 @@ public class DdlDiffTest {
     }
   }
 }
-

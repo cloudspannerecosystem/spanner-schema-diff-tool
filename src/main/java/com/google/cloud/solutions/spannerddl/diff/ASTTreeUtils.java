@@ -25,14 +25,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-/**
- * Utility functions for getting and casting Nodes in the parsed AST.
- */
+/** Utility functions for getting and casting Nodes in the parsed AST. */
 public class ASTTreeUtils {
 
-  /**
-   * Gets (and casts) the first found child of a specific node type
-   */
+  /** Gets (and casts) the first found child of a specific node type */
   public static <T> T getOptionalChildByType(Node[] children, Class<T> type) {
     for (Node child : children) {
       if (type.isInstance(child)) {
@@ -51,9 +47,11 @@ public class ASTTreeUtils {
     return child;
   }
 
-  private static Set<String> reservedWords = Arrays.stream(DdlParserConstants.tokenImage)
-      .filter(s -> s.charAt(0) == '"').map(s -> s.substring(1, s.length() - 1)).collect(
-          Collectors.toSet());
+  private static Set<String> reservedWords =
+      Arrays.stream(DdlParserConstants.tokenImage)
+          .filter(s -> s.charAt(0) == '"')
+          .map(s -> s.substring(1, s.length() - 1))
+          .collect(Collectors.toSet());
 
   public static boolean isReservedWord(String word) {
     return reservedWords.contains(word);
@@ -69,8 +67,7 @@ public class ASTTreeUtils {
         .collect(Collectors.toList());
   }
 
-  private ASTTreeUtils() {
-  }
+  private ASTTreeUtils() {}
 
   public static String tokensToString(Token firstToken, Token lastToken) {
     StringBuilder sb = new StringBuilder();
@@ -79,13 +76,15 @@ public class ASTTreeUtils {
       String tok = t.toString();
       sb.append(isReservedWord(tok) ? tok.toUpperCase() : tok);
 
-      if (t.next != null && !t.next.toString().equals(",") && !t.next.toString().equals(".") && !tok
-          .equals(".")) {
+      if (t.next != null
+          && !t.next.toString().equals(",")
+          && !t.next.toString().equals(".")
+          && !tok.equals(".")) {
         sb.append(" ");
       }
       t = t.next;
     }
-    //append last token
+    // append last token
     String tok = t.toString();
     sb.append(isReservedWord(tok) ? tok.toUpperCase() : tok);
     return sb.toString();

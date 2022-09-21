@@ -19,9 +19,7 @@ package com.google.cloud.solutions.spannerddl.parser;
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
 import com.google.common.base.Joiner;
 
-/**
- * Abstract Syntax Tree parser object for "primary_Key" token
- */
+/** Abstract Syntax Tree parser object for "primary_Key" token */
 public class ASTprimary_key extends SimpleNode {
 
   public ASTprimary_key(int id) {

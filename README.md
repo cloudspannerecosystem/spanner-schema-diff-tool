@@ -37,7 +37,7 @@ statements in the DDL file. This has the following implications:
   being indexed.
 
 * The tool relies on the expressions in `CHECK` constraints and generated
-  columns being valid - it itself does noy understand SQL expressions and
+  columns being valid - it itself does not understand SQL expressions and
   just performs text comparison.
 
 * Tables and indexes must be created with a single `CREATE` statement (not by

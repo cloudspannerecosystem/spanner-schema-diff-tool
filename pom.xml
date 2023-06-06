@@ -26,7 +26,7 @@
     <maven.compiler.source>8</maven.compiler.source>
     <maven.compiler.target>8</maven.compiler.target>
     <guava.version>31.1-jre</guava.version>
-    <slf4j.version>2.0.5</slf4j.version>
+    <slf4j.version>2.0.7</slf4j.version>
     <commons-cli.version>1.5.0</commons-cli.version>
     <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
     <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>

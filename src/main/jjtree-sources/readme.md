@@ -19,15 +19,20 @@ that call `ValidateBytesLiteral()` and `ValidateStringBytesLiteral()`
 
 ```shell
 # Build ddl_keywords.jjt
-sudo apt install bazel-2.2.0
+sudo apt install bazel-5.4.0
 git clone https://github.com/GoogleCloudPlatform/cloud-spanner-emulator.git
 cd cloud-spanner-emulator
-bazel-2.2.0 build backend/schema/parser:ddl_keywords_jjt
+bazel build backend/schema/parser:ddl_keywords_jjt
+
+# generated file in bazel-bin/backend/schema/parser/ddl_keywords.jjt
+
 
 # Compare JJT files
 
 diff bazel-bin/backend/schema/parser/ddl_keywords.jjt ../spanner-schema-diff-tool/src/main/jjtree-sources/ddl_keywords.jjt
+diff backend/schema/parser/ddl_expression.jjt ../spanner-schema-diff-tool/src/main/jjtree-sources/ddl_expression.jjt
 diff backend/schema/parser/ddl_parser.jjt ../spanner-schema-diff-tool/src/main/jjtree-sources/ddl_parser.jjt
 diff backend/schema/parser/ddl_string_bytes_tokens.jjt ../spanner-schema-diff-tool/src/main/jjtree-sources/ddl_string_bytes_tokens.jjt
+diff backend/schema/parser/ddl_whitespace.jjt ../spanner-schema-diff-tool/src/main/jjtree-sources/ddl_whitespace.jjt
 ```
 

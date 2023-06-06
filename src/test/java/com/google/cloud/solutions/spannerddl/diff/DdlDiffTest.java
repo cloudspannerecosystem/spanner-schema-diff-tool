@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -78,7 +79,8 @@ public class DdlDiffTest {
 
   @Test
   public void parseDDLCreateIndexSyntaxError() {
-    parseDdlCheckDdlDiffException("Create index index1 on test1", "Was expecting:\n\n\"(\" ...");
+    parseDdlCheckDdlDiffException(
+        "Create index index1 on test1", "Was expecting one of:\n\n\"(\" ...");
   }
 
   private void parseDdlCheckDdlDiffException(String DDL, String exceptionContains) {
@@ -161,15 +163,70 @@ public class DdlDiffTest {
     DdlDiff.parseDDL(DDL);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = UnsupportedOperationException.class)
   public void parseDDLNoDropTable() throws DdlDiffException {
     String DDL = "drop table test1";
     DdlDiff.parseDDL(DDL);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = UnsupportedOperationException.class)
   public void parseDDLNoDropIndex() throws DdlDiffException {
     String DDL = "drop index test1";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoDropChangeStream() throws DdlDiffException {
+    String DDL = "drop change stream test1";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoCreateChangeStream() throws DdlDiffException {
+    String DDL = "Create change stream test1 for test2";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoCreateView() throws DdlDiffException {
+    String DDL = "CREATE  VIEW test1 SQL SECURITY INVOKER AS SELECT * from test2";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoCreateorReplaceView() throws DdlDiffException {
+    String DDL = "CREATE OR REPLACE VIEW test1 SQL SECURITY INVOKER AS SELECT * from test2";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoCreateTableRowDeletionPolicy() throws DdlDiffException {
+    String DDL =
+        "CREATE TABLE test1(Key INT64,CreatedAt TIMESTAMP,"
+            + ") PRIMARY KEY (Key), "
+            + "ROW DELETION POLICY (OLDER_THAN(timestamp_column, INTERVAL 1 DAY));";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoAlterTableRowDeletionPolicy() throws DdlDiffException {
+    String DDL =
+        "ALTER TABLE Albums "
+            + "ADD ROW DELETION POLICY (OLDER_THAN(timestamp_column, INTERVAL 1 DAY));";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoAlterTableReplaceRowDeletionPolicy() throws DdlDiffException {
+    String DDL =
+        "ALTER TABLE Albums "
+            + "REPLACE ROW DELETION POLICY (OLDER_THAN(timestamp_column, INTERVAL 1 DAY));";
+    DdlDiff.parseDDL(DDL);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoDropRowDeletionPolicy() throws DdlDiffException {
+    String DDL = "ALTER TABLE Albums DROP ROW DELETION POLICY;";
     DdlDiff.parseDDL(DDL);
   }
 
@@ -588,7 +645,7 @@ public class DdlDiffTest {
         List<String> expectedDiff =
             expectedOutput.getValue() != null
                 ? Arrays.asList(expectedOutput.getValue().split("\n"))
-                : Arrays.asList();
+                : Collections.emptyList();
 
         DdlDiff ddlDiff = DdlDiff.build(originalSegment.getValue(), newSegment.getValue());
         // Run diff with allowRecreateIndexes and allowDropStatements

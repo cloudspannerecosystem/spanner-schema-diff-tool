@@ -38,10 +38,22 @@ void identifier() #void :
   | pseudoReservedWord()
 }
 
+void qualified_identifier() #void :
+{}
+{
+  ((identifier() #part) (("." identifier() #part)*))
+}
+
 void identifier_list() :
 {}
 {
   (identifier() #identifier) ("," identifier() #identifier)*
+}
+
+void qualified_identifier_list() :
+{}
+{
+  (qualified_identifier() #identifier) ("," qualified_identifier() #identifier)*
 }
 
 void path() :
@@ -65,6 +77,7 @@ void ddl_statement() :
   (   alter_statement()
     | create_statement()
     | drop_statement()
+    | analyze_statement()
   )
   <EOF>
 }
@@ -74,8 +87,22 @@ void create_statement() #void :
 {
   <CREATE>
   (   create_database_statement()
+
     | create_table_statement()
-    | create_index_statement()
+    | LOOKAHEAD(2) create_index_statement()
+
+    | create_or_replace_statement()
+    | create_change_stream_statement()
+  )
+}
+
+
+void create_or_replace_statement() :
+{}
+{
+  [ or_replace() ]
+  (
+      create_view_statement()
   )
 }
 
@@ -96,10 +123,12 @@ void create_database_statement() :
 void create_table_statement() :
 {}
 {
-  <TABLE> identifier() #name
+  <TABLE>
+  qualified_identifier() #name
   "(" [ table_element() ( LOOKAHEAD(2) "," table_element() )* [ "," ] ] ")"
   primary_key()
   [ LOOKAHEAD(2) "," table_interleave_clause() ]
+  [ LOOKAHEAD(2) "," row_deletion_policy_clause() ]
 }
 
 void table_element() #void :
@@ -116,7 +145,7 @@ void column_def() :
   identifier() #name
   column_type()
   [ <NOT> <NULLL> #not_null ]
-  [ generation_clause() ]
+  [ generation_clause() | column_default_clause() ]
   [ options_clause() ]
 }
 
@@ -125,13 +154,16 @@ void column_def_alter_attrs() :
 {
   column_type()
   [ <NOT> <NULLL> #not_null ]
-  [ generation_clause() ]
+  [ generation_clause() | column_default_clause() ]
 }
 
 void column_def_alter() :
 {}
 {
-    <SET> #set_options_clause options_clause()
+    LOOKAHEAD(2) <SET> ( options_clause()
+                         | column_default_clause()
+                       )
+  | LOOKAHEAD(2) <DROP> <DEFAULTT> #drop_column_default
   | column_def_alter_attrs()
 }
 
@@ -146,9 +178,13 @@ void column_type() :
   | <TIMESTAMP>
   | <DATE>
   | <NUMERIC>
+  | <PG> "." qualified_identifier() #pgtype
   | <JSON>
   | <ARRAY> "<" column_type() ">"
+
+
 }
+
 
 void column_length() :
 {}
@@ -163,6 +199,12 @@ void generation_clause() :
   [<STORED> #stored]
 }
 
+void column_default_clause() :
+{}
+{
+  <DEFAULTT> "(" expression() #column_default_expression ")"
+}
+
 void primary_key() #void :
 {}
 {
@@ -175,9 +217,10 @@ void foreign_key() :
   [ <CONSTRAINT> identifier() #constraint_name ]
   <FOREIGN> <KEY>
     "(" identifier_list() #referencing_columns ")"
-  <REFERENCES> identifier() #referenced_table
+  <REFERENCES> qualified_identifier() #referenced_table
     "(" identifier_list() #referenced_columns ")"
 }
+
 
 void statement_token_no_paren() :
 {}
@@ -195,8 +238,27 @@ void check_constraint() :
 void table_interleave_clause() :
 {}
 {
-  <INTERLEAVE> <IN> <PARENT> identifier() #interleave_in
+  <INTERLEAVE> <IN> <PARENT> qualified_identifier() #interleave_in
     [ on_delete_clause() ]
+}
+
+void row_deletion_policy_clause():
+{}
+{
+  <ROW> <DELETION> <POLICY> "(" row_deletion_policy_expression() ")"
+}
+
+void row_deletion_policy_expression():
+{}
+{
+  identifier() #row_deletion_policy_function
+  "(" identifier() #row_deletion_policy_column "," interval_expression() ")"
+}
+
+void interval_expression():
+{}
+{
+  <INTERVAL> int_value() <DAY>
 }
 
 void on_delete_clause() :
@@ -210,18 +272,55 @@ void create_index_statement() :
 {
   [ <UNIQUE> #unique_index ]
   [ <NULL_FILTERED> #null_filtered ]
-  <INDEX> identifier() #name
-  <ON> identifier() #table
+  <INDEX>
+  qualified_identifier() #name
+  <ON> qualified_identifier() #table
   key() #columns
   [ <STORING> stored_column_list() ]
   [ LOOKAHEAD(2) "," index_interleave_clause() ]
 }
 
+
+void create_change_stream_statement() :
+{}
+{
+  <CHANGE> <STREAM> qualified_identifier() #name
+  [ change_stream_for_clause() ]
+  [ options_clause() ]
+}
+
+void change_stream_for_clause() :
+{}
+{
+  <FOR>
+  (   <ALL> #all
+    | change_stream_tracked_tables()
+  )
+}
+
+void change_stream_tracked_tables() :
+{}
+{
+  change_stream_tracked_tables_entry()
+  ( "," change_stream_tracked_tables_entry() )*
+}
+
+void change_stream_tracked_tables_entry() :
+{}
+{
+  qualified_identifier() #table
+  [ (
+      "(" [ (identifier() #column) ( "," identifier() #column )* ] ")"
+    ) #explicit_columns // Needed to distinguish between `Table` and `Table()`
+  ]
+}
+
 void index_interleave_clause() :
 {}
 {
-  <INTERLEAVE> <IN> identifier() #interleave_in
+  <INTERLEAVE> <IN> qualified_identifier() #interleave_in
 }
+
 
 void key() #void :
 {}
@@ -271,49 +370,104 @@ void option_key_val() :
   identifier() #key
   "="
   (   <NULLL> #nulll
-    | <TRUE> #bool_true_val
-    | <FALSE> #bool_false_val
+    | <TRUEE> #bool_true_val
+    | <FALSEE> #bool_false_val
     | <INTEGER_LITERAL> #integer_val
-    | string_value()  #str_val
+    | string_value() #str_val
   )
+}
+
+void or_replace() :
+{}
+{
+  <OR> <REPLACE>
+}
+
+void sql_security_invoker() :
+{}
+{
+  <SQL> <SECURITY> <INVOKER>
+}
+
+void create_view_statement() :
+{}
+{
+  ( <VIEW> )
+  ( qualified_identifier() #name )
+  [ sql_security_invoker() ]
+  <AS> statement_tokens() #view_definition
+}
+
+void statement_tokens() :
+{}
+{
+  ( statement_token_no_paren()
+  | "("
+  | ")" )+
 }
 
 void drop_statement() :
 {}
 {
-  <DROP> ( <TABLE> #table | <INDEX> #index ) identifier() #name
+  <DROP>
+
+    ( <TABLE> #table
+    | <INDEX> #index
+    | <VIEW> #view
+    | <CHANGE> <STREAM> #change_stream
+  ) qualified_identifier() #name
+
+
+
 }
 
 void alter_statement() #void :
 {}
 {
   <ALTER>
-  (   alter_database_statement()
-    | alter_table_statement()
-  )
-}
+  (
+    alter_table_statement()
+    | alter_change_stream_statement()
 
-void alter_database_statement() :
-{}
-{
-  <DATABASE> (identifier() #database_name) <SET> options_clause()
+  )
 }
 
 void alter_table_statement() :
 {}
 {
-  <TABLE> (identifier() #table_name)
-  (   LOOKAHEAD(3) <ADD> #add_column [LOOKAHEAD(2) <COLUMN>] column_def()
-    | LOOKAHEAD(3) <DROP> <CONSTRAINT> #drop_constraint
-        identifier() #constraint_name
-    | <DROP> #drop_column [LOOKAHEAD(2) <COLUMN>] (identifier() #column_name)
-    | LOOKAHEAD(3) <ALTER> #alter_column [LOOKAHEAD(2) <COLUMN>]
+  <TABLE> (qualified_identifier() #table_name)
+  (   LOOKAHEAD(3) <DROP> <CONSTRAINT> #drop_constraint identifier() #constraint_name
+    | LOOKAHEAD(3) <DROP> <ROW> <DELETION> <POLICY> #drop_row_deletion_policy
+    | LOOKAHEAD(3) <DROP> #drop_column [LOOKAHEAD(2) <COLUMN>]
+        (identifier() #column_name)
+    | LOOKAHEAD(1) <ALTER> #alter_column [LOOKAHEAD(2) <COLUMN>]
         (identifier() #name) column_def_alter()
     | <SET> #set_on_delete on_delete_clause()
     | LOOKAHEAD(4) <ADD> foreign_key()
-    | <ADD> check_constraint()
+    | LOOKAHEAD(4) <ADD> check_constraint()
+    | LOOKAHEAD(4) <ADD> row_deletion_policy_clause() #add_row_deletion_policy
+    | LOOKAHEAD(1) <ADD> #add_column [LOOKAHEAD(6) <COLUMN>
+      ] column_def()
+    | <REPLACE> row_deletion_policy_clause() #replace_row_deletion_policy
   )
 }
+
+void alter_change_stream_statement() :
+{}
+{
+  <CHANGE> <STREAM> (qualified_identifier() #name)
+  (   LOOKAHEAD(2) <SET> change_stream_for_clause()
+    | <SET> options_clause()
+    | <DROP> <FOR> <ALL> #drop_for_all
+  )
+}
+
+void analyze_statement() :
+{}
+{
+  <ANALYZE>
+}
+
 
 TOKEN:
 {

@@ -150,6 +150,44 @@ CREATE TABLE test_fkey (col1 INT64, col2 INT64) PRIMARY KEY (col1 ASC)
 ALTER TABLE test_fkey ADD CONSTRAINT fk_col1 FOREIGN KEY (col1) REFERENCES test1 (col1)
 
 == TEST 25 move foreign key out of create table
-# No change
-==
 
+# No change
+
+== TEST 26 unchanged Row Deletion Policy
+
+# No change
+
+== TEST 27 unchanged Row Deletion Policy - moved to ALTER
+
+# No change
+
+== TEST 28 drop Row Deletion Policy
+
+ALTER TABLE test1 DROP ROW DELETION POLICY
+
+== TEST 29 drop Row Deletion Policy added by ALTER
+
+ALTER TABLE test1 DROP ROW DELETION POLICY
+
+== TEST 30 Add Row Deletion Policy
+
+ALTER TABLE test1 ADD ROW DELETION POLICY (OLDER_THAN ( timestamp_column, INTERVAL 10 DAY ))
+
+== TEST 31 Add Row Deletion Policy by Alter
+
+ALTER TABLE test1 ADD ROW DELETION POLICY (OLDER_THAN ( timestamp_column, INTERVAL 10 DAY ))
+
+== TEST 32 Change Row Deletion Policy
+
+ALTER TABLE test1 REPLACE ROW DELETION POLICY (OLDER_THAN ( other_column, INTERVAL 20 DAY ))
+
+== TEST 32 Change Row Deletion Policy added by Alter
+
+ALTER TABLE test1 REPLACE ROW DELETION POLICY (OLDER_THAN ( other_column, INTERVAL 20 DAY ))
+
+== TEST 33 Drop table with Row Deletion Policy
+
+ALTER TABLE test1 DROP ROW DELETION POLICY
+DROP TABLE test1
+
+==

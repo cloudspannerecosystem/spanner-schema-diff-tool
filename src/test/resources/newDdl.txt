@@ -238,5 +238,84 @@ create table test1 (
 primary key (col1);
 alter table test1 add constraint fk_in_table foreign key (col1) references othertable(othercol1)
 
+== TEST 26 unchanged Row Deletion Policy
+
+create table test1 (
+    col1 int64,
+    time timestamp
+)
+primary key (col1),
+row deletion policy (OLDER_THAN ( timestamp_column, INTERVAL 10 DAY ));
+
+== TEST 27 unchanged Row Deletion Policy - moved to ALTER
+
+create table test1 (
+    col1 int64,
+    time timestamp
+)
+primary key (col1);
+
+ALTER table test1 ADD row deletion policy (OLDER_THAN ( timestamp_column, INTERVAL 10 DAY ));
+
+== TEST 28 drop Row Deletion Policy
+
+create table test1 (
+    col1 int64,
+    time timestamp
+)
+primary key (col1)
+
+== TEST 29 drop Row Deletion Policy added by ALTER
+
+create table test1 (
+    col1 int64,
+    time timestamp
+)
+primary key (col1);
+
+== TEST 30 Add Row Deletion Policy
+
+create table test1 (
+    col1 int64,
+    time timestamp
+)
+primary key (col1),
+row deletion policy (OLDER_THAN ( timestamp_column, INTERVAL 10 DAY ));
+
+== TEST 31 Add Row Deletion Policy by Alter
+
+create table test1 (
+    col1 int64,
+    time timestamp
+)
+primary key (col1);
+alter table test1 ADD row deletion policy (OLDER_THAN ( timestamp_column, INTERVAL 10 DAY ))
+
+== TEST 32 Change Row Deletion Policy
+
+create table test1 (
+    col1 int64,
+    time timestamp
+)
+primary key (col1),
+row deletion policy (OLDER_THAN ( other_column, INTERVAL 20 DAY ));
+
+== TEST 32 Change Row Deletion Policy added by Alter
+
+create table test1 (
+    col1 int64,
+    time timestamp
+)
+primary key (col1);
+
+Alter table test1 add row deletion policy (OLDER_THAN ( other_column, INTERVAL 20 DAY ));
+
+== TEST 33 Drop table with Row Deletion Policy
+
+# nothing here
+
 ==
+
+
+
 

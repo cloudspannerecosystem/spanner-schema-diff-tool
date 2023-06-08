@@ -172,6 +172,11 @@ public class DDLParserTest {
     parseAndVerifyToString("ALTER TABLE Albums DROP ROW DELETION POLICY;");
   }
 
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoDefaultValue() throws ParseException {
+    parseAndVerifyToString("CREATE TABLE test1 ( keycol INT64 DEFAULT (123) ) PRIMARY KEY keycol;");
+  }
+
   private static void parseCheckingException(String ddlStatement, String exceptionContains) {
     try {
       parseAndVerifyToString(ddlStatement);

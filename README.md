@@ -42,8 +42,8 @@ statements in the DDL file. This has the following implications:
 
 * Tables and indexes must be created with a single `CREATE` statement (not by
   using `CREATE` then `ALTER` statements). The exception to this is when
-  foreign key constraints are created - the tool supports creating them in the
-  table creation DDL statement, and also using `ALTER` statements.
+  constraints and row deletion policies are created - the tool supports creating them in the
+  table creation DDL statement, and also by using `ALTER` statements after the table has been created.
 
 ### Note on dropped database objects.
 
@@ -57,8 +57,8 @@ differences found:
 * Drop Indexes.
 * Drop Columns in a Table.
 
-Foreign key constraints will always be dropped if they are not present in the
-new DDL.
+Constraints and row deletion policies will always be dropped if they are not
+present in the new DDL.
 
 ### Note on modified indexes
 
@@ -102,12 +102,26 @@ foreign key relationship is
 which would also be dropped and recreated. Therefore this option is disabled by
 default, and FOREIGN KEY differences will cause the tool to fail.
 
+## Unsupported Spanner DDL features
+
+This tool by neccessity will lag behind the implementation of new DDL features
+in Spanner. If you need this tool to support a specific feature, please log an
+issue, or [implement it yourself](AddingCapabilities.md) and submit a Pull
+Request.
+
+As of the last edit of this file, the features known not to be supported are: 
+
+* Change Streams (create, drop, alter)
+* `ALTER DATABASE` statements
+* Default column values (`DEFAULT` clause)
+* Views (create, drop, alter)
+
 ## Usage:
 
 ### Prerequisites:
 
 Install a [JAVA development kit](https://jdk.java.net/) (supporting Java 8
-or above) and [Apache Maven])(https://maven.apache.org/)
+or above) and [Apache Maven](https://maven.apache.org/)
 
 There are 2 options for running the tool: either compiling and running from
 source, or by building a runnable JAR with all dependencies included and then
@@ -319,14 +333,14 @@ java -jar target/spanner-ddl-diff-*-jar-with-dependencies.jar \
 
 # Apply alter statements to the database.
 gcloud spanner databases ddl update "${SPANNER_DATABASE}" --instance="${SPANNER_INSTANCE}" \
-    --ddl="$(cat /tmp/alter.ddl)"
+    --ddl-file=/tmp/alter.ddl
 
 ```
 
 ## License
 
 ```
-Copyright 2020 Google LLC
+Copyright 2023 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

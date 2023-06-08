@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.google.cloud.solutions.spannerddl.parser;
 
-/** Abstract Syntax Tree parser object for "drop_statement" token */
-public class ASTdrop_statement extends SimpleNode {
-
-  public ASTdrop_statement(int id) {
+public class ASTcolumn_default_clause extends SimpleNode {
+  public ASTcolumn_default_clause(int id) {
     super(id);
-    throw new UnsupportedOperationException("Not Implemented");
+    throw new UnsupportedOperationException("not implemented");
   }
 
-  public ASTdrop_statement(DdlParser p, int id) {
+  public ASTcolumn_default_clause(DdlParser p, int id) {
     super(p, id);
-    throw new UnsupportedOperationException("Not Implemented");
+    throw new UnsupportedOperationException("not implemented");
   }
 }

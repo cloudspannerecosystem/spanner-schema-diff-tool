@@ -46,7 +46,7 @@ TOKEN:
   | <EXCLUDE:              "exclude">
   | <EXISTS:               "exists">
   | <EXTRACT:              "extract">
-  | <FALSE:                "false">
+  | <FALSEE:               "false">
   | <FETCH:                "fetch">
   | <FOLLOWING:            "following">
   | <FOR:                  "for">
@@ -101,7 +101,7 @@ TOKEN:
   | <THEN:                 "then">
   | <TO:                   "to">
   | <TREAT:                "treat">
-  | <TRUE:                 "true">
+  | <TRUEE:                "true">
   | <UNBOUNDED:            "unbounded">
   | <UNION:                "union">
   | <UNNEST:               "unnest">
@@ -118,36 +118,68 @@ TOKEN:
     <ACTION:                   "action">
   | <ADD:                      "add">
   | <ALTER:                    "alter">
+  | <ANALYZE:                  "analyze">
   | <BOOL:                     "bool">
+  | <BUNDLE:                   "bundle">
   | <BYTES:                    "bytes">
   | <CASCADE:                  "cascade">
+  | <CHANGE:                   "change">
   | <CHECK:                    "check">
   | <COLUMN:                   "column">
   | <CONSTRAINT:               "constraint">
   | <DATABASE:                 "database">
   | <DATE:                     "date">
+  | <DAY:                      "day">
   | <DELETE:                   "delete">
+  | <DELETION:                 "deletion">
   | <DROP:                     "drop">
+  | <EXECUTE:                  "execute">
+  | <FIRST:                    "first">
   | <FLOAT64:                  "float64">
   | <FOREIGN:                  "foreign">
+  | <FUNCTION:                 "function">
+  | <GRANT:                    "grant">
   | <INDEX:                    "index">
+  | <INPUT:                    "input">
+  | <INSERT:                   "insert">
   | <INT64:                    "int64">
   | <INTERLEAVE:               "interleave">
+  | <INVOKER:                  "invoker">
   | <JSON:                     "json">
   | <KEY:                      "key">
+  | <LAST:                     "last">
   | <MAX:                      "max">
+  | <MODEL:                    "model">
   | <NULL_FILTERED:            "null_filtered">
   | <NUMERIC:                  "numeric">
   | <OPTIONS:                  "options">
+  | <OUTPUT:                   "output">
   | <PARENT:                   "parent">
+  | <PG:                       "pg">
+  | <POLICY:                   "policy">
   | <PRIMARY:                  "primary">
   | <REFERENCES:               "references">
+  | <REMOTE:                   "remote">
+  | <REPLACE:                  "replace">
+  | <REVOKE:                   "revoke">
+  | <ROLE:                     "role">
+  | <ROW:                      "row">
+  | <SCHEMA:                   "schema">
+  | <SEARCH:                   "search">
+  | <SECURITY:                 "security">
+  | <SEQUENCE:                 "sequence">
+  | <SQL:                      "sql">
+  | <STATISTICS:               "statistics">
   | <STORED:                   "stored">
   | <STORING:                  "storing">
+  | <STREAM:                   "stream">
   | <STRING:                   "string">
   | <TABLE:                    "table">
   | <TIMESTAMP:                "timestamp">
+  | <TOKENLIST:                "tokenlist">
   | <UNIQUE:                   "unique">
+  | <UPDATE:                   "update">
+  | <VIEW:                     "view">
 }
 
 void pseudoReservedWord() #void :
@@ -156,36 +188,68 @@ void pseudoReservedWord() #void :
     <ACTION>
   | <ADD>
   | <ALTER>
+  | <ANALYZE>
   | <BOOL>
+  | <BUNDLE>
   | <BYTES>
   | <CASCADE>
+  | <CHANGE>
   | <CHECK>
   | <COLUMN>
   | <CONSTRAINT>
   | <DATABASE>
   | <DATE>
+  | <DAY>
   | <DELETE>
+  | <DELETION>
   | <DROP>
+  | <EXECUTE>
+  | <FIRST>
   | <FLOAT64>
   | <FOREIGN>
+  | <FUNCTION>
+  | <GRANT>
   | <INDEX>
+  | <INPUT>
+  | <INSERT>
   | <INT64>
   | <INTERLEAVE>
+  | <INVOKER>
   | <JSON>
   | <KEY>
+  | <LAST>
   | <MAX>
+  | <MODEL>
   | <NULL_FILTERED>
   | <NUMERIC>
   | <OPTIONS>
+  | <OUTPUT>
   | <PARENT>
+  | <PG>
+  | <POLICY>
   | <PRIMARY>
   | <REFERENCES>
+  | <REMOTE>
+  | <REPLACE>
+  | <REVOKE>
+  | <ROLE>
+  | <ROW>
+  | <SCHEMA>
+  | <SEARCH>
+  | <SECURITY>
+  | <SEQUENCE>
+  | <SQL>
+  | <STATISTICS>
   | <STORED>
   | <STORING>
+  | <STREAM>
   | <STRING>
   | <TABLE>
   | <TIMESTAMP>
+  | <TOKENLIST>
   | <UNIQUE>
+  | <UPDATE>
+  | <VIEW>
 }
 
 void any_reserved_word() :
@@ -221,7 +285,7 @@ void any_reserved_word() :
   | <EXCLUDE>
   | <EXISTS>
   | <EXTRACT>
-  | <FALSE>
+  | <FALSEE>
   | <FETCH>
   | <FOLLOWING>
   | <FOR>
@@ -276,7 +340,7 @@ void any_reserved_word() :
   | <THEN>
   | <TO>
   | <TREAT>
-  | <TRUE>
+  | <TRUEE>
   | <UNBOUNDED>
   | <UNION>
   | <UNNEST>

@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -43,7 +44,7 @@ import org.junit.Test;
 public class DdlDiffTest {
 
   @Test
-  public void parseDDL() throws DdlDiffException {
+  public void parseMultiDdlStatements() throws DdlDiffException {
     String DDL =
         "create table test1 (col1 int64) primary key (col1);\n\n"
             + "-- comment ; with semicolon.\n"
@@ -68,26 +69,6 @@ public class DdlDiffTest {
             "CREATE TABLE test3 (col3 STRING(MAX)) PRIMARY KEY (col3 ASC), "
                 + "INTERLEAVE IN PARENT testparent ON DELETE NO ACTION");
     assertThat(result.get(3).toString()).isEqualTo("CREATE INDEX index1 ON table1 (col1 ASC)");
-  }
-
-  @Test
-  public void parseDDLCreateTableSyntaxError() {
-    parseDdlCheckDdlDiffException(
-        "Create table test1 ( col1 int64 )", "Was expecting:\n\n\"primary\" ...");
-  }
-
-  @Test
-  public void parseDDLCreateIndexSyntaxError() {
-    parseDdlCheckDdlDiffException("Create index index1 on test1", "Was expecting:\n\n\"(\" ...");
-  }
-
-  private void parseDdlCheckDdlDiffException(String DDL, String exceptionContains) {
-    try {
-      DdlDiff.parseDDL(DDL);
-      fail("Expected DdlDiffException not thrown.");
-    } catch (DdlDiffException e) {
-      assertThat(e.getMessage()).contains(exceptionContains);
-    }
   }
 
   @Test
@@ -122,55 +103,37 @@ public class DdlDiffTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableAlterColumn() throws DdlDiffException {
-    String DDL = "alter table test1 alter column col1 int64 not null";
-    DdlDiff.parseDDL(DDL);
+    DdlDiff.parseDDL("alter table test1 alter column col1 int64 not null");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableAddColumn() throws DdlDiffException {
-    String DDL = "alter table test1 add column col1 int64 not null";
-    DdlDiff.parseDDL(DDL);
+    DdlDiff.parseDDL("alter table test1 add column col1 int64 not null");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableDropColumn() throws DdlDiffException {
-    String DDL = "alter table test1 drop column col1";
-    DdlDiff.parseDDL(DDL);
+    DdlDiff.parseDDL("alter table test1 drop column col1");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableDropConstraint() throws DdlDiffException {
-    String DDL = "alter table test1 drop constraint xxx";
-    DdlDiff.parseDDL(DDL);
+    DdlDiff.parseDDL("alter table test1 drop constraint xxx");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableSetOnDelete() throws DdlDiffException {
-    String DDL = "alter table test1 set on delete cascade";
-    DdlDiff.parseDDL(DDL);
+    DdlDiff.parseDDL("alter table test1 set on delete cascade");
   }
 
+  @Test
   public void parseDDLAlterTableAddConstraint() throws DdlDiffException {
-    String DDL = "alter table test1 add constraint XXX FOREIGN KEY (yyy) references zzz(xxx)";
-    DdlDiff.parseDDL(DDL);
+    DdlDiff.parseDDL("alter table test1 add constraint XXX FOREIGN KEY (yyy) references zzz(xxx)");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableAddAnonConstraint() throws DdlDiffException {
-    String DDL = "alter table test1 add FOREIGN KEY (yyy) references zzz(xxx)";
-    DdlDiff.parseDDL(DDL);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void parseDDLNoDropTable() throws DdlDiffException {
-    String DDL = "drop table test1";
-    DdlDiff.parseDDL(DDL);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void parseDDLNoDropIndex() throws DdlDiffException {
-    String DDL = "drop index test1";
-    DdlDiff.parseDDL(DDL);
+    DdlDiff.parseDDL("alter table test1 add FOREIGN KEY (yyy) references zzz(xxx)");
   }
 
   @Test
@@ -376,7 +339,7 @@ public class DdlDiffTest {
   }
 
   @Test
-  public void generateAlterTable_changeGenerationClause() throws DdlDiffException {
+  public void generateAlterTable_changeGenerationClause() {
     // remove interleave
     getTableDiffCheckDdlDiffException(
         "create table test1 (col1 int64, col2 int64, col3 int64 as ( col1*col2 ) stored) primary"
@@ -588,7 +551,7 @@ public class DdlDiffTest {
         List<String> expectedDiff =
             expectedOutput.getValue() != null
                 ? Arrays.asList(expectedOutput.getValue().split("\n"))
-                : Arrays.asList();
+                : Collections.emptyList();
 
         DdlDiff ddlDiff = DdlDiff.build(originalSegment.getValue(), newSegment.getValue());
         // Run diff with allowRecreateIndexes and allowDropStatements

@@ -18,6 +18,7 @@ package com.google.cloud.solutions.spannerddl.diff;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.cloud.solutions.spannerddl.parser.ASTadd_row_deletion_policy;
 import com.google.cloud.solutions.spannerddl.parser.ASTalter_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcheck_constraint;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_def;
@@ -27,12 +28,14 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTforeign_key;
 import com.google.cloud.solutions.spannerddl.parser.ASToptions_clause;
+import com.google.cloud.solutions.spannerddl.parser.ASTrow_deletion_policy_clause;
 import com.google.cloud.solutions.spannerddl.parser.DdlParser;
 import com.google.cloud.solutions.spannerddl.parser.DdlParserTreeConstants;
 import com.google.cloud.solutions.spannerddl.parser.ParseException;
 import com.google.cloud.solutions.spannerddl.parser.SimpleNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.MapDifference;
@@ -48,7 +51,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeMap;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -93,6 +98,7 @@ public class DdlDiff {
   private final MapDifference<String, ConstraintWrapper> constraintDifferences;
   private final Map<String, ASTcreate_table_statement> newTablesCreationOrder;
   private final Map<String, ASTcreate_table_statement> originalTablesCreationOrder;
+  private final MapDifference<String, ASTrow_deletion_policy_clause> ttlDifferences;
 
   private static class ConstraintWrapper {
 
@@ -132,12 +138,14 @@ public class DdlDiff {
       Map<String, ASTcreate_table_statement> originalTablesCreationOrder,
       Map<String, ASTcreate_table_statement> newTablesCreationOrder,
       MapDifference<String, ASTcreate_index_statement> indexDifferences,
-      MapDifference<String, ConstraintWrapper> constraintDifferences) {
+      MapDifference<String, ConstraintWrapper> constraintDifferences,
+      MapDifference<String, ASTrow_deletion_policy_clause> ttlDifferences) {
     this.tableDifferences = tableDifferences;
     this.originalTablesCreationOrder = originalTablesCreationOrder;
     this.newTablesCreationOrder = newTablesCreationOrder;
     this.indexDifferences = indexDifferences;
     this.constraintDifferences = constraintDifferences;
+    this.ttlDifferences = ttlDifferences;
   }
 
   public List<String> generateDifferenceStatements(Map<String, Boolean> options)
@@ -191,6 +199,11 @@ public class DdlDiff {
               + fkDiff.leftValue().getName());
     }
 
+    // Drop deleted TTLs
+    for (String tableName : ttlDifferences.entriesOnlyOnLeft().keySet()) {
+      output.add("ALTER TABLE " + tableName + " DROP ROW DELETION POLICY");
+    }
+
     if (allowDropStatements) {
       // Drop tables that have been deleted -- need to do it in reverse creation order.
       List<String> reverseOrderedTableNames = new ArrayList<>(originalTablesCreationOrder.keySet());
@@ -220,6 +233,22 @@ public class DdlDiff {
       }
     }
 
+    // Create new TTLs
+    for (Map.Entry<String, ASTrow_deletion_policy_clause> newTtl :
+        ttlDifferences.entriesOnlyOnRight().entrySet()) {
+      output.add("ALTER TABLE " + newTtl.getKey() + " ADD " + newTtl.getValue());
+    }
+
+    // updateExisting TTLs
+    for (Entry<String, ValueDifference<ASTrow_deletion_policy_clause>> differentTtl :
+        ttlDifferences.entriesDiffering().entrySet()) {
+      output.add(
+          "ALTER TABLE "
+              + differentTtl.getKey()
+              + " REPLACE "
+              + differentTtl.getValue().rightValue());
+    }
+
     // Create new indexes
     for (ASTcreate_index_statement index : indexDifferences.entriesOnlyOnRight().values()) {
       LOG.info("Creating new index: {}", index.getIndexName());
@@ -233,9 +262,9 @@ public class DdlDiff {
       output.add(difference.rightValue().toString());
     }
 
-    // Create new constrants.
+    // Create new constraints.
     for (ConstraintWrapper fk : constraintDifferences.entriesOnlyOnRight().values()) {
-      output.add("ALTER TABLE " + fk.tableName + " ADD " + fk.constraint.toString());
+      output.add("ALTER TABLE " + fk.tableName + " ADD " + fk.constraint);
     }
 
     // Re-create modified Foreign Keys.
@@ -439,24 +468,30 @@ public class DdlDiff {
   }
 
   static DdlDiff build(String originalDDL, String newDDL) throws DdlDiffException {
-    List<ASTddl_statement> originalStatements = parseDDL(originalDDL);
-    List<ASTddl_statement> newStatements = parseDDL(newDDL);
+    List<ASTddl_statement> originalStatements = parseDDL(Strings.nullToEmpty(originalDDL));
+    List<ASTddl_statement> newStatements = parseDDL(Strings.nullToEmpty(newDDL));
 
     Map<String, ASTcreate_table_statement> originalTablesCreationOrder = new LinkedHashMap<>();
     Map<String, ASTcreate_index_statement> originalIndexes = new TreeMap<>();
     Map<String, ConstraintWrapper> originalConstraints = new TreeMap<>();
+    Map<String, ASTrow_deletion_policy_clause> originalTtls = new TreeMap<>();
 
-    separateTablesIndexesConstraints(
-        originalStatements, originalTablesCreationOrder, originalIndexes, originalConstraints);
+    separateTablesIndexesConstraintsTtls(
+        originalStatements,
+        originalTablesCreationOrder,
+        originalIndexes,
+        originalConstraints,
+        originalTtls);
     Map<String, ASTcreate_table_statement> originalTablesNameOrder =
         new TreeMap<>(originalTablesCreationOrder);
 
     Map<String, ASTcreate_table_statement> newTablesCreationOrder = new LinkedHashMap<>();
     Map<String, ASTcreate_index_statement> newIndexes = new TreeMap<>();
     Map<String, ConstraintWrapper> newConstraints = new TreeMap<>();
+    Map<String, ASTrow_deletion_policy_clause> newTtls = new TreeMap<>();
 
-    separateTablesIndexesConstraints(
-        newStatements, newTablesCreationOrder, newIndexes, newConstraints);
+    separateTablesIndexesConstraintsTtls(
+        newStatements, newTablesCreationOrder, newIndexes, newConstraints, newTtls);
     Map<String, ASTcreate_table_statement> newTablesNameOrder =
         new TreeMap<>(newTablesCreationOrder);
 
@@ -465,14 +500,16 @@ public class DdlDiff {
         originalTablesCreationOrder,
         newTablesCreationOrder,
         Maps.difference(originalIndexes, newIndexes),
-        Maps.difference(originalConstraints, newConstraints));
+        Maps.difference(originalConstraints, newConstraints),
+        Maps.difference(originalTtls, newTtls));
   }
 
-  private static void separateTablesIndexesConstraints(
+  private static void separateTablesIndexesConstraintsTtls(
       List<ASTddl_statement> statements,
       Map<String, ASTcreate_table_statement> tables,
       Map<String, ASTcreate_index_statement> indexes,
-      Map<String, ConstraintWrapper> constraints) {
+      Map<String, ConstraintWrapper> constraints,
+      Map<String, ASTrow_deletion_policy_clause> ttls) {
     for (ASTddl_statement statement : statements) {
       if (statement.jjtGetChild(0) instanceof ASTcreate_table_statement) {
         ASTcreate_table_statement createTable =
@@ -482,29 +519,41 @@ public class DdlDiff {
         tables.put(createTable.getTableName(), createTable.clearConstraints());
 
         // convert embedded constraint statements into wrapper object with table name
-        // use a single map for all foreign keys, whether created in table or externally
+        // use a single map for all foreign keys, constraints and row deletion polcies whether
+        // created in table or externally
         createTable.getConstraints().values().stream()
             .map(c -> new ConstraintWrapper(createTable.getTableName(), c))
             .forEach(c -> constraints.put(c.getName(), c));
+
+        final Optional<ASTrow_deletion_policy_clause> rowDeletionPolicyClause =
+            createTable.getRowDeletionPolicyClause();
+        rowDeletionPolicyClause.ifPresent(rdp -> ttls.put(createTable.getTableName(), rdp));
+
       } else if (statement.jjtGetChild(0) instanceof ASTcreate_index_statement) {
         ASTcreate_index_statement createIndex =
             (ASTcreate_index_statement) statement.jjtGetChild(0);
         indexes.put(createIndex.getIndexName(), createIndex);
 
-      } else if (statement.jjtGetChild(0) instanceof ASTalter_table_statement
-          &&
-          // use a single map for all foreign keys, whether created in table or externally
-          (statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTforeign_key
-              || statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTcheck_constraint)) {
+      } else if (statement.jjtGetChild(0) instanceof ASTalter_table_statement) {
+        // use a single map for all foreign keys, and constraints and row deletion policies
+        // whether created in table or externally
         ASTalter_table_statement alterTable = (ASTalter_table_statement) statement.jjtGetChild(0);
-        ConstraintWrapper constraint =
-            new ConstraintWrapper(
-                alterTable.jjtGetChild(0).toString(), (SimpleNode) alterTable.jjtGetChild(1));
-        constraints.put(constraint.getName(), constraint);
-      } else {
-        throw new IllegalArgumentException(
-            "Unsupported statement type: "
-                + DdlParserTreeConstants.jjtNodeName[statement.jjtGetChild(0).getId()]);
+
+        final String tableName = alterTable.jjtGetChild(0).toString();
+        if (alterTable.jjtGetChild(1) instanceof ASTforeign_key
+            || alterTable.jjtGetChild(1) instanceof ASTcheck_constraint) {
+          ConstraintWrapper constraint =
+              new ConstraintWrapper(tableName, (SimpleNode) alterTable.jjtGetChild(1));
+          constraints.put(constraint.getName(), constraint);
+
+        } else if (statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTadd_row_deletion_policy) {
+          ttls.put(
+              tableName, (ASTrow_deletion_policy_clause) alterTable.jjtGetChild(1).jjtGetChild(0));
+        } else {
+          throw new IllegalArgumentException(
+              "Unsupported statement type: "
+                  + DdlParserTreeConstants.jjtNodeName[statement.jjtGetChild(0).getId()]);
+        }
       }
     }
   }
@@ -537,12 +586,13 @@ public class DdlDiff {
           // child 0 = table name
           // child 1 = alter statement. Only ASTforeign_key is supported
           if (!(alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key)
-              && !(alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint)) {
+              && !(alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint)
+              && !(alterTableStatement.jjtGetChild(1) instanceof ASTadd_row_deletion_policy)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
                     + statement
-                    + "\nCan only create diffs from 'CREATE TABLE, CREATE INDEX, and "
-                    + "'ALTER TABLE table_name ADD CONSTRAINT' DDL statements");
+                    + "\nCan only create diffs from 'CREATE TABLE, CREATE INDEX and "
+                    + "'ALTER TABLE table_name ADD ' DDL statements");
           }
           // only foreign key statements here:
           if (alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key
@@ -636,7 +686,7 @@ public class DdlDiff {
     } catch (InvalidPathException e) {
       System.err.println("Invalid file path: " + e.getInput() + "\n" + e.getReason());
     } catch (IOException e) {
-      System.err.println("Cannot read DDL file: " + e.toString());
+      System.err.println("Cannot read DDL file: " + e);
     } catch (DdlDiffException e) {
       e.printStackTrace();
     }

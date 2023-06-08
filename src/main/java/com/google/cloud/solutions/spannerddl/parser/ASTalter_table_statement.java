@@ -16,6 +16,8 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
+import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+
 /** Abstract Syntax Tree parser object for "alter_table_statement" token */
 public class ASTalter_table_statement extends SimpleNode {
 
@@ -25,5 +27,37 @@ public class ASTalter_table_statement extends SimpleNode {
 
   public ASTalter_table_statement(DdlParser p, int id) {
     super(p, id);
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other instanceof ASTalter_table_statement) {
+      // lazy: compare text rendering.
+      return this.toString().equals(other.toString());
+    }
+    return false;
+  }
+
+  @Override
+  public String toString() {
+    // perform validation. Supported Alter Table statements are:
+    // ADD (FOREIGN KEY|CHECK CONSTRAINT|ROW DELETION POLICY)
+    StringBuilder ret = new StringBuilder();
+    ret.append("ALTER TABLE ");
+    ret.append(jjtGetChild(0)); // tablename
+    ret.append(" ADD ");
+    final Node alterTableAction = jjtGetChild(1);
+    if (alterTableAction instanceof ASTforeign_key) {
+      ret.append(alterTableAction);
+    } else if (alterTableAction instanceof ASTcheck_constraint) {
+      ret.append(alterTableAction);
+    } else if (alterTableAction instanceof ASTadd_row_deletion_policy) {
+      ret.append(alterTableAction.jjtGetChild(0));
+    } else {
+      throw new IllegalArgumentException(
+          "Unrecognised Alter Table action in: "
+              + ASTTreeUtils.tokensToString(jjtGetFirstToken(), jjtGetLastToken()));
+    }
+    return ret.toString();
   }
 }

@@ -19,13 +19,13 @@ package com.google.cloud.solutions.spannerddl.parser;
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
 import com.google.common.base.Joiner;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
 /** Abstract Syntax Tree parser object for "create_table_statement" token */
 public class ASTcreate_table_statement extends SimpleNode {
+
   private boolean withConstraints = true;
 
   public ASTcreate_table_statement(int id) {
@@ -78,6 +78,15 @@ public class ASTcreate_table_statement extends SimpleNode {
     }
   }
 
+  public synchronized Optional<ASTrow_deletion_policy_clause> getRowDeletionPolicyClause() {
+    try {
+      return Optional.of(
+          ASTTreeUtils.getChildByType(children, ASTrow_deletion_policy_clause.class));
+    } catch (IllegalArgumentException e) {
+      return Optional.empty();
+    }
+  }
+
   public ASTcreate_table_statement clearConstraints() {
     this.withConstraints = false;
     return this;
@@ -92,8 +101,7 @@ public class ASTcreate_table_statement extends SimpleNode {
     ret.append(getTableName());
     ret.append(" (");
     // append column and constraint definitions.
-    List<SimpleNode> tableElements = new ArrayList<>();
-    tableElements.addAll(getColumns().values());
+    List<SimpleNode> tableElements = new ArrayList<>(getColumns().values());
 
     if (this.withConstraints) {
       tableElements.addAll(getConstraints().values());
@@ -107,6 +115,12 @@ public class ASTcreate_table_statement extends SimpleNode {
       ret.append(", ");
       ret.append(interleaveClause.get()); // interleave optional
     }
+    Optional<ASTrow_deletion_policy_clause> rowDeletionPolicyClause = getRowDeletionPolicyClause();
+    if (this.withConstraints && rowDeletionPolicyClause.isPresent()) {
+      ret.append(", ");
+      ret.append(rowDeletionPolicyClause.get()); // TTL optional
+    }
+
     return ret.toString();
   }
 
@@ -117,15 +131,13 @@ public class ASTcreate_table_statement extends SimpleNode {
           && !(child instanceof ASTname)
           && !(child instanceof ASTcheck_constraint)
           && !(child instanceof ASTprimary_key)
-          && !(child instanceof ASTtable_interleave_clause)) {
+          && !(child instanceof ASTtable_interleave_clause)
+          && !(child instanceof ASTrow_deletion_policy_clause)) {
         throw new IllegalArgumentException(
             "Unknown child type " + child.getClass().getSimpleName() + " - " + child);
       }
     }
   }
-
-  public static Comparator<ASTcreate_table_statement> COMPARE_BY_NAME =
-      Comparator.comparing(ASTcreate_table_statement::getTableName);
 
   @Override
   public boolean equals(Object other) {

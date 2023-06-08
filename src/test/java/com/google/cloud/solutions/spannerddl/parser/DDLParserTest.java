@@ -17,6 +17,7 @@
 package com.google.cloud.solutions.spannerddl.parser;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
 
 import java.io.StringReader;
 import org.junit.Test;
@@ -47,7 +48,8 @@ public class DDLParserTest {
                         + "constraint check_some_value CHECK ((length(sizedstring)>100 or sizedstring= \"xxx\") AND boolcol= true and intcol > -123.4 and numericcol < 1.5)"
                         + ") "
                         + "primary key (intcol ASC, floatcol desc, boolcol), "
-                        + "interleave in parent other_table on delete cascade ")
+                        + "interleave in parent other_table on delete cascade,"
+                        + "row deletion policy (OLDER_THAN(timestampcol, INTERVAL 10 DAY))")
                 .jjtGetChild(0);
 
     assertThat(statement.toString())
@@ -69,11 +71,12 @@ public class DDLParserTest {
                 + "CONSTRAINT fk_col_remote FOREIGN KEY (col1, col2) REFERENCES other_table (other_col1, other_col2), "
                 + "CONSTRAINT check_some_value CHECK (( length ( sizedstring ) > 100 OR sizedstring = \"xxx\" ) AND boolcol = TRUE AND intcol > -123.4 AND numericcol < 1.5)"
                 + ") PRIMARY KEY (intcol ASC, floatcol DESC, boolcol ASC), "
-                + "INTERLEAVE IN PARENT other_table ON DELETE CASCADE");
+                + "INTERLEAVE IN PARENT other_table ON DELETE CASCADE, "
+                + "ROW DELETION POLICY (OLDER_THAN ( timestampcol, INTERVAL 10 DAY ))");
 
     // Test re-parse of toString output.
     ASTcreate_table_statement statement2 =
-        (ASTcreate_table_statement) parse(statement.toString()).jjtGetChild(0);
+        (ASTcreate_table_statement) parseAndVerifyToString(statement.toString()).jjtGetChild(0);
     assertThat(statement).isEqualTo(statement2);
   }
 
@@ -103,8 +106,84 @@ public class DDLParserTest {
 
     // Test re-parse of toString output.
     ASTcreate_index_statement statement2 =
-        (ASTcreate_index_statement) parse(statement.toString()).jjtGetChild(0);
+        (ASTcreate_index_statement) parseAndVerifyToString(statement.toString()).jjtGetChild(0);
     assertThat(statement).isEqualTo(statement2);
+  }
+
+  @Test
+  public void parseDDLCreateTableSyntaxError() {
+    parseCheckingException(
+        "Create table test1 ( col1 int64 )", "Was expecting:\n\n\"primary\" ...");
+  }
+
+  @Test
+  public void parseDDLCreateIndexSyntaxError() {
+    parseCheckingException("Create index index1 on test1", "Was expecting one of:\n\n\"(\" ...");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoDropTable() throws ParseException {
+    parseAndVerifyToString("drop table test1");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoDropIndex() throws ParseException {
+    parseAndVerifyToString("drop index test1");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoDropChangeStream() throws ParseException {
+    parseAndVerifyToString("drop change stream test1");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoCreateChangeStream() throws ParseException {
+    parseAndVerifyToString("Create change stream test1 for test2");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoCreateView() throws ParseException {
+    parseAndVerifyToString("CREATE  VIEW test1 SQL SECURITY INVOKER AS SELECT * from test2");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoCreateorReplaceView() throws ParseException {
+    parseAndVerifyToString(
+        "CREATE OR REPLACE VIEW test1 SQL SECURITY INVOKER AS SELECT * from test2");
+  }
+
+  @Test
+  public void parseDDLNoAlterTableRowDeletionPolicy() throws ParseException {
+    parseAndVerifyToString(
+        "ALTER TABLE Albums "
+            + "ADD ROW DELETION POLICY (OLDER_THAN ( timestamp_column, INTERVAL 1 DAY ))");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoAlterTableReplaceRowDeletionPolicy() throws ParseException {
+    String DDL =
+        "ALTER TABLE Albums "
+            + "REPLACE ROW DELETION POLICY (OLDER_THAN(timestamp_column, INTERVAL 1 DAY))";
+    parseAndVerifyToString(DDL);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoDropRowDeletionPolicy() throws ParseException {
+    parseAndVerifyToString("ALTER TABLE Albums DROP ROW DELETION POLICY;");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void parseDDLNoDefaultValue() throws ParseException {
+    parseAndVerifyToString("CREATE TABLE test1 ( keycol INT64 DEFAULT (123) ) PRIMARY KEY keycol;");
+  }
+
+  private static void parseCheckingException(String ddlStatement, String exceptionContains) {
+    try {
+      parseAndVerifyToString(ddlStatement);
+      fail("Expected ParseException not thrown.");
+    } catch (ParseException e) {
+      assertThat(e.getMessage()).contains(exceptionContains);
+    }
   }
 
   private static ASTddl_statement parse(String DDLStatement) throws ParseException {
@@ -113,5 +192,12 @@ public class DDLParserTest {
       parser.ddl_statement();
       return (ASTddl_statement) parser.jjtree.rootNode();
     }
+  }
+
+  private static ASTddl_statement parseAndVerifyToString(String DDLStatement)
+      throws ParseException {
+    ASTddl_statement node = parse(DDLStatement);
+    assertThat(node.toString()).isEqualTo(DDLStatement); // validates statement regeneration
+    return node;
   }
 }

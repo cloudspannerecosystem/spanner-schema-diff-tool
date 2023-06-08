@@ -18,7 +18,9 @@ The tool can only make changes that are allowable by Cloud Spanner's `CREATE`,
   or `BYTES` columns).
 * Add or remove `NOT NULL` constraints on columns.
 * Add or remove column `OPTIONS` clauses.
+* Add or remove column `DEFAULT` value clauses.
 * Modify `ON DELETE` rules on interleaved child tables.
+* Add or remove table row deletion policies
 
 If the tool cannot parse the DDL files, or the changes between the two DDL files
 cannot be made using ALTER statements (eg, change of column type, change of
@@ -113,7 +115,6 @@ As of the last edit of this file, the features known not to be supported are:
 
 * Change Streams (create, drop, alter)
 * `ALTER DATABASE` statements
-* Default column values (`DEFAULT` clause)
 * Views (create, drop, alter)
 
 ## Usage:

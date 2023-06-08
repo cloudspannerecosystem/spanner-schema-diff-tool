@@ -15,14 +15,27 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
+import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+
 public class ASTcolumn_default_clause extends SimpleNode {
   public ASTcolumn_default_clause(int id) {
     super(id);
-    throw new UnsupportedOperationException("not implemented");
   }
 
   public ASTcolumn_default_clause(DdlParser p, int id) {
     super(p, id);
-    throw new UnsupportedOperationException("not implemented");
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    return other instanceof ASTcolumn_default_clause && this.toString().equals(other.toString());
+  }
+
+  @Override
+  public String toString() {
+    ASTcolumn_default_expression exp = (ASTcolumn_default_expression) jjtGetChild(0);
+    return "DEFAULT ("
+        + ASTTreeUtils.tokensToString(exp.jjtGetFirstToken(), exp.jjtGetLastToken())
+        + ")";
   }
 }

@@ -35,7 +35,7 @@ public class DDLParserTest {
                         + "intcol int64 not null, "
                         + "floatcol float64, "
                         + "sizedstring string(55), "
-                        + "maxstring string(max), "
+                        + "maxstring string(max) NOT NULL DEFAULT (\"prefix\" || sizedstring || \"suffix\"), "
                         + "sizedbytes bytes(55), "
                         + "maxbytes bytes(max), "
                         + "datecol date, "
@@ -59,7 +59,7 @@ public class DDLParserTest {
                 + "intcol INT64 NOT NULL, "
                 + "floatcol FLOAT64, "
                 + "sizedstring STRING(55), "
-                + "maxstring STRING(MAX), "
+                + "maxstring STRING(MAX) NOT NULL DEFAULT (\"prefix\" | | sizedstring | | \"suffix\"), "
                 + "sizedbytes BYTES(55), "
                 + "maxbytes BYTES(MAX), "
                 + "datecol DATE, "
@@ -172,9 +172,10 @@ public class DDLParserTest {
     parseAndVerifyToString("ALTER TABLE Albums DROP ROW DELETION POLICY;");
   }
 
-  @Test(expected = UnsupportedOperationException.class)
-  public void parseDDLNoDefaultValue() throws ParseException {
-    parseAndVerifyToString("CREATE TABLE test1 ( keycol INT64 DEFAULT (123) ) PRIMARY KEY keycol;");
+  @Test
+  public void parseDDLColDefaultValue() throws ParseException {
+    parseAndVerifyToString(
+        "CREATE TABLE test1 (keycol INT64, value INT64 DEFAULT (keycol * 100 + PI ( ))) PRIMARY KEY (keycol ASC)");
   }
 
   private static void parseCheckingException(String ddlStatement, String exceptionContains) {

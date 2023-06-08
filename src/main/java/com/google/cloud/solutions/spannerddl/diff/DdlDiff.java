@@ -22,6 +22,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTadd_row_deletion_policy;
 import com.google.cloud.solutions.spannerddl.parser.ASTalter_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcheck_constraint;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_def;
+import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_default_clause;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_type;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
@@ -464,6 +465,32 @@ public class DdlDiff {
               + "="
               + optionToUpdate.getValue()
               + ")");
+    }
+
+    // Update default values
+
+    final ASTcolumn_default_clause oldDefaultValue =
+        columnDiff.leftValue().getColumnDefaultClause();
+    final ASTcolumn_default_clause newDefaultValue =
+        columnDiff.rightValue().getColumnDefaultClause();
+    if (!Objects.equals(oldDefaultValue, newDefaultValue)) {
+      if (newDefaultValue == null) {
+        alterStatements.add(
+            "ALTER TABLE "
+                + tableName
+                + " ALTER COLUMN "
+                + columnDiff.rightValue().getColumnName()
+                + " DROP DEFAULT");
+      } else {
+        // add or change default value
+        alterStatements.add(
+            "ALTER TABLE "
+                + tableName
+                + " ALTER COLUMN "
+                + columnDiff.rightValue().getColumnName()
+                + " SET "
+                + newDefaultValue);
+      }
     }
   }
 

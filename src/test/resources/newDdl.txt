@@ -314,6 +314,55 @@ Alter table test1 add row deletion policy (OLDER_THAN ( other_column, INTERVAL 2
 
 # nothing here
 
+== TEST 34 unchanged default value
+
+create table test1 (
+    col1 int64,
+    created_at timestamp default (CURRENT_TIMESTAMP())
+)
+primary key (col1)
+
+== TEST 34 add default value
+
+create table test1 (
+    col1 int64,
+    created_at timestamp  default (CURRENT_TIMESTAMP())
+)
+primary key (col1)
+
+== TEST 35 drop default value
+
+create table test1 (
+    col1 int64,
+    created_at timestamp
+)
+primary key (col1)
+
+== TEST 36 modify default value
+
+create table test1 (
+    col1 int64,
+    created_at timestamp  default (TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY ))
+)
+primary key (col1)
+
+== TEST 37 add a new col with a default value
+
+create table test1 (
+    col1 int64,
+    created_at timestamp  default (CURRENT_TIMESTAMP()),
+    new_col String(MAX) default ("Hello World")
+)
+primary key (col1)
+
+== TEST 38 add a new table with a default value
+
+create table test1 (
+    col1 int64,
+    created_at timestamp NOT NULL default (CURRENT_TIMESTAMP()) OPTIONS (allow_commit_timestamp = true)
+)
+primary key (col1)
+
 ==
 
 

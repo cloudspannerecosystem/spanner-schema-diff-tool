@@ -1,5 +1,10 @@
 # Adding capabilities
 
+A rough guide to add capabilities to this tool. For concrete examples look
+at the PR logs, for example
+[PR #23 for the column DEFAULT values](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/pull/23)
+or [PR #22 for the Row Deletion Policy](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/pull/22)
+
 ## Sync parser code with cloud spanner emulator
 
 1) Clone the Cloud Spanner Emulator repo from `https://github.com/GoogleCloudPlatform/cloud-spanner-emulator`
@@ -149,3 +154,10 @@ Normally you will want tests for:
 For a DDL object like a constraint that can be added inline in a Create Table or
 by an Alter statement, you will need to add multiple versions of the add/remove
 tests to handle each case.
+
+## Reformat code
+
+```shell
+mvn spotless:apply
+```
+

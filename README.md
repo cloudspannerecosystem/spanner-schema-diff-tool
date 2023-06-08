@@ -109,7 +109,7 @@ in Spanner. If you need this tool to support a specific feature, please log an
 issue, or [implement it yourself](AddingCapabilities.md) and submit a Pull
 Request.
 
-As of the last edit of this file, the features known not to be supported are: 
+As of the last edit of this file, the features known not to be supported are:
 
 * Change Streams (create, drop, alter)
 * `ALTER DATABASE` statements

@@ -15,8 +15,7 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-public
-class ASTcolumn_default_clause extends SimpleNode {
+public class ASTcolumn_default_clause extends SimpleNode {
   public ASTcolumn_default_clause(int id) {
     super(id);
     throw new UnsupportedOperationException("not implemented");

@@ -322,7 +322,52 @@ create table test1 (
 primary key (col1),
 row deletion policy (OLDER_THAN ( timestamp_column, INTERVAL 10 DAY ));
 
+== TEST 34 unchanged default value
+
+create table test1 (
+    col1 int64,
+    created_at timestamp default (CURRENT_TIMESTAMP())
+)
+primary key (col1)
+
+== TEST 34 add default value
+
+create table test1 (
+    col1 int64,
+    created_at timestamp
+)
+primary key (col1)
+
+== TEST 35 drop default value
+
+create table test1 (
+    col1 int64,
+    created_at timestamp  default (CURRENT_TIMESTAMP())
+)
+primary key (col1)
+
+== TEST 36 modify default value
+
+create table test1 (
+    col1 int64,
+    created_at timestamp default (CURRENT_TIMESTAMP())
+)
+primary key (col1)
+
+== TEST 37 add a new col with a default value
+
+create table test1 (
+    col1 int64,
+    created_at timestamp  default (CURRENT_TIMESTAMP())
+)
+primary key (col1)
+
+== TEST 38 add a new table with a default value
+
+# nothing
+
 ==
+
 
 
 

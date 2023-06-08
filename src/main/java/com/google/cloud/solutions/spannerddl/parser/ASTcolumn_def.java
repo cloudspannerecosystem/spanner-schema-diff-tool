@@ -16,9 +16,9 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-/** Abstract Syntax Tree parser object for "column_def" token */
+/** Abstract Syntax Tree parser object for column definitions */
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
-import java.util.Comparator;
+import com.google.common.base.Joiner;
 import javax.annotation.Nullable;
 
 public class ASTcolumn_def extends SimpleNode {
@@ -47,59 +47,70 @@ public class ASTcolumn_def extends SimpleNode {
     return ASTTreeUtils.getOptionalChildByType(children, ASTgeneration_clause.class);
   }
 
+  public ASTcolumn_default_clause getColumnDefaultClause() {
+    return ASTTreeUtils.getOptionalChildByType(children, ASTcolumn_default_clause.class);
+  }
+
   public boolean isNotNull() {
     return (children.length > 2 && children[2] instanceof ASTnot_null);
   }
 
   public @Nullable ASToptions_clause getOptionsClause() {
-    int index = 2; // skip name and type
-    if (index < children.length && children[index] instanceof ASTnot_null) {
-      // skip NOT NULL
-      index++;
-    }
-    if (index < children.length && children[index] instanceof ASTgeneration_clause) {
-      // skip generated
-      index++;
-    }
-    // Options should be last, but check for any unknown children.
-    if (index == (children.length - 1) && children[index] instanceof ASToptions_clause) {
-      return (ASToptions_clause) children[index];
-    }
-    if (index == children.length) {
-      return null;
-    }
-    // If we are here we have an unknown child.
-    throw new IllegalArgumentException("Unknown child type " + children[index]);
+    return ASTTreeUtils.getOptionalChildByType(children, ASToptions_clause.class);
   }
 
   @Override
   public String toString() {
-    StringBuilder ret = new StringBuilder();
+    // check for unknown/unsupported children
+    validate();
 
-    // name
-    ret.append(getColumnName());
-    ret.append(" ");
-    // type
-    ret.append(getColumnTypeString());
+    return Joiner.on(" ")
+        .skipNulls()
+        .join(
+            getColumnName(),
+            getColumnTypeString(),
+            (isNotNull() ? "NOT NULL" : null),
+            getGenerationClause(),
+            getColumnDefaultClause(),
+            getOptionsClause());
+  }
 
-    if (isNotNull()) {
-      ret.append(" NOT NULL");
+  private void validate() {
+
+    /* Column definition is:
+         name
+         column_type
+         not_null (optional)
+         generation_clause(optional) OR column_default_clause(optional)
+         options_clause(optional)
+
+       Parser will handle most issues, but we should check if an unknown class has been added to the
+       parser.
+       Iterate through children checking for optional items in order.
+    */
+
+    int index = 2; // skip name and type
+    if (index < children.length && children[index] instanceof ASTnot_null) {
+      // NOT NULL
+      index++;
+    }
+    if (index < children.length && children[index] instanceof ASTgeneration_clause) {
+      // generated
+      index++;
+    }
+    if (index < children.length && children[index] instanceof ASTcolumn_default_clause) {
+      // default value
+      index++;
+    }
+    if (index < children.length && children[index] instanceof ASToptions_clause) {
+      // options
+      index++;
     }
 
-    ASTgeneration_clause generated =
-        ASTTreeUtils.getOptionalChildByType(children, ASTgeneration_clause.class);
-    if (generated != null) {
-      ret.append(" ");
-      ret.append(generated.toString());
+    if (index < children.length) {
+      // we have an unknown child.
+      throw new IllegalArgumentException("Unknown child type " + children[index]);
     }
-
-    // getOptions also checks for unknown children.
-    ASToptions_clause optionsClause = getOptionsClause();
-    if (optionsClause != null) {
-      ret.append(" ");
-      ret.append(optionsClause.toString());
-    }
-    return ret.toString().trim();
   }
 
   @Override
@@ -109,7 +120,4 @@ public class ASTcolumn_def extends SimpleNode {
     }
     return false;
   }
-
-  public static Comparator<ASTcolumn_def> SORT_BY_NAME_COMPARATOR =
-      Comparator.comparing(o -> o.children[0].toString());
 }

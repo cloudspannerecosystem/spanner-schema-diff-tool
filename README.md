@@ -42,8 +42,10 @@ statements in the DDL file. This has the following implications:
 
 * Tables and indexes must be created with a single `CREATE` statement (not by
   using `CREATE` then `ALTER` statements). The exception to this is when
-  constraints and row deletion policies are created - the tool supports creating them in the
-  table creation DDL statement, and also by using `ALTER` statements after the table has been created.
+  constraints and row deletion policies are created - the tool supports creating
+  them in the
+  table creation DDL statement, and also by using `ALTER` statements after the
+  table has been created.
 
 ### Note on dropped database objects.
 
@@ -60,6 +62,26 @@ differences found:
 Constraints and row deletion policies will always be dropped if they are not
 present in the new DDL.
 
+This also helps to prevent edge cases which are not handled by this tool.
+
+Consider for example, a DDL object such as a check constraint, default value
+calculation or a row deletion policy clause that has an expression referencing
+a column that is going to be removed, and will be changed to reference a column
+that is being added.
+
+For this to work properly things need to happen in the following order:
+
+1) the object with the expression referencing the existing column needs to be
+dropped
+2) the column dropped
+3) the new column added
+4) finally the object re-created with the new expression referencing the new
+column.
+
+As this tool does not _understand_ the contents of the expression, it cannot
+know that this is required, so by not dropping the column, steps 1 and 2 are
+not required.
+
 ### Note on modified indexes
 
 Modifications to indexes are not possible via `ALTER` statements, but if the
@@ -70,7 +92,8 @@ will cause the tool to fail.
 
 ### Note on constraints
 
-`FOREIGN KEY` amd `CHECK` constraints _must_ be explicitly named, either within a
+`FOREIGN KEY` amd `CHECK` constraints _must_ be explicitly named, either within
+a
 `CREATE TABLE` statement, or using an `ALTER TABLE` statement, using the syntax:
 
 ```sql
@@ -84,10 +107,11 @@ dropped.
 Anonymous `FOREIGN KEY` or `CHECK` constraints of the form:
 
 ```sql
-CREATE TABLE fk_dest (
-	key INT64,
-	source_key INT64,
-	FOREIGN KEY (source_key) REFERENCES fk_source(key)
+CREATE TABLE fk_dest
+(
+    key        INT64,
+    source_key INT64,
+    FOREIGN KEY (source_key) REFERENCES fk_source (key)
 ) PRIMARY KEY (key);
 ```
 
@@ -163,60 +187,72 @@ java -jar target/spanner-ddl-diff-*-jar-with-dependencies.jar \
 ### Original schema DDL input file
 
 ```sql
-create table test1 (
+create table test1
+(
     col1 int64,
     col2 int64,
     col3 STRING(100),
     col4 ARRAY<STRING(100)>,
     col5 float64 not null,
-    col6 timestamp)
-    primary key (col1 desc);
+    col6 timestamp
+) primary key (col1 desc);
 
 create index index1 on test1 (col1);
 
-create table test2 (
-    col1 int64)
-    primary key (col1);
+create table test2
+(
+    col1 int64
+) primary key (col1);
 
 create index index2 on test2 (col1);
 
-create table test3 (
+create table test3
+(
     col1 int64,
-    col2 int64 )
-    primary key (col1, col2),
+    col2 int64
+) primary key (col1, col2),
     interleave in parent test2
-    on delete cascade;
+    on
+delete
+cascade;
 
-create table test4 (col1 int64, col2 int64) primary key (col1);
+create table test4
+(
+    col1 int64,
+    col2 int64
+) primary key (col1);
 create index index3 on test4 (col2);
 ```
 
 ### New schema DDL input file
 
 ```sql
-create table test1 (
-    col1 int64,
-    col2 int64 NOT NULL,
-    col3 STRING(MAX),
-    col4 ARRAY<STRING(200)>,
-    col5 float64 not null,
-    newcol7 BYTES(100))
-    primary key (col1 desc);
+create table test1
+(
+    col1    int64,
+    col2    int64   NOT NULL,
+    col3    STRING( MAX),
+    col4    ARRAY<STRING(200)>,
+    col5    float64 not null,
+    newcol7 BYTES(100)
+) primary key (col1 desc);
 
 create index index1 on test1 (col2);
 
-create table test2 (
-    col1 int64,
-    newcol2 string(max))
-    primary key (col1);
+create table test2
+(
+    col1    int64,
+    newcol2 string( max)
+) primary key (col1);
 
 create index index2 on test2 (col1 desc);
 
-create table test3 (
+create table test3
+(
     col1 int64,
     col2 int64,
-    col3 timestamp )
-    primary key (col1, col2),
+    col3 timestamp
+) primary key (col1, col2),
     interleave in parent test2;
 ```
 
@@ -237,7 +273,8 @@ DROP TABLE test4;
 
 ALTER TABLE test1 DROP COLUMN col6;
 
-ALTER TABLE test1 ADD COLUMN newcol7 BYTES(100);
+ALTER TABLE test1
+    ADD COLUMN newcol7 BYTES(100);
 
 ALTER TABLE test1 ALTER COLUMN col2 INT64 NOT NULL;
 
@@ -245,11 +282,13 @@ ALTER TABLE test1 ALTER COLUMN col3 STRING(MAX);
 
 ALTER TABLE test1 ALTER COLUMN col4 ARRAY<STRING(200)>;
 
-ALTER TABLE test2 ADD COLUMN newcol2 STRING(MAX);
+ALTER TABLE test2
+    ADD COLUMN newcol2 STRING(MAX);
 
 ALTER TABLE test3 SET ON DELETE NO ACTION;
 
-ALTER TABLE test3 ADD COLUMN col3 TIMESTAMP;
+ALTER TABLE test3
+    ADD COLUMN col3 TIMESTAMP;
 
 CREATE INDEX index1 ON test1 (col2 ASC);
 

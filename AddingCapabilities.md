@@ -2,9 +2,7 @@
 
 ## Sync parser code with cloud spanner emulator
 
-1) Clone the Cloud Spanner Emulator repo from
-
-`https://github.com/GoogleCloudPlatform/cloud-spanner-emulator`
+1) Clone the Cloud Spanner Emulator repo from `https://github.com/GoogleCloudPlatform/cloud-spanner-emulator`
 
 1) Generate the `ddl_keywords.jjt` file in backend/schema/parser module in order
 to build the `ddl_keywords.jjt`
@@ -21,12 +19,13 @@ in [src/main/jjtree-sources](src%2Fmain%2Fjjtree-sources) with the emulator's
 versions in
 the [backend/schema/parser](https://github.com/GoogleCloudPlatform/cloud-spanner-emulator/tree/master/backend/schema/parser)
 directory)
+
 * `ddl_expression.jjt`
 * `ddl_parser.jjt`
 * `ddl_string_bytes_tokens.jjt`
 * `ddl_whitespace.jjt` - Note that this file does not have
-the `ValidateStringLiteral()`
-and `ValidateBytesLiteral()` functions - this is intentional.
+  the `ValidateStringLiteral()`
+  and `ValidateBytesLiteral()` functions - this is intentional.
 
 ## Invalidate AST wrappers that have been added
 
@@ -71,7 +70,7 @@ the tests.
 ## Implement the toString and equals methods for the new AST capability classes
 
 The `toString()` and probably the `equals()` methods need to be implemented in
-the new AST classes for implementing the capability.
+the new AST classes for implementing the diff capability.
 
 For end-branches of the AST, the toString() method can be as simple as
 regenerating the original tokens using the helper method:
@@ -80,7 +79,11 @@ regenerating the original tokens using the helper method:
 ASTTreeUtils.tokensToString(node.firstToken,node.lastToken);
 ```
 
-and the equals method can do a string compare...
+This will iterate down the AST regenerating the tokens into a normalized form
+(ie single spaces, capitalized reserved words etc).
+
+Once you have a toString which generates a normalized form, the equals method
+can simply do a string comparison... Lazy but it works!
 
 However for more complex classes, like Tables, the implementation is necessarily
 more complex, extracting the optional and repeated nodes (eg for Table, columns,
@@ -88,7 +91,8 @@ constraints, primary key, interleave etc), and then rebuilding the original
 statement in the toString()
 
 If you only implement some of the functionality, the `toString()` method is a
-good place to put some validation - checking only for supported child nodes.
+good place to put some validation - checking only for supported child nodes. See
+the Table and colum definition classes for examples.
 
 Once this is done, you can run some tests in the `DDLParserTest` class to verify
 that the parser works, and that the toString() method regenerates the original
@@ -96,7 +100,7 @@ statement.
 
 ## Implement difference generation.
 
-Once you have a valid `equals()` method, the bulk of the work is handled
+With a valid `equals()` method, the bulk of the work is handled
 in `DDLDiff.build()` The DDL is split into its components, and Maps.difference()
 is used to compare.
 
@@ -140,6 +144,7 @@ Normally you will want tests for:
 * Adding a DDL feature/object in the new DDL
 * Removing a DDL feature/object in the new DDL
 * Changing a DDL feature/object.
+* Verifying that not changing the feature/object has no effect!
 
 For a DDL object like a constraint that can be added inline in a Create Table or
 by an Alter statement, you will need to add multiple versions of the add/remove

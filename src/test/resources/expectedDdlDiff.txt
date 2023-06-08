@@ -190,4 +190,31 @@ ALTER TABLE test1 REPLACE ROW DELETION POLICY (OLDER_THAN ( other_column, INTERV
 ALTER TABLE test1 DROP ROW DELETION POLICY
 DROP TABLE test1
 
+== TEST 34 unchanged default value
+
+# No change
+
+== TEST 34 add default value
+
+ALTER TABLE test1 ALTER COLUMN created_at SET DEFAULT (CURRENT_TIMESTAMP ( ))
+
+== TEST 35 drop default value
+
+ALTER TABLE test1 ALTER COLUMN created_at DROP DEFAULT
+
+== TEST 36 modify default value
+
+ALTER TABLE test1 ALTER COLUMN created_at SET DEFAULT (TIMESTAMP_SUB ( CURRENT_TIMESTAMP ( ), INTERVAL 1 DAY ))
+
+== TEST 37 add a new col with a default value
+
+ALTER TABLE test1 ADD COLUMN new_col STRING(MAX) DEFAULT ("Hello World")
+
+== TEST 38 add a new table with a default value
+
+CREATE TABLE test1 (col1 INT64, created_at TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP ( )) OPTIONS (allow_commit_timestamp=TRUE)) PRIMARY KEY (col1 ASC)
+
 ==
+
+
+

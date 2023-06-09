@@ -2,11 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=true,NODE_PREFIX=AST,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.google.cloud.solutions.spannerddl.parser;
 
-import java.util.Comparator;
-
 public class ASTcheck_constraint extends SimpleNode {
-
-  public static final String ANONYMOUS_NAME = "ANONYMOUS_CHECK_CONSTRAINT_NOT_SUPPORTED";
 
   public ASTcheck_constraint(int id) {
     super(id);
@@ -21,7 +17,7 @@ public class ASTcheck_constraint extends SimpleNode {
     if (children[0] instanceof ASTconstraint_name) {
       return ((ASTconstraint_name) children[0]).jjtGetFirstToken().toString();
     } else {
-      return ANONYMOUS_NAME;
+      return ASTcreate_table_statement.ANONYMOUS_NAME;
     }
   }
 
@@ -34,7 +30,6 @@ public class ASTcheck_constraint extends SimpleNode {
   }
 
   public String toString() {
-
     return "CONSTRAINT " + getName() + " CHECK (" + getExpression() + ")";
   }
 
@@ -45,8 +40,5 @@ public class ASTcheck_constraint extends SimpleNode {
     }
     return false;
   }
-
-  public static Comparator<ASTforeign_key> SORT_BY_NAME_COMPARATOR =
-      Comparator.comparing(ASTforeign_key::getName);
 }
 /* JavaCC - OriginalChecksum=0932669f868149000fb0cf8f92a12b13 (do not edit this line) */

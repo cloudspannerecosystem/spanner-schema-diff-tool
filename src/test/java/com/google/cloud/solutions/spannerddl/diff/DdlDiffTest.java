@@ -82,7 +82,7 @@ public class DdlDiffTest {
               + "primary key (intcol ASC)");
       fail("Expected exception not thrown");
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage()).containsMatch("anonymous FOREIGN KEY constraints");
+      assertThat(e.getMessage()).containsMatch("Can not create diffs when anonymous constraints are used.");
     }
   }
 
@@ -97,7 +97,7 @@ public class DdlDiffTest {
               + "primary key (intcol ASC)");
       fail("Expected exception not thrown");
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage()).containsMatch("anonymous CHECK constraints");
+      assertThat(e.getMessage()).containsMatch("Can not create diffs when anonymous constraints are used.");
     }
   }
 

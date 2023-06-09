@@ -26,6 +26,7 @@ import java.util.Optional;
 /** Abstract Syntax Tree parser object for "create_table_statement" token */
 public class ASTcreate_table_statement extends SimpleNode {
 
+  public static final String ANONYMOUS_NAME = "ANONYMOUS_CONSTRAINT_NOT_SUPPORTED";
   private boolean withConstraints = true;
 
   public ASTcreate_table_statement(int id) {

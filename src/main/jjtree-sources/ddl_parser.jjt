@@ -426,10 +426,17 @@ void alter_statement() #void :
 {
   <ALTER>
   (
-    alter_table_statement()
+    alter_database_statement()
+    | alter_table_statement()
     | alter_change_stream_statement()
 
   )
+}
+
+void alter_database_statement() :
+{}
+{
+  <DATABASE> (identifier() #database_name) <SET> options_clause()
 }
 
 void alter_table_statement() :

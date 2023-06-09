@@ -180,6 +180,11 @@ public class DDLParserTest {
         "CREATE TABLE test1 (keycol INT64, value INT64 DEFAULT (keycol * 100 + PI ( ))) PRIMARY KEY (keycol ASC)");
   }
 
+  @Test
+  public void parseAlterDatabase() throws ParseException {
+    parseAndVerifyToString("ALTER DATABASE dbname SET OPTIONS (opt1=NULL,opt2='1234',opt3=3)");
+  }
+
   private static void parseCheckingException(String ddlStatement, String exceptionContains) {
     try {
       parseAndVerifyToString(ddlStatement);

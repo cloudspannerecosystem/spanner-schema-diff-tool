@@ -214,7 +214,20 @@ ALTER TABLE test1 ADD COLUMN new_col STRING(MAX) DEFAULT ("Hello World")
 
 CREATE TABLE test1 (col1 INT64, created_at TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP ( )) OPTIONS (allow_commit_timestamp=TRUE)) PRIMARY KEY (col1 ASC)
 
+== TEST 39 Unchanged database options using multiple statements
+
+# no change
+
+== TEST 40 adding database options
+
+ALTER DATABASE dbname SET OPTIONS (nothing=NULL,othervalue=456)
+
+== TEST 41 changing and removing database options
+
+ALTER DATABASE dbname SET OPTIONS (othervalue=456,removeme=NULL)
+
 ==
+
 
 
 

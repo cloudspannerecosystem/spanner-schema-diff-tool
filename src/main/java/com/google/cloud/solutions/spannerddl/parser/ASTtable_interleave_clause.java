@@ -16,11 +16,11 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-/** Abstract Syntax Tree parser object for "table_interleave_clause" token */
+import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
 import com.google.common.base.Joiner;
 
+/** Abstract Syntax Tree parser object for "table_interleave_clause" token */
 public class ASTtable_interleave_clause extends SimpleNode {
-
   public ASTtable_interleave_clause(int id) {
     super(id);
   }
@@ -30,7 +30,7 @@ public class ASTtable_interleave_clause extends SimpleNode {
   }
 
   public String getParentTableName() {
-    return children[0].toString();
+    return ASTTreeUtils.tokensToString((ASTinterleave_in) children[0]);
   }
 
   public String getOnDelete() {

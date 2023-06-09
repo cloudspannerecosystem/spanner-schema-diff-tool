@@ -16,6 +16,8 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
+import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+
 /** Abstract Syntax Tree parser object for "column_length" token */
 public class ASTcolumn_length extends SimpleNode {
 
@@ -29,10 +31,6 @@ public class ASTcolumn_length extends SimpleNode {
 
   @Override
   public String toString() {
-    if (children == null) {
-      return jjtGetFirstToken().toString().toUpperCase(); // normally MAX
-    } else {
-      return children[0].toString();
-    }
+    return ASTTreeUtils.tokensToString(this);
   }
 }

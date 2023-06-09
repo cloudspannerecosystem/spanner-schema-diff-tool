@@ -38,7 +38,7 @@ public class ASTcreate_table_statement extends SimpleNode {
   }
 
   public String getTableName() {
-    return children[0].toString();
+    return ASTTreeUtils.tokensToString((SimpleNode) children[0]);
   }
 
   public LinkedHashMap<String, ASTcolumn_def> getColumns() {

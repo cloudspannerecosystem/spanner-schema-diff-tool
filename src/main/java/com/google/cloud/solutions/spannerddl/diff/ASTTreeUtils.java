@@ -18,6 +18,7 @@ package com.google.cloud.solutions.spannerddl.diff;
 
 import com.google.cloud.solutions.spannerddl.parser.DdlParserConstants;
 import com.google.cloud.solutions.spannerddl.parser.Node;
+import com.google.cloud.solutions.spannerddl.parser.SimpleNode;
 import com.google.cloud.solutions.spannerddl.parser.Token;
 import java.util.Arrays;
 import java.util.List;
@@ -47,7 +48,7 @@ public class ASTTreeUtils {
     return child;
   }
 
-  private static Set<String> reservedWords =
+  private static final Set<String> reservedWords =
       Arrays.stream(DdlParserConstants.tokenImage)
           .filter(s -> s.charAt(0) == '"')
           .map(s -> s.substring(1, s.length() - 1))
@@ -69,6 +70,10 @@ public class ASTTreeUtils {
 
   private ASTTreeUtils() {}
 
+  /**
+   * Generate the original parsed text between the 2 specified tokens, normalizing the text with
+   * spacing and capitalization of tokens.
+   */
   public static String tokensToString(Token firstToken, Token lastToken) {
     StringBuilder sb = new StringBuilder();
     Token t = firstToken;
@@ -88,5 +93,13 @@ public class ASTTreeUtils {
     String tok = t.toString();
     sb.append(isReservedWord(tok) ? tok.toUpperCase() : tok);
     return sb.toString();
+  }
+
+  /**
+   * Generate the original parsed text of the node, normalizing the text with spacing and
+   * capitalization of tokens.
+   */
+  public static String tokensToString(SimpleNode node) {
+    return tokensToString(node.jjtGetFirstToken(), node.jjtGetLastToken());
   }
 }

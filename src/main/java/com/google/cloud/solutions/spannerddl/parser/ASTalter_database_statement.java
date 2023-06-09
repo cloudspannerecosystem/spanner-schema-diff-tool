@@ -30,7 +30,7 @@ public class ASTalter_database_statement extends SimpleNode {
     return (ASToptions_clause) jjtGetChild(1);
   }
 
-  String getDbName() {
+  public String getDbName() {
     return ASTTreeUtils.tokensToString((ASTdatabase_name) jjtGetChild(0));
   }
 

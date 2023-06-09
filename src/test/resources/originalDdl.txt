@@ -366,6 +366,20 @@ primary key (col1)
 
 # nothing
 
+== TEST 39 Unchanged database options using multiple statements
+
+ALTER DATABASE dbname SET OPTIONS(hello='world');
+ALTER DATABASE dbname SET OPTIONS(othervalue=123);
+ALTER DATABASE dbname SET OPTIONS(nothing=NULL, othervalue=456);
+
+== TEST 40 adding database options
+
+ALTER DATABASE dbname SET OPTIONS(hello='world');
+
+== TEST 41 changing and removing database options
+
+ALTER DATABASE dbname SET OPTIONS(hello='world', othervalue=123, removeme='please');
+
 ==
 
 

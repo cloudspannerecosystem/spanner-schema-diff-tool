@@ -101,9 +101,9 @@ public class DdlDiff {
   private final MapDifference<String, ASTrow_deletion_policy_clause> ttlDifferences;
 
   /**
-   * Wrapper class for Check and Foreign Key constraints
-   * to include the table name for when they are separated from their create table/alter table
-   * statements in separateTablesIndexesConstraintsTtls().
+   * Wrapper class for Check and Foreign Key constraints to include the table name for when they are
+   * separated from their create table/alter table statements in
+   * separateTablesIndexesConstraintsTtls().
    */
   private static class ConstraintWrapper {
 
@@ -170,7 +170,9 @@ public class DdlDiff {
     if (!constraintDifferences.entriesDiffering().isEmpty()
         && !options.get(ALLOW_RECREATE_CONSTRAINTS_OPT)) {
       throw new DdlDiffException(
-          "At least one constraint differs, and "+ALLOW_RECREATE_CONSTRAINTS_OPT+" is not set.\n"
+          "At least one constraint differs, and "
+              + ALLOW_RECREATE_CONSTRAINTS_OPT
+              + " is not set.\n"
               + Joiner.on(", ").join(constraintDifferences.entriesDiffering().keySet()));
     }
 
@@ -494,11 +496,7 @@ public class DdlDiff {
     Map<String, ASTrow_deletion_policy_clause> newTtls = new TreeMap<>();
 
     separateTablesIndexesConstraintsTtls(
-        newStatements,
-        newTablesInCreationOrder,
-        newIndexes,
-        newConstraints,
-        newTtls);
+        newStatements, newTablesInCreationOrder, newIndexes, newConstraints, newTtls);
 
     return new DdlDiff(
         Maps.difference(originalTablesInCreationOrder, newTablesInCreationOrder),
@@ -510,12 +508,12 @@ public class DdlDiff {
   }
 
   /**
-   * Separarates the index, constraints, and Row Deletion policy creation statements
-   * from the Table creation statement, and put them - along with any Alter statements that
-   * create these same objects - into a separate maps.
+   * Separarates the index, constraints, and Row Deletion policy creation statements from the Table
+   * creation statement, and put them - along with any Alter statements that create these same
+   * objects - into a separate maps.
    *
-   * This allows the diff tool to handle these objects which are created inline with the table
-   * in the same way as if they were created separately with ALTER statements.
+   * <p>This allows the diff tool to handle these objects which are created inline with the table in
+   * the same way as if they were created separately with ALTER statements.
    */
   private static void separateTablesIndexesConstraintsTtls(
       List<ASTddl_statement> statements,
@@ -527,8 +525,7 @@ public class DdlDiff {
       final SimpleNode statement = (SimpleNode) ddlStatement.jjtGetChild(0);
 
       if (statement instanceof ASTcreate_table_statement) {
-        ASTcreate_table_statement createTable =
-            (ASTcreate_table_statement) statement;
+        ASTcreate_table_statement createTable = (ASTcreate_table_statement) statement;
         // Remove embedded constraint statements from the CreateTable node
         // as they are taken into account via `constraints`
         tables.put(createTable.getTableName(), createTable.clearConstraints());
@@ -546,8 +543,7 @@ public class DdlDiff {
         rowDeletionPolicyClause.ifPresent(rdp -> ttls.put(createTable.getTableName(), rdp));
 
       } else if (statement instanceof ASTcreate_index_statement) {
-        ASTcreate_index_statement createIndex =
-            (ASTcreate_index_statement) statement;
+        ASTcreate_index_statement createIndex = (ASTcreate_index_statement) statement;
         indexes.put(createIndex.getIndexName(), createIndex);
 
       } else if (statement instanceof ASTalter_table_statement) {
@@ -568,12 +564,14 @@ public class DdlDiff {
           // other ALTER statements are not supported.
           throw new IllegalArgumentException(
               "Unsupported ALTER TABLE statement: "
-                  + ASTTreeUtils.tokensToString(ddlStatement.jjtGetFirstToken(),ddlStatement.jjtGetLastToken()));
+                  + ASTTreeUtils.tokensToString(
+                      ddlStatement.jjtGetFirstToken(), ddlStatement.jjtGetLastToken()));
         }
       } else {
         throw new IllegalArgumentException(
             "Unsupported statement: "
-                + ASTTreeUtils.tokensToString(ddlStatement.jjtGetFirstToken(),ddlStatement.jjtGetLastToken()));
+                + ASTTreeUtils.tokensToString(
+                    ddlStatement.jjtGetFirstToken(), ddlStatement.jjtGetLastToken()));
       }
     }
   }
@@ -764,23 +762,19 @@ public class DdlDiff {
               "DdlDiff",
               "Compares original and new DDL files and creates a DDL file with DROP, CREATE and"
                   + " ALTER statements which convert the original Schema to the new Schema.\n\n"
-
                   + "Incompatible table changes (table hierarchy changes. column type changes) are"
                   + " not supported and will cause this tool to fail.\n\n"
-
                   + "To prevent accidental data loss, DROP statements are not generated for removed"
                   + " tables, columns and indexes. This can be overridden using the"
                   + " --"
                   + ALLOW_DROP_STATEMENTS_OPT
                   + " command line argument.\n\n"
-
                   + "By default, changes to indexes will also cause a failure. The"
                   + " --"
                   + ALLOW_RECREATE_INDEXES_OPT
                   + " command line option enables index changes by"
                   + " generating statements to drop and recreate the index which will trigger a"
                   + " long running operation to rebuild the index.\n\n"
-
                   + "By default, changes to Check and Foreign key constraints will also cause a failure. The"
                   + " --"
                   + ALLOW_RECREATE_CONSTRAINTS_OPT

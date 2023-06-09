@@ -33,9 +33,8 @@ public class ASTcolumn_default_clause extends SimpleNode {
 
   @Override
   public String toString() {
-    ASTcolumn_default_expression exp = (ASTcolumn_default_expression) jjtGetChild(0);
     return "DEFAULT ("
-        + ASTTreeUtils.tokensToString(exp.jjtGetFirstToken(), exp.jjtGetLastToken())
+        + ASTTreeUtils.tokensToString((ASTcolumn_default_expression) jjtGetChild(0))
         + ")";
   }
 }

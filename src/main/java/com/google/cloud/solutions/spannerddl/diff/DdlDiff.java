@@ -590,15 +590,11 @@ public class DdlDiff {
         } else {
           // other ALTER statements are not supported.
           throw new IllegalArgumentException(
-              "Unsupported ALTER TABLE statement: "
-                  + ASTTreeUtils.tokensToString(
-                      ddlStatement.jjtGetFirstToken(), ddlStatement.jjtGetLastToken()));
+              "Unsupported ALTER TABLE statement: " + ASTTreeUtils.tokensToString(ddlStatement));
         }
       } else {
         throw new IllegalArgumentException(
-            "Unsupported statement: "
-                + ASTTreeUtils.tokensToString(
-                    ddlStatement.jjtGetFirstToken(), ddlStatement.jjtGetLastToken()));
+            "Unsupported statement: " + ASTTreeUtils.tokensToString(ddlStatement));
       }
     }
   }

@@ -34,9 +34,7 @@ public class ASTrow_deletion_policy_clause extends SimpleNode {
   public String toString() {
     ASTrow_deletion_policy_expression expression =
         ASTTreeUtils.getChildByType(children, ASTrow_deletion_policy_expression.class);
-    return "ROW DELETION POLICY ("
-        + ASTTreeUtils.tokensToString(expression.firstToken, expression.lastToken)
-        + ")";
+    return "ROW DELETION POLICY (" + ASTTreeUtils.tokensToString(expression) + ")";
   }
 
   @Override

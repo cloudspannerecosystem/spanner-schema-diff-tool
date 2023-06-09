@@ -16,6 +16,8 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
+import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+
 /** Abstract Syntax Tree parser object for "column_type" token */
 public class ASTcolumn_type extends SimpleNode {
 
@@ -50,10 +52,11 @@ public class ASTcolumn_type extends SimpleNode {
         case "STRING":
         case "BYTES":
           // length.
-          return typeName + "(" + children[0].toString() + ")";
+          return typeName + "(" + ((ASTlength) children[0]) + ")";
         case "ARRAY":
-          // type and length.
-          return "ARRAY<" + children[0].toString() + ">";
+          return "ARRAY<" + ((ASTcolumn_type) children[0]) + ">";
+        case "PG": // PG.pgtype
+          return ASTTreeUtils.tokensToString(this);
         default:
           throw new IllegalArgumentException("Unknown column type " + typeName);
       }

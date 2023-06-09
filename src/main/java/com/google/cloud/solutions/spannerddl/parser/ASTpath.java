@@ -16,6 +16,8 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
+import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+
 /** Abstract Syntax Tree parser object for "path" token */
 public class ASTpath extends SimpleNode {
 
@@ -29,6 +31,6 @@ public class ASTpath extends SimpleNode {
 
   @Override
   public String toString() {
-    return jjtGetFirstToken().toString();
+    return ASTTreeUtils.tokensToString(this);
   }
 }

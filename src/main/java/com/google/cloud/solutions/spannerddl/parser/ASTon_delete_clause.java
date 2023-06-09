@@ -38,6 +38,6 @@ public class ASTon_delete_clause extends SimpleNode {
     if (children[0] instanceof ASTno_action) {
       return ON_DELETE_NO_ACTION;
     }
-    throw new IllegalArgumentException("Unrecognised ON DELETE child: " + children[0]);
+    throw new IllegalArgumentException("Unrecognised ON DELETE type: " + children[0]);
   }
 }

@@ -30,11 +30,11 @@ public class DDLParserTest {
     ASTcreate_table_statement statement =
         (ASTcreate_table_statement)
             parse(
-                    "create table test ("
+                    "create table test.test ("
                         + "boolcol bool, "
                         + "intcol int64 not null, "
                         + "floatcol float64, "
-                        + "sizedstring string(55), "
+                        + "`sizedstring` string(55), "
                         + "maxstring string(max) NOT NULL DEFAULT (\"prefix\" || sizedstring || \"suffix\"), "
                         + "sizedbytes bytes(55), "
                         + "maxbytes bytes(max), "
@@ -42,23 +42,24 @@ public class DDLParserTest {
                         + "timestampcol timestamp options (allow_commit_timestamp = true), "
                         + "intarray array<int64>, "
                         + "numericcol numeric,"
-                        + "jsoncol json,"
+                        + "jsoncol json, "
+                        + "pgcolumn pg.something, "
                         + "generatedcol string(max) as (sizedstring+ strstr(maxstring,strpos(maxstring,'xxx'),length(maxstring)) +2.0) STORED, "
-                        + "constraint fk_col_remote FOREIGN KEY(col1, col2) REFERENCES other_table(other_col1, other_col2), "
+                        + "constraint fk_col_remote FOREIGN KEY(col1, col2) REFERENCES test.other_table(other_col1, other_col2), "
                         + "constraint check_some_value CHECK ((length(sizedstring)>100 or sizedstring= \"xxx\") AND boolcol= true and intcol > -123.4 and numericcol < 1.5)"
                         + ") "
                         + "primary key (intcol ASC, floatcol desc, boolcol), "
-                        + "interleave in parent other_table on delete cascade,"
+                        + "interleave in parent `other_table` on delete cascade,"
                         + "row deletion policy (OLDER_THAN(timestampcol, INTERVAL 10 DAY))")
                 .jjtGetChild(0);
 
     assertThat(statement.toString())
         .isEqualTo(
-            "CREATE TABLE test ("
+            "CREATE TABLE test.test ("
                 + "boolcol BOOL, "
                 + "intcol INT64 NOT NULL, "
                 + "floatcol FLOAT64, "
-                + "sizedstring STRING(55), "
+                + "`sizedstring` STRING(55), "
                 + "maxstring STRING(MAX) NOT NULL DEFAULT (\"prefix\" | | sizedstring | | \"suffix\"), "
                 + "sizedbytes BYTES(55), "
                 + "maxbytes BYTES(MAX), "
@@ -67,11 +68,12 @@ public class DDLParserTest {
                 + "intarray ARRAY<INT64>, "
                 + "numericcol NUMERIC, "
                 + "jsoncol JSON, "
+                + "pgcolumn PG.SOMETHING, "
                 + "generatedcol STRING(MAX)  AS ( sizedstring + strstr ( maxstring, strpos ( maxstring, 'xxx' ), length ( maxstring ) ) + 2.0 ) STORED, "
-                + "CONSTRAINT fk_col_remote FOREIGN KEY (col1, col2) REFERENCES other_table (other_col1, other_col2), "
+                + "CONSTRAINT fk_col_remote FOREIGN KEY (col1, col2) REFERENCES test.other_table (other_col1, other_col2), "
                 + "CONSTRAINT check_some_value CHECK (( length ( sizedstring ) > 100 OR sizedstring = \"xxx\" ) AND boolcol = TRUE AND intcol > -123.4 AND numericcol < 1.5)"
                 + ") PRIMARY KEY (intcol ASC, floatcol DESC, boolcol ASC), "
-                + "INTERLEAVE IN PARENT other_table ON DELETE CASCADE, "
+                + "INTERLEAVE IN PARENT `other_table` ON DELETE CASCADE, "
                 + "ROW DELETION POLICY (OLDER_THAN ( timestampcol, INTERVAL 10 DAY ))");
 
     // Test re-parse of toString output.

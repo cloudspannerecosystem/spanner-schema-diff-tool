@@ -31,4 +31,9 @@ public class ASTddl_statement extends SimpleNode {
   public String toString() {
     return children[0].toString();
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof ASTddl_statement && this.toString().equals(obj.toString());
+  }
 }

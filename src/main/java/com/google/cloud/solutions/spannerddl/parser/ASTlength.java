@@ -34,11 +34,7 @@ public class ASTlength extends SimpleNode {
       return jjtGetFirstToken().toString().toUpperCase();
     } else {
       // Length
-      if (children[0] instanceof ASTint_value) {
-        return children[0].toString().toUpperCase();
-      } else {
-        return children[0].toString().toUpperCase();
-      }
+      return children[0].toString().toUpperCase();
     }
   }
 }

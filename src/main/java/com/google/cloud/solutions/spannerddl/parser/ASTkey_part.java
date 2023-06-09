@@ -16,6 +16,8 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
+import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+
 /** Abstract Syntax Tree parser object for "key_part" token */
 public class ASTkey_part extends SimpleNode {
 
@@ -33,10 +35,13 @@ public class ASTkey_part extends SimpleNode {
       return jjtGetFirstToken().toString();
     }
     if (children.length == 1) {
-      return children[0].toString() + " ASC"; // key name ;
+      return ASTTreeUtils.tokensToString((ASTpath) children[0])
+          + " ASC"; // key name without direction ;
     } else {
       // key name and ASC/DESC
-      return children[0].toString() + " " + children[1].toString().toUpperCase();
+      return ASTTreeUtils.tokensToString((ASTpath) children[0])
+          + " "
+          + children[1].toString().toUpperCase();
     }
   }
 }

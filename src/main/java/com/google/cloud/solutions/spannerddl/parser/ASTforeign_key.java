@@ -26,8 +26,6 @@ import java.util.stream.Collectors;
 
 public class ASTforeign_key extends SimpleNode {
 
-  public static final String ANONYMOUS_NAME = "ANONYMOUS_FOREIGN_KEY_NOT_SUPPORTED";
-
   public ASTforeign_key(int id) {
     super(id);
   }
@@ -41,7 +39,7 @@ public class ASTforeign_key extends SimpleNode {
     if (children[0] instanceof ASTconstraint_name) {
       return ((ASTconstraint_name) children[0]).jjtGetFirstToken().toString();
     } else {
-      return ANONYMOUS_NAME;
+      return ASTcreate_table_statement.ANONYMOUS_NAME;
     }
   }
 

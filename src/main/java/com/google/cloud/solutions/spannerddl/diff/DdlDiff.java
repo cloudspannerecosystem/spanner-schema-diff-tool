@@ -101,6 +101,11 @@ public class DdlDiff {
   private final Map<String, ASTcreate_table_statement> originalTablesCreationOrder;
   private final MapDifference<String, ASTrow_deletion_policy_clause> ttlDifferences;
 
+  /**
+   * Wrapper class for Check and Foreign Key constraints to include the table name for when they are
+   * separated from their create table/alter table statements in
+   * separateTablesIndexesConstraintsTtls().
+   */
   private static class ConstraintWrapper {
 
     private final String tableName;
@@ -166,7 +171,9 @@ public class DdlDiff {
     if (!constraintDifferences.entriesDiffering().isEmpty()
         && !options.get(ALLOW_RECREATE_CONSTRAINTS_OPT)) {
       throw new DdlDiffException(
-          "At least one FOREIGN KEY constraint differs, and allowRecreateForeignKeys is not set.\n"
+          "At least one constraint differs, and "
+              + ALLOW_RECREATE_CONSTRAINTS_OPT
+              + " is not set.\n"
               + Joiner.on(", ").join(constraintDifferences.entriesDiffering().keySet()));
     }
 
@@ -185,12 +192,12 @@ public class DdlDiff {
       output.add("DROP INDEX " + indexName);
     }
 
-    // Drop deleted foreign keys
+    // Drop deleted constraints
     for (ConstraintWrapper fk : constraintDifferences.entriesOnlyOnLeft().values()) {
       output.add("ALTER TABLE " + fk.tableName + " DROP CONSTRAINT " + fk.getName());
     }
 
-    // Drop modified foreign keys that need to be re-created...
+    // Drop modified constraints that need to be re-created...
     for (ValueDifference<ConstraintWrapper> fkDiff :
         constraintDifferences.entriesDiffering().values()) {
       output.add(
@@ -240,7 +247,7 @@ public class DdlDiff {
       output.add("ALTER TABLE " + newTtl.getKey() + " ADD " + newTtl.getValue());
     }
 
-    // updateExisting TTLs
+    // update existing TTLs
     for (Entry<String, ValueDifference<ASTrow_deletion_policy_clause>> differentTtl :
         ttlDifferences.entriesDiffering().entrySet()) {
       output.add(
@@ -268,14 +275,14 @@ public class DdlDiff {
       output.add("ALTER TABLE " + fk.tableName + " ADD " + fk.constraint);
     }
 
-    // Re-create modified Foreign Keys.
-    for (ValueDifference<ConstraintWrapper> fkDiff :
+    // Re-create modified constraints.
+    for (ValueDifference<ConstraintWrapper> constraintDiff :
         constraintDifferences.entriesDiffering().values()) {
       output.add(
           "ALTER TABLE "
-              + fkDiff.rightValue().tableName
+              + constraintDiff.rightValue().tableName
               + " ADD "
-              + fkDiff.rightValue().constraint.toString());
+              + constraintDiff.rightValue().constraint.toString());
     }
     return output.build();
   }
@@ -498,49 +505,54 @@ public class DdlDiff {
     List<ASTddl_statement> originalStatements = parseDDL(Strings.nullToEmpty(originalDDL));
     List<ASTddl_statement> newStatements = parseDDL(Strings.nullToEmpty(newDDL));
 
-    Map<String, ASTcreate_table_statement> originalTablesCreationOrder = new LinkedHashMap<>();
+    Map<String, ASTcreate_table_statement> originalTablesInCreationOrder = new LinkedHashMap<>();
     Map<String, ASTcreate_index_statement> originalIndexes = new TreeMap<>();
     Map<String, ConstraintWrapper> originalConstraints = new TreeMap<>();
     Map<String, ASTrow_deletion_policy_clause> originalTtls = new TreeMap<>();
 
     separateTablesIndexesConstraintsTtls(
         originalStatements,
-        originalTablesCreationOrder,
+        originalTablesInCreationOrder,
         originalIndexes,
         originalConstraints,
         originalTtls);
-    Map<String, ASTcreate_table_statement> originalTablesNameOrder =
-        new TreeMap<>(originalTablesCreationOrder);
 
-    Map<String, ASTcreate_table_statement> newTablesCreationOrder = new LinkedHashMap<>();
+    Map<String, ASTcreate_table_statement> newTablesInCreationOrder = new LinkedHashMap<>();
     Map<String, ASTcreate_index_statement> newIndexes = new TreeMap<>();
     Map<String, ConstraintWrapper> newConstraints = new TreeMap<>();
     Map<String, ASTrow_deletion_policy_clause> newTtls = new TreeMap<>();
 
     separateTablesIndexesConstraintsTtls(
-        newStatements, newTablesCreationOrder, newIndexes, newConstraints, newTtls);
-    Map<String, ASTcreate_table_statement> newTablesNameOrder =
-        new TreeMap<>(newTablesCreationOrder);
+        newStatements, newTablesInCreationOrder, newIndexes, newConstraints, newTtls);
 
     return new DdlDiff(
-        Maps.difference(originalTablesNameOrder, newTablesNameOrder),
-        originalTablesCreationOrder,
-        newTablesCreationOrder,
+        Maps.difference(originalTablesInCreationOrder, newTablesInCreationOrder),
+        originalTablesInCreationOrder,
+        newTablesInCreationOrder,
         Maps.difference(originalIndexes, newIndexes),
         Maps.difference(originalConstraints, newConstraints),
         Maps.difference(originalTtls, newTtls));
   }
 
+  /**
+   * Separarates the index, constraints, and Row Deletion policy creation statements from the Table
+   * creation statement, and put them - along with any Alter statements that create these same
+   * objects - into a separate maps.
+   *
+   * <p>This allows the diff tool to handle these objects which are created inline with the table in
+   * the same way as if they were created separately with ALTER statements.
+   */
   private static void separateTablesIndexesConstraintsTtls(
       List<ASTddl_statement> statements,
       Map<String, ASTcreate_table_statement> tables,
       Map<String, ASTcreate_index_statement> indexes,
       Map<String, ConstraintWrapper> constraints,
       Map<String, ASTrow_deletion_policy_clause> ttls) {
-    for (ASTddl_statement statement : statements) {
-      if (statement.jjtGetChild(0) instanceof ASTcreate_table_statement) {
-        ASTcreate_table_statement createTable =
-            (ASTcreate_table_statement) statement.jjtGetChild(0);
+    for (ASTddl_statement ddlStatement : statements) {
+      final SimpleNode statement = (SimpleNode) ddlStatement.jjtGetChild(0);
+
+      if (statement instanceof ASTcreate_table_statement) {
+        ASTcreate_table_statement createTable = (ASTcreate_table_statement) statement;
         // Remove embedded constraint statements from the CreateTable node
         // as they are taken into account via `constraints`
         tables.put(createTable.getTableName(), createTable.clearConstraints());
@@ -552,41 +564,48 @@ public class DdlDiff {
             .map(c -> new ConstraintWrapper(createTable.getTableName(), c))
             .forEach(c -> constraints.put(c.getName(), c));
 
+        // Move embedded Row Deletion Policies
         final Optional<ASTrow_deletion_policy_clause> rowDeletionPolicyClause =
             createTable.getRowDeletionPolicyClause();
         rowDeletionPolicyClause.ifPresent(rdp -> ttls.put(createTable.getTableName(), rdp));
 
-      } else if (statement.jjtGetChild(0) instanceof ASTcreate_index_statement) {
-        ASTcreate_index_statement createIndex =
-            (ASTcreate_index_statement) statement.jjtGetChild(0);
+      } else if (statement instanceof ASTcreate_index_statement) {
+        ASTcreate_index_statement createIndex = (ASTcreate_index_statement) statement;
         indexes.put(createIndex.getIndexName(), createIndex);
 
-      } else if (statement.jjtGetChild(0) instanceof ASTalter_table_statement) {
-        // use a single map for all foreign keys, and constraints and row deletion policies
-        // whether created in table or externally
-        ASTalter_table_statement alterTable = (ASTalter_table_statement) statement.jjtGetChild(0);
-
+      } else if (statement instanceof ASTalter_table_statement) {
+        // Alter table can be adding Index, Constraint or Row Deletion Policy
+        ASTalter_table_statement alterTable = (ASTalter_table_statement) statement;
         final String tableName = alterTable.jjtGetChild(0).toString();
+
         if (alterTable.jjtGetChild(1) instanceof ASTforeign_key
             || alterTable.jjtGetChild(1) instanceof ASTcheck_constraint) {
           ConstraintWrapper constraint =
               new ConstraintWrapper(tableName, (SimpleNode) alterTable.jjtGetChild(1));
           constraints.put(constraint.getName(), constraint);
 
-        } else if (statement.jjtGetChild(0).jjtGetChild(1) instanceof ASTadd_row_deletion_policy) {
+        } else if (statement.jjtGetChild(1) instanceof ASTadd_row_deletion_policy) {
           ttls.put(
               tableName, (ASTrow_deletion_policy_clause) alterTable.jjtGetChild(1).jjtGetChild(0));
         } else {
+          // other ALTER statements are not supported.
           throw new IllegalArgumentException(
-              "Unsupported statement type: "
-                  + DdlParserTreeConstants.jjtNodeName[statement.jjtGetChild(0).getId()]);
+              "Unsupported ALTER TABLE statement: "
+                  + ASTTreeUtils.tokensToString(
+                      ddlStatement.jjtGetFirstToken(), ddlStatement.jjtGetLastToken()));
         }
+      } else {
+        throw new IllegalArgumentException(
+            "Unsupported statement: "
+                + ASTTreeUtils.tokensToString(
+                    ddlStatement.jjtGetFirstToken(), ddlStatement.jjtGetLastToken()));
       }
     }
   }
 
   @VisibleForTesting
   static List<ASTddl_statement> parseDDL(String original) throws DdlDiffException {
+    // Remove "--" comments and split by ";"
     String[] statements = original.replaceAll("--.*(\n|$)", "").split(";");
     ArrayList<ASTddl_statement> ddlStatements = new ArrayList<>(statements.length);
 
@@ -598,14 +617,6 @@ public class DdlDiff {
       try {
         ASTddl_statement ddlStatement = DdlParser.parseDdlStatement(statement);
         int statementType = ddlStatement.jjtGetChild(0).getId();
-
-        if (statementType == DdlParserTreeConstants.JJTDROP_STATEMENT) {
-          throw new IllegalArgumentException(
-              "Unsupported statement:\n"
-                  + statement
-                  + "\nCan only create diffs from 'CREATE TABLE, CREATE INDEX, and "
-                  + "'ALTER TABLE table_name ADD CONSTRAINT' DDL statements");
-        }
 
         if (statementType == DdlParserTreeConstants.JJTALTER_TABLE_STATEMENT) {
           ASTalter_table_statement alterTableStatement =
@@ -621,45 +632,41 @@ public class DdlDiff {
                     + "\nCan only create diffs from 'CREATE TABLE, CREATE INDEX and "
                     + "'ALTER TABLE table_name ADD ' DDL statements");
           }
-          // only foreign key statements here:
           if (alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key
               && ((ASTforeign_key) alterTableStatement.jjtGetChild(1))
                   .getName()
-                  .equals(ASTforeign_key.ANONYMOUS_NAME)) {
+                  .equals(ASTcreate_table_statement.ANONYMOUS_NAME)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
                     + statement
-                    + "\nCan not create diffs when anonymous FOREIGN KEY constraints are used.");
+                    + "\nCan not create diffs when anonymous constraints are used.");
           }
           if (alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint
               && ((ASTcheck_constraint) alterTableStatement.jjtGetChild(1))
                   .getName()
-                  .equals(ASTcheck_constraint.ANONYMOUS_NAME)) {
+                  .equals(ASTcreate_table_statement.ANONYMOUS_NAME)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
                     + statement
-                    + "\nCan not create diffs when anonymous CHECK constraints are used.");
+                    + "\nCan not create diffs when anonymous constraints are used.");
           }
-        }
-        if (statementType == DdlParserTreeConstants.JJTCREATE_TABLE_STATEMENT) {
+        } else if (statementType == DdlParserTreeConstants.JJTCREATE_TABLE_STATEMENT) {
           if (((ASTcreate_table_statement) ddlStatement.jjtGetChild(0))
               .getConstraints()
-              .containsKey(ASTforeign_key.ANONYMOUS_NAME)) {
+              .containsKey(ASTcreate_table_statement.ANONYMOUS_NAME)) {
             throw new IllegalArgumentException(
                 "Unsupported statement:\n"
                     + statement
-                    + "\nCan not create diffs when anonymous FOREIGN KEY constraints are used.");
+                    + "\nCan not create diffs when anonymous constraints are used.");
           }
-        }
-        if (statementType == DdlParserTreeConstants.JJTCREATE_TABLE_STATEMENT) {
-          if (((ASTcreate_table_statement) ddlStatement.jjtGetChild(0))
-              .getConstraints()
-              .containsKey(ASTcheck_constraint.ANONYMOUS_NAME)) {
-            throw new IllegalArgumentException(
-                "Unsupported statement:\n"
-                    + statement
-                    + "\nCan not create diffs when anonymous CHECK constraints are used.");
-          }
+        } else if (statementType == DdlParserTreeConstants.JJTCREATE_INDEX_STATEMENT) {
+          // no-op
+        } else {
+          throw new IllegalArgumentException(
+              "Unsupported statement:\n"
+                  + statement
+                  + "\nCan only create diffs from 'CREATE TABLE, CREATE INDEX, and "
+                  + "'ALTER TABLE table_name ADD CONSTRAINT' DDL statements");
         }
         ddlStatements.add(ddlStatement);
       } catch (ParseException e) {
@@ -759,7 +766,7 @@ public class DdlDiff {
         Option.builder()
             .longOpt(ALLOW_RECREATE_CONSTRAINTS_OPT)
             .desc(
-                "Allows dropping and recreating Check and Foreign Keys constrainys (and their "
+                "Allows dropping and recreating Check and Foreign Key constraints (and their "
                     + "backing Indexes) to apply changes.")
             .build());
     options.addOption(
@@ -793,12 +800,15 @@ public class DdlDiff {
                   + " --"
                   + ALLOW_RECREATE_INDEXES_OPT
                   + " command line option enables index changes by"
-                  + " generating statements to drop and recreate the index.\n\n"
-                  + "By default, changes to foreign key constraints will also cause a failure. The"
+                  + " generating statements to drop and recreate the index which will trigger a"
+                  + " long running operation to rebuild the index.\n\n"
+                  + "By default, changes to Check and Foreign key constraints will also cause a failure. The"
                   + " --"
                   + ALLOW_RECREATE_CONSTRAINTS_OPT
-                  + " command line option enables constraint and foreign key changes by"
-                  + " generating statements to drop and recreate the constraint.\n\n",
+                  + " command line option enables check and foreign key constraint changes by"
+                  + " generating statements to drop and recreate the constraint. These are disabled"
+                  + " by default because they trigger long running operations to rebuild indexes"
+                  + " and validate constraints on existing rows\n\n",
               buildOptions(),
               1,
               4,

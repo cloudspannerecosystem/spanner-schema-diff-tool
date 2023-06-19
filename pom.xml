@@ -32,7 +32,7 @@
     <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
     <ph-javacc-maven-plugin.version>4.1.5</ph-javacc-maven-plugin.version>
-    <truth.version>1.1.4</truth.version>
+    <truth.version>1.1.5</truth.version>
     <junit.version>4.13.2</junit.version>
     <spotless.version>2.41.1</spotless.version>
     <exec-maven.version>3.1.0</exec-maven.version>

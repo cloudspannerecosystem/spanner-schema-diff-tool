@@ -28,7 +28,7 @@
     <guava.version>32.0.1-jre</guava.version>
     <slf4j.version>2.0.7</slf4j.version>
     <commons-cli.version>1.5.0</commons-cli.version>
-    <maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
+    <maven-clean-plugin.version>3.3.1</maven-clean-plugin.version>
     <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
     <ph-javacc-maven-plugin.version>4.1.5</ph-javacc-maven-plugin.version>

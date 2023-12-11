@@ -27,7 +27,7 @@
     <maven.compiler.target>8</maven.compiler.target>
     <guava.version>32.1.3-jre</guava.version>
     <slf4j.version>2.0.9</slf4j.version>
-    <commons-cli.version>1.5.0</commons-cli.version>
+    <commons-cli.version>1.6.0</commons-cli.version>
     <maven-clean-plugin.version>3.3.2</maven-clean-plugin.version>
     <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>

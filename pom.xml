@@ -35,7 +35,7 @@
     <truth.version>1.1.5</truth.version>
     <junit.version>4.13.2</junit.version>
     <spotless.version>2.41.1</spotless.version>
-    <exec-maven.version>3.1.0</exec-maven.version>
+    <exec-maven.version>3.1.1</exec-maven.version>
   </properties>
   <dependencies>
     <dependency>

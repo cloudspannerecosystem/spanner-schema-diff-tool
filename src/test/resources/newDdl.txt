@@ -379,8 +379,22 @@ ALTER DATABASE dbname SET OPTIONS(hello='world');
 
 ALTER DATABASE dbname SET OPTIONS(hello='world', othervalue=456);
 
+== TEST 42 add foreign key in table with delete cascade
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL,
+    constraint fk_in_table foreign key (col2) references othertable(othercol) ON DELETE CASCADE
+)
+primary key (col1);
+
+== TEST 43 add foreign key in table with delete no action
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL,
+    constraint fk_in_table foreign key (col2) references othertable(othercol) ON DELETE NO ACTION
+)
+primary key (col1);
+
 ==
-
-
-
-

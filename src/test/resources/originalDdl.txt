@@ -380,6 +380,22 @@ ALTER DATABASE dbname SET OPTIONS(hello='world');
 
 ALTER DATABASE dbname SET OPTIONS(hello='world', othervalue=123, removeme='please');
 
+== TEST 42 add foreign key in table with delete cascade
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+
+== TEST 43 add foreign key in table with delete no action
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL
+)
+primary key (col1);
+
 ==
 
 

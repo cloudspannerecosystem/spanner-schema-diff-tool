@@ -226,6 +226,14 @@ ALTER DATABASE dbname SET OPTIONS (nothing=NULL,othervalue=456)
 
 ALTER DATABASE dbname SET OPTIONS (othervalue=456,removeme=NULL)
 
+== TEST 42 add foreign key in table with delete cascade
+
+ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY (col2) REFERENCES othertable (othercol) ON DELETE CASCADE
+
+== TEST 43 add foreign key in table with delete no action
+
+ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY (col2) REFERENCES othertable (othercol) ON DELETE NO ACTION
+
 ==
 
 

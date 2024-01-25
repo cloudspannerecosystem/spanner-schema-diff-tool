@@ -69,6 +69,15 @@ public class ASTforeign_key extends SimpleNode {
         (ASTidentifier_list) ((ASTreferenced_columns) children[child]).children[0]);
   }
 
+  public String getDeleteOption() {
+    ASTon_delete deleteOption = ASTTreeUtils.getOptionalChildByType(children, ASTon_delete.class);
+    if (deleteOption != null) {
+      return " " + deleteOption;
+    } else {
+      return "";
+    }
+  }
+
   public String toString() {
 
     return "CONSTRAINT "
@@ -79,7 +88,8 @@ public class ASTforeign_key extends SimpleNode {
         + getReferencedTableName()
         + " ("
         + Joiner.on(", ").join(getReferencedColumnNames())
-        + ")";
+        + ")"
+        + getDeleteOption();
   }
 
   @Override

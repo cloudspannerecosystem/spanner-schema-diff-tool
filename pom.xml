@@ -36,6 +36,7 @@
     <junit.version>4.13.2</junit.version>
     <spotless.version>2.42.0</spotless.version>
     <exec-maven.version>3.1.1</exec-maven.version>
+    <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
   </properties>
   <dependencies>
     <dependency>
@@ -69,6 +70,12 @@
       <artifactId>truth</artifactId>
       <version>${truth.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
   <build>
@@ -100,6 +107,8 @@
         <version>${exec-maven.version}</version>
         <executions>
           <execution>
+            <!-- For VSCode to regenerate sources on change -->
+            <?m2e execute onConfiguration,onIncremental?>
             <id>jjt-2-concat</id>
             <goals>
               <goal>exec</goal>
@@ -186,6 +195,26 @@
             <goals>
               <goal>check</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>${build-helper-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <phase>generate-sources</phase>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/jjtree</source>
+              </sources>
+              <skipAddSourceIfMissing></skipAddSourceIfMissing>
+            </configuration>
           </execution>
         </executions>
       </plugin>

@@ -1,0 +1,50 @@
+###############################################################################
+# File containing test input output for DDL parser tests for unsupported
+# statements that should throw unsupported operation exceptions -- .
+#
+# Format:
+# '#' = line comment, skipped when file is read.
+# '== TEST NAME ' = section name/separator.
+#                   Tests are run on each section individually.
+#                   "TEST NAME" should be the same on all 3 DDL file
+#
+# Each test must have a single DDL statement that is parsed, and then
+# compared to the string rendering of the parsed statemet.
+#
+# Note that leading spaces will be stripped and line breaks converted to spaces
+# to make this file a little more readable
+###############################################################################
+
+== Test 1
+
+ALTER TABLE Albums DROP ROW DELETION POLICY
+
+== Test 2
+
+ALTER TABLE Albums
+REPLACE ROW DELETION POLICY (OLDER_THAN(timestamp_column, INTERVAL 1 DAY))
+
+== Test 3
+
+CREATE OR REPLACE VIEW test1 SQL SECURITY INVOKER AS SELECT * from test2
+
+== Test 4
+
+CREATE  VIEW test1 SQL SECURITY INVOKER AS SELECT * from test2
+
+== Test 5
+
+Create change stream test1 for test2
+
+== Test 6
+
+drop change stream test1
+
+== Test 7
+
+drop index test1
+
+== Test 8
+
+drop table test1
+

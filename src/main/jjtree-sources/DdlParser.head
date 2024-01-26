@@ -56,7 +56,7 @@ options {
 }
 PARSER_BEGIN(DdlParser)
 package com.google.cloud.solutions.spannerddl.parser;
-import java.io.InputStream;import java.io.StringReader;import java.util.*;
+import java.io.StringReader;
 
 public class DdlParser {
   public static ASTddl_statement parseDdlStatement(String in)

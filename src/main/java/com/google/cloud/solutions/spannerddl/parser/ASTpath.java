@@ -31,6 +31,6 @@ public class ASTpath extends SimpleNode {
 
   @Override
   public String toString() {
-    return ASTTreeUtils.tokensToString(this);
+    return ASTTreeUtils.tokensToString(this, false);
   }
 }

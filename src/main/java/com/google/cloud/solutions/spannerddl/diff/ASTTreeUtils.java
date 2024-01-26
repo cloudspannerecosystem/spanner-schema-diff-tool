@@ -75,11 +75,20 @@ public class ASTTreeUtils {
    * spacing and capitalization of tokens.
    */
   public static String tokensToString(Token firstToken, Token lastToken) {
+    return tokensToString(firstToken, lastToken, true);
+  }
+
+  /**
+   * Generate the original parsed text between the 2 specified tokens, normalizing the text with
+   * spacing and optional capitalization of reserved words.
+   */
+  public static String tokensToString(
+      Token firstToken, Token lastToken, boolean upperCaseReserved) {
     StringBuilder sb = new StringBuilder();
     Token t = firstToken;
     while (t != lastToken) {
       String tok = t.toString();
-      sb.append(isReservedWord(tok) ? tok.toUpperCase() : tok);
+      sb.append(isReservedWord(tok) && upperCaseReserved ? tok.toUpperCase() : tok);
 
       if (t.next != null
           && !t.next.toString().equals(",")
@@ -91,15 +100,23 @@ public class ASTTreeUtils {
     }
     // append last token
     String tok = t.toString();
-    sb.append(isReservedWord(tok) ? tok.toUpperCase() : tok);
+    sb.append(isReservedWord(tok) && upperCaseReserved ? tok.toUpperCase() : tok);
     return sb.toString();
   }
 
   /**
    * Generate the original parsed text of the node, normalizing the text with spacing and
-   * capitalization of tokens.
+   * capitalization of reserved words.
    */
   public static String tokensToString(SimpleNode node) {
-    return tokensToString(node.jjtGetFirstToken(), node.jjtGetLastToken());
+    return tokensToString(node, true);
+  }
+
+  /**
+   * Generate the original parsed text of the node, normalizing the text with spacing and optional
+   * capitalization of reserved words.
+   */
+  public static String tokensToString(SimpleNode node, boolean upperCaseReserved) {
+    return tokensToString(node.jjtGetFirstToken(), node.jjtGetLastToken(), upperCaseReserved);
   }
 }

@@ -1,0 +1,87 @@
+###############################################################################
+# File containing test input output for DDL parser/validator Tests.
+#
+# Format:
+# '#' = line comment, skipped when file is read.
+# '== TEST NAME ' = section name/separator.
+#                   Tests are run on each section individually.
+#                   "TEST NAME" should be the same on all 3 DDL file
+#
+# Each test must have a single DDL statement that is parsed, and then
+# compared to the string rendering of the parsed statemet.
+#
+# Note that leading spaces will be stripped and line breaks converted to spaces
+# to make this file a little more readable
+###############################################################################
+
+== Test 1 Create table with col default value
+
+CREATE TABLE test1
+  (keycol INT64,
+  value INT64 DEFAULT (keycol * 100 + PI ( ))) PRIMARY KEY (keycol ASC)
+
+== Test 2
+
+ALTER DATABASE dbname SET OPTIONS (opt1=NULL,opt2='1234',opt3=3)
+
+== Test 3
+
+ALTER TABLE Albums
+ADD ROW DELETION POLICY (OLDER_THAN ( timestamp_column, INTERVAL 1 DAY ))
+
+== Test 4
+
+CREATE UNIQUE NULL_FILTERED INDEX testindex ON testtable
+(col1 ASC,
+  col2 DESC,
+  col3 ASC) STORING (col4, col5, col6),
+INTERLEAVE IN other_table
+
+== Test 5
+
+CREATE TABLE test.test
+(boolcol BOOL,
+    intcol INT64 NOT NULL,
+    floatcol FLOAT64,
+    `sizedstring` STRING(55),
+    maxstring STRING(MAX) NOT NULL DEFAULT ("prefix" | | sizedstring | | "suffix"),
+    sizedbytes BYTES(55),
+    maxbytes BYTES(MAX),
+    datecol DATE,
+    timestampcol TIMESTAMP OPTIONS (allow_commit_timestamp=TRUE),
+    intarray ARRAY<INT64>,
+    numericcol NUMERIC,
+    jsoncol JSON,
+    pgcolumn PG.SOMETHING,
+    generatedcol STRING(MAX) AS ( sizedstring + strstr ( maxstring, strpos ( maxstring, 'xxx' ), length ( maxstring ) ) + 2.0 ) STORED,
+    CONSTRAINT fk_col_remote FOREIGN KEY (col1, col2) REFERENCES test.other_table (other_col1, other_col2) ON DELETE CASCADE,
+    CONSTRAINT fk_col_remote2 FOREIGN KEY (col1) REFERENCES test.other_table (other_col1) ON DELETE NO ACTION,
+    CONSTRAINT check_some_value CHECK (( length ( sizedstring ) > 100 OR sizedstring = "xxx" ) AND boolcol = TRUE AND intcol > -123.4 AND numericcol < 1.5))
+PRIMARY KEY (intcol ASC, floatcol DESC, boolcol ASC),
+INTERLEAVE IN PARENT `other_table` ON DELETE CASCADE,
+ROW DELETION POLICY (OLDER_THAN ( timestampcol, INTERVAL 10 DAY ))
+
+
+== Test 6 -- using quoted reserverd words as column names
+
+CREATE TABLE mytable
+(`key` INT64,
+`index` STRING(MAX),
+`table` BYTES(MAX),
+generatedcol INT64 AS ( KEY * INDEX ) STORED,
+CONSTRAINT fk_col_remote2 FOREIGN KEY (`key`) REFERENCES test.other_table (`key`))
+PRIMARY KEY (`key` ASC)
+
+== Test 7 -- using unquoted reserverd words as column names
+
+CREATE TABLE mytable
+(key INT64,
+index STRING(MAX),
+table BYTES(MAX),
+generatedcol INT64 AS ( KEY * INDEX ) STORED,
+CONSTRAINT fk_col_remote2 FOREIGN KEY (key) REFERENCES test.other_table (key))
+PRIMARY KEY (key ASC, index ASC)
+
+== Test 7 -- using unquoted reserverd words as column names in index
+
+CREATE INDEX myIndex ON mytable (key ASC, index ASC) STORING (table)

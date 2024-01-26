@@ -255,7 +255,7 @@ public class DdlDiff {
         newTablesCreationOrder.entrySet()) {
       if (tableDifferences.entriesOnlyOnRight().containsKey(newTableEntry.getKey())) {
         LOG.info("Creating new table: {}", newTableEntry.getKey());
-        output.add(newTableEntry.getValue().toString());
+        output.add(newTableEntry.getValue().toStringOptionalExistClause(false));
       }
     }
 
@@ -278,14 +278,14 @@ public class DdlDiff {
     // Create new indexes
     for (ASTcreate_index_statement index : indexDifferences.entriesOnlyOnRight().values()) {
       LOG.info("Creating new index: {}", index.getIndexName());
-      output.add(index.toString());
+      output.add(index.toStringOptionalExistClause(false));
     }
 
     // Re-create modified indexes...
     for (ValueDifference<ASTcreate_index_statement> difference :
         indexDifferences.entriesDiffering().values()) {
       LOG.info("Re-creating changed index: {}", difference.leftValue().getIndexName());
-      output.add(difference.rightValue().toString());
+      output.add(difference.rightValue().toStringOptionalExistClause(false));
     }
 
     // Create new constraints.
@@ -901,11 +901,11 @@ public class DdlDiff {
                   + "By default, changes to indexes will also cause a failure. The"
                   + " --"
                   + ALLOW_RECREATE_INDEXES_OPT
-                  + " command line option enables index changes by"
-                  + " generating statements to drop and recreate the index which will trigger a"
-                  + " long running operation to rebuild the index.\n\n"
-                  + "By default, changes to Check and Foreign key constraints will also cause a failure. The"
-                  + " --"
+                  + " command line option enables index changes by generating statements to drop"
+                  + " and recreate the index which will trigger a long running operation to rebuild"
+                  + " the index.\n\n"
+                  + "By default, changes to Check and Foreign key constraints will also cause a"
+                  + " failure. The --"
                   + ALLOW_RECREATE_CONSTRAINTS_OPT
                   + " command line option enables check and foreign key constraint changes by"
                   + " generating statements to drop and recreate the constraint. These are disabled"

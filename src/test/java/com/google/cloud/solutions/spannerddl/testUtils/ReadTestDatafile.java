@@ -62,7 +62,7 @@ public abstract class ReadTestDatafile {
       // Check if there is an unclosed last section
       if (section.length() > 0) {
         // add last section
-        output.put(sectionName, section.length() > 0 ? section.toString() : null);
+        throw new IOException("Missing section border '==' at end of file " + filename);
       }
       return output;
     }

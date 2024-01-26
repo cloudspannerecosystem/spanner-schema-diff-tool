@@ -139,6 +139,7 @@ TOKEN:
   | <FOREIGN:                  "foreign">
   | <FUNCTION:                 "function">
   | <GRANT:                    "grant">
+  | <HIDDEN:                   "hidden">
   | <INDEX:                    "index">
   | <INPUT:                    "input">
   | <INSERT:                   "insert">
@@ -179,6 +180,7 @@ TOKEN:
   | <TOKENLIST:                "tokenlist">
   | <UNIQUE:                   "unique">
   | <UPDATE:                   "update">
+  | <USAGE:                    "usage">
   | <VIEW:                     "view">
 }
 
@@ -209,6 +211,7 @@ void pseudoReservedWord() #void :
   | <FOREIGN>
   | <FUNCTION>
   | <GRANT>
+  | <HIDDEN>
   | <INDEX>
   | <INPUT>
   | <INSERT>
@@ -249,6 +252,7 @@ void pseudoReservedWord() #void :
   | <TOKENLIST>
   | <UNIQUE>
   | <UPDATE>
+  | <USAGE>
   | <VIEW>
 }
 

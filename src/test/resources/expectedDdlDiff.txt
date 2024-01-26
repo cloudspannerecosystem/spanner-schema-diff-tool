@@ -14,8 +14,8 @@
 ###############################################################################
 == TEST 1 simple add table and index
 
-CREATE TABLE test2 (col1 INT64, col2 INT64) PRIMARY KEY (col1 ASC)
-CREATE INDEX index2 ON test2 (col1 ASC)
+CREATE TABLE test2 ( col1 INT64, col2 INT64 ) PRIMARY KEY (col1 ASC)
+CREATE INDEX index2 ON test2 ( col1 ASC )
 
 == TEST 2 drop table and index (index should be dropped first)
 
@@ -26,7 +26,7 @@ DROP TABLE test2
 
 DROP INDEX index2
 ALTER TABLE test2 ADD COLUMN col3 TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=TRUE)
-CREATE INDEX index2 ON test2 (col3 ASC)
+CREATE INDEX index2 ON test2 ( col3 ASC )
 
 == TEST 4 multiple tables, indexes, different orders - verify creation order.
 
@@ -39,11 +39,11 @@ ALTER TABLE test1 ALTER COLUMN col4 ARRAY<STRING(200)>
 ALTER TABLE test2 ADD COLUMN newcol2 STRING(MAX)
 ALTER TABLE test3 SET ON DELETE NO ACTION
 ALTER TABLE test3 ADD COLUMN col3 TIMESTAMP
-CREATE TABLE cccparent (col1 INT64) PRIMARY KEY (col1 ASC)
-CREATE TABLE bbbchild1 (col1 INT64, col2 INT64) PRIMARY KEY (col1 ASC, col2 ASC), INTERLEAVE IN PARENT cccparent ON DELETE NO ACTION
-CREATE TABLE aaachild2 (col1 INT64, col2 INT64, col3 INT64) PRIMARY KEY (col1 ASC, col2 ASC, col3 ASC), INTERLEAVE IN PARENT bbbchild1 ON DELETE NO ACTION
-CREATE INDEX index1 ON test1 (col2 ASC)
-CREATE INDEX index2 ON test2 (col1 DESC)
+CREATE TABLE cccparent ( col1 INT64 ) PRIMARY KEY (col1 ASC)
+CREATE TABLE bbbchild1 ( col1 INT64, col2 INT64 ) PRIMARY KEY (col1 ASC, col2 ASC), INTERLEAVE IN PARENT cccparent ON DELETE NO ACTION
+CREATE TABLE aaachild2 ( col1 INT64, col2 INT64, col3 INT64 ) PRIMARY KEY (col1 ASC, col2 ASC, col3 ASC), INTERLEAVE IN PARENT bbbchild1 ON DELETE NO ACTION
+CREATE INDEX index1 ON test1 ( col2 ASC )
+CREATE INDEX index2 ON test2 ( col1 DESC )
 
 == TEST 5 verify table deletion order - important for interleaved
 
@@ -55,7 +55,7 @@ DROP TABLE aaaparent
 == TEST 6 case-sensitive table names
 
 DROP TABLE test1
-CREATE TABLE TEST1 (col1 INT64) PRIMARY KEY (col1 ASC)
+CREATE TABLE TEST1 ( col1 INT64 ) PRIMARY KEY (col1 ASC)
 
 == TEST 7 case-sensitive column names
 
@@ -65,25 +65,25 @@ ALTER TABLE test1 ADD COLUMN COL2 INT64
 == TEST 8 case-sensitive index names
 
 DROP INDEX index1
-CREATE INDEX INDEX1 ON test1 (col2 ASC)
+CREATE INDEX INDEX1 ON test1 ( col2 ASC )
 
 == TEST 9 add foreign key in table
 
-ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY (col2) REFERENCES othertable (othercol)
+ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY ( col2 ) REFERENCES othertable ( othercol ) ON DELETE NO ACTION
 
 == TEST 10 add foreign key via alter statement
 
-ALTER TABLE test1 ADD CONSTRAINT fk_in_alter FOREIGN KEY (col2) REFERENCES othertable (othercol)
+ALTER TABLE test1 ADD CONSTRAINT fk_in_alter FOREIGN KEY ( col2 ) REFERENCES othertable ( othercol ) ON DELETE NO ACTION
 
 == TEST 11 modify foreign key in table
 
 ALTER TABLE test1 DROP CONSTRAINT fk_in_table
-ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY (col1) REFERENCES othertable (othercol1)
+ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY ( col1 ) REFERENCES othertable ( othercol1 ) ON DELETE NO ACTION
 
 == TEST 12 modify foreign key via alter statement
 
 ALTER TABLE test1 DROP CONSTRAINT fk_in_alter
-ALTER TABLE test1 ADD CONSTRAINT fk_in_alter FOREIGN KEY (col1) REFERENCES othertable (othercol1)
+ALTER TABLE test1 ADD CONSTRAINT fk_in_alter FOREIGN KEY ( col1 ) REFERENCES othertable ( othercol1 ) ON DELETE NO ACTION
 
 == TEST 13 drop foreign key in table
 
@@ -103,12 +103,12 @@ ALTER TABLE test1 DROP CONSTRAINT ch_in_test1
 ALTER TABLE test1 DROP CONSTRAINT fk_in_test1
 DROP TABLE test2
 ALTER TABLE test1 ADD COLUMN col3 INT64
-CREATE TABLE test3 (col1 INT64) PRIMARY KEY (col1 ASC)
-CREATE INDEX index1 ON test1 (col3 ASC)
+CREATE TABLE test3 ( col1 INT64 ) PRIMARY KEY (col1 ASC)
+CREATE INDEX index1 ON test1 ( col3 ASC )
 ALTER TABLE test3 ADD CONSTRAINT ch_in_test3 CHECK (col1 = col3 AND col1 > 100 AND col2 < -50)
-ALTER TABLE test3 ADD CONSTRAINT fk_in_test3 FOREIGN KEY (col3) REFERENCES othertable (othercol)
+ALTER TABLE test3 ADD CONSTRAINT fk_in_test3 FOREIGN KEY ( col3 ) REFERENCES othertable ( othercol ) ON DELETE NO ACTION
 ALTER TABLE test1 ADD CONSTRAINT ch_in_test1 CHECK (col1 = col3 AND col1 > 100 AND col2 < -50)
-ALTER TABLE test1 ADD CONSTRAINT fk_in_test1 FOREIGN KEY (col3) REFERENCES othertable (othercol)
+ALTER TABLE test1 ADD CONSTRAINT fk_in_test1 FOREIGN KEY ( col3 ) REFERENCES othertable ( othercol ) ON DELETE NO ACTION
 
 == TEST 16 add check constraint via alter statement
 
@@ -146,8 +146,8 @@ ALTER TABLE test_gen DROP COLUMN col3
 
 == TEST 24 add foreign key via create table
 
-CREATE TABLE test_fkey (col1 INT64, col2 INT64) PRIMARY KEY (col1 ASC)
-ALTER TABLE test_fkey ADD CONSTRAINT fk_col1 FOREIGN KEY (col1) REFERENCES test1 (col1)
+CREATE TABLE test_fkey ( col1 INT64, col2 INT64 ) PRIMARY KEY (col1 ASC)
+ALTER TABLE test_fkey ADD CONSTRAINT fk_col1 FOREIGN KEY ( col1 ) REFERENCES test1 ( col1 ) ON DELETE NO ACTION
 
 == TEST 25 move foreign key out of create table
 
@@ -212,7 +212,7 @@ ALTER TABLE test1 ADD COLUMN new_col STRING(MAX) DEFAULT ("Hello World")
 
 == TEST 38 add a new table with a default value
 
-CREATE TABLE test1 (col1 INT64, created_at TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP ( )) OPTIONS (allow_commit_timestamp=TRUE)) PRIMARY KEY (col1 ASC)
+CREATE TABLE test1 ( col1 INT64, created_at TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP ( )) OPTIONS (allow_commit_timestamp=TRUE) ) PRIMARY KEY (col1 ASC)
 
 == TEST 39 Unchanged database options using multiple statements
 
@@ -228,14 +228,29 @@ ALTER DATABASE dbname SET OPTIONS (othervalue=456,removeme=NULL)
 
 == TEST 42 add foreign key in table with delete cascade
 
-ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY (col2) REFERENCES othertable (othercol) ON DELETE CASCADE
+ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY ( col2 ) REFERENCES othertable ( othercol ) ON DELETE CASCADE
 
 == TEST 43 add foreign key in table with delete no action
 
-ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY (col2) REFERENCES othertable (othercol) ON DELETE NO ACTION
+ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY ( col2 ) REFERENCES othertable ( othercol ) ON DELETE NO ACTION
+
+== TEST 44 IF NOT EXIST on table and index
+
+CREATE TABLE test3 ( col1 INT64 ) PRIMARY KEY (col1 ASC)
+CREATE INDEX test4 ON test1 ( col1 ASC )
+
+== TEST 45 mismatchng IF NOT EXISTS on table and index - no diff
+
+
+== TEST 46 change foreign key on delete clause
+
+ALTER TABLE test1 DROP CONSTRAINT fk_in_table
+ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY ( col2 ) REFERENCES othertable ( othercol ) ON DELETE CASCADE
+
+== TEST 47 Modifying index with IF NOT EXIST
+
+DROP INDEX test4
+CREATE INDEX test4 ON test1 ( col1 ASC ) STORING ( col2 )
 
 ==
-
-
-
 

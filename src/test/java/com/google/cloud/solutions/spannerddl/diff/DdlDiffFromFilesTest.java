@@ -40,7 +40,7 @@ public class DdlDiffFromFilesTest {
 
     String segmentName = null;
     try {
-      while (originalSegmentIt.hasNext()) {
+      while (originalSegmentIt.hasNext() && newSegmentIt.hasNext() && expectedOutputIt.hasNext()) {
         Map.Entry<String, String> originalSegment = originalSegmentIt.next();
         segmentName = originalSegment.getKey();
         Map.Entry<String, String> newSegment = newSegmentIt.next();
@@ -108,9 +108,26 @@ public class DdlDiffFromFilesTest {
             .that(diff)
             .isEqualTo(expectedDiffNoDrops);
       }
-    } catch (Throwable e) {
-      e.printStackTrace(System.err);
-      fail("Unexpected exception when processing segment " + segmentName + ": " + e);
+    } catch (DdlDiffException e) {
+      fail("DdlDiffException when processing segment " + segmentName + ": " + e);
+    } catch (Exception e) {
+      throw new Error("Unexpected exception when processing segment " + segmentName + ": " + e, e);
+    }
+
+    if (originalSegmentIt.hasNext()) {
+      throw new Error(
+          "Mismatched number of segments: Others have finished, but Original still has "
+              + originalSegmentIt.next().getKey());
+    }
+    if (newSegmentIt.hasNext()) {
+      throw new Error(
+          "Mismatched number of segments: Others have finished, but New still has "
+              + newSegmentIt.next().getKey());
+    }
+    if (expectedOutputIt.hasNext()) {
+      throw new Error(
+          "Mismatched number of segments: Others have finished, but Expected still has "
+              + expectedOutputIt.next().getKey());
     }
   }
 }

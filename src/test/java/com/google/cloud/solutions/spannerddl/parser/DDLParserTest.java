@@ -51,21 +51,37 @@ public class DDLParserTest {
 
     assertThat(statement.toString())
         .isEqualTo(
-            "CREATE TABLE test.test (boolcol BOOL, intcol INT64 NOT NULL, floatcol FLOAT64,"
-                + " `sizedstring` STRING(55), maxstring STRING(MAX) NOT NULL DEFAULT (\"prefix\" |"
-                + " | sizedstring | | \"suffix\"), sizedbytes BYTES(55), maxbytes BYTES(MAX),"
-                + " datecol DATE, timestampcol TIMESTAMP OPTIONS (allow_commit_timestamp=TRUE),"
-                + " intarray ARRAY<INT64>, numericcol NUMERIC, jsoncol JSON, pgcolumn PG.SOMETHING,"
-                + " generatedcol STRING(MAX) AS ( sizedstring + strstr ( maxstring, strpos ("
-                + " maxstring, 'xxx' ), length ( maxstring ) ) + 2.0 ) STORED, CONSTRAINT"
-                + " fk_col_remote FOREIGN KEY (col1, col2) REFERENCES test.other_table (other_col1,"
-                + " other_col2) ON DELETE CASCADE, CONSTRAINT fk_col_remote2 FOREIGN KEY (col1)"
-                + " REFERENCES test.other_table (other_col1) ON DELETE NO ACTION, CONSTRAINT"
-                + " check_some_value CHECK (( length ( sizedstring ) > 100 OR sizedstring = \"xxx\""
-                + " ) AND boolcol = TRUE AND intcol > -123.4 AND numericcol < 1.5)) PRIMARY KEY"
-                + " (intcol ASC, floatcol DESC, boolcol ASC), INTERLEAVE IN PARENT `other_table` ON"
-                + " DELETE CASCADE, ROW DELETION POLICY (OLDER_THAN ( timestampcol, INTERVAL 10 DAY"
-                + " ))");
+            ("CREATE TABLE test.test \n"
+                    + "(\n"
+                    + "  boolcol BOOL, \n"
+                    + "  intcol INT64 NOT NULL, \n"
+                    + "  floatcol FLOAT64, \n"
+                    + "  `sizedstring` STRING(55), \n"
+                    + "  maxstring STRING(MAX) NOT NULL DEFAULT (\"prefix\" || sizedstring ||\n"
+                    + "     \"suffix\"), \n"
+                    + "  sizedbytes BYTES(55), \n"
+                    + "  maxbytes BYTES(MAX), \n"
+                    + "  datecol DATE, \n"
+                    + "  timestampcol TIMESTAMP OPTIONS (allow_commit_timestamp=TRUE), \n"
+                    + "  intarray ARRAY<INT64>, \n"
+                    + "  numericcol NUMERIC, \n"
+                    + "  jsoncol JSON, \n"
+                    + "  pgcolumn PG.SOMETHING, \n"
+                    + "  generatedcol STRING(MAX) AS ( sizedstring + strstr ( maxstring, strpos (\n"
+                    + "     maxstring, 'xxx' ), length ( maxstring ) ) + 2.0 ) STORED, \n"
+                    + "  CONSTRAINT fk_col_remote FOREIGN KEY ( col1, col2 ) REFERENCES \n"
+                    + "     test.other_table ( other_col1, other_col2 ) ON DELETE CASCADE, \n"
+                    + "  CONSTRAINT fk_col_remote2 FOREIGN KEY ( col1 ) REFERENCES test.other_table\n"
+                    + "     ( other_col1 ) ON DELETE NO ACTION, \n"
+                    + "  CONSTRAINT check_some_value CHECK (( length ( sizedstring ) > 100 OR \n"
+                    + "     sizedstring = \"xxx\" ) AND boolcol = TRUE AND intcol > -123.4 AND \n"
+                    + "     numericcol < 1.5)\n"
+                    + ")\n"
+                    + "PRIMARY KEY (intcol ASC, floatcol DESC, boolcol ASC), \n"
+                    + "INTERLEAVE IN PARENT `other_table` ON DELETE CASCADE, \n"
+                    + "ROW DELETION POLICY (OLDER_THAN ( timestampcol, INTERVAL 10 DAY ))")
+                // remove extra spaces left in expected output for readability
+                .replaceAll("\\s+", " "));
 
     // Test re-parse of toString output.
     ASTcreate_table_statement statement2 =
@@ -93,8 +109,8 @@ public class DDLParserTest {
     assertThat(statement.toString())
         .isEqualTo(
             "CREATE UNIQUE NULL_FILTERED INDEX testindex ON testtable "
-                + "(col1 ASC, col2 DESC, col3 ASC) "
-                + "STORING (col4, col5, col6), "
+                + "( col1 ASC, col2 DESC, col3 ASC ) "
+                + "STORING ( col4, col5, col6 ) , "
                 + "INTERLEAVE IN other_table");
 
     // Test re-parse of toString output.
@@ -115,8 +131,24 @@ public class DDLParserTest {
   }
 
   @Test
-  public void parseAlterDatabase() throws ParseException {
-    parseAndVerifyToString("ALTER DATABASE dbname SET OPTIONS (opt1=NULL,opt2='1234',opt3=3)");
+  public void parseDdlOnDeleteDefaultNoAction() throws ParseException {
+    ASTcreate_table_statement statement =
+        (ASTcreate_table_statement)
+            parse(
+                    "CREATE TABLE test_table \n"
+                        + "(intcol INT64, \n"
+                        + "CONSTRAINT fk_other1 FOREIGN KEY ( intcol ) REFERENCES othertable ("
+                        + " othercol )) \n"
+                        + "PRIMARY KEY (intcol ASC)")
+                .jjtGetChild(0);
+    assertThat(statement.toString())
+        .isEqualTo(
+            ("CREATE TABLE test_table (\n"
+                    + "intcol INT64, \n"
+                    + "CONSTRAINT fk_other1 FOREIGN KEY ( intcol ) REFERENCES othertable ("
+                    + " othercol ) ON DELETE NO ACTION\n"
+                    + ") PRIMARY KEY (intcol ASC)")
+                .replaceAll("\\s+", " "));
   }
 
   private static void parseCheckingException(String ddlStatement, String exceptionContains) {

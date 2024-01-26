@@ -50,14 +50,14 @@ public class DdlDiffTest {
     assertThat(result).hasSize(4);
 
     assertThat(result.get(0).toString())
-        .isEqualTo("CREATE TABLE test1 (col1 INT64) PRIMARY KEY (col1 ASC)");
+        .isEqualTo("CREATE TABLE test1 ( col1 INT64 ) PRIMARY KEY (col1 ASC)");
     assertThat(result.get(1).toString())
-        .isEqualTo("CREATE TABLE test2 (col2 FLOAT64) PRIMARY KEY (col2 ASC)");
+        .isEqualTo("CREATE TABLE test2 ( col2 FLOAT64 ) PRIMARY KEY (col2 ASC)");
     assertThat(result.get(2).toString())
         .isEqualTo(
-            "CREATE TABLE test3 (col3 STRING(MAX)) PRIMARY KEY (col3 ASC), "
+            "CREATE TABLE test3 ( col3 STRING(MAX) ) PRIMARY KEY (col3 ASC), "
                 + "INTERLEAVE IN PARENT testparent ON DELETE NO ACTION");
-    assertThat(result.get(3).toString()).isEqualTo("CREATE INDEX index1 ON table1 (col1 ASC)");
+    assertThat(result.get(3).toString()).isEqualTo("CREATE INDEX index1 ON table1 ( col1 ASC )");
   }
 
   @Test
@@ -420,6 +420,26 @@ public class DdlDiffTest {
         "Multiple database IDs defined");
   }
 
+  @Test
+  public void diffCreateTableDifferentExists() throws DdlDiffException {
+    assertThat(
+            getDiff(
+                "create table test1 ( col1 int64 ) primary key (col1);",
+                "create table if not exists test1 ( col1 int64 ) primary key (col1);",
+                true))
+        .isEmpty();
+  }
+
+  @Test
+  public void diffCreateIndexDifferentExists() throws DdlDiffException {
+    assertThat(
+            getDiff(
+                "CREATE INDEX myindex ON mytable ( col1 );",
+                "CREATE INDEX IF NOT EXISTS myindex ON mytable ( col1 );",
+                true))
+        .isEmpty();
+  }
+
   private static void getDiffCheckDdlDiffException(
       String originalDdl, String newDdl, boolean allowDropStatements, String exceptionContains) {
     try {
@@ -514,21 +534,22 @@ public class DdlDiffTest {
         .isEqualTo(
             Arrays.asList(
                 "DROP INDEX index1",
-                "CREATE UNIQUE NULL_FILTERED INDEX index1 ON table1 (col1 ASC)"));
+                "CREATE UNIQUE NULL_FILTERED INDEX index1 ON table1 ( col1 ASC )"));
     assertThat(
             DdlDiff.build(
-                    "Create unique null_filtered index index1 on table1 (col1 desc)",
-                    "Create unique null_filtered index index1 on table1 (col2 desc)")
+                    "Create unique null_filtered index index1 on table1 ( col1 desc )",
+                    "Create unique null_filtered index index1 on table1 ( col2 desc )")
                 .generateDifferenceStatements(options))
         .isEqualTo(
             Arrays.asList(
                 "DROP INDEX index1",
-                "CREATE UNIQUE NULL_FILTERED INDEX index1 ON table1 (col2 DESC)"));
+                "CREATE UNIQUE NULL_FILTERED INDEX index1 ON table1 ( col2 DESC )"));
     assertThat(
             DdlDiff.build(
-                    "Create unique null_filtered index index1 on table1 (col1 desc)",
-                    "Create index index1 on table1 (col1 desc)")
+                    "Create unique null_filtered index index1 on table1 ( col1 desc )",
+                    "Create index index1 on table1 ( col1 desc )")
                 .generateDifferenceStatements(options))
-        .isEqualTo(Arrays.asList("DROP INDEX index1", "CREATE INDEX index1 ON table1 (col1 DESC)"));
+        .isEqualTo(
+            Arrays.asList("DROP INDEX index1", "CREATE INDEX index1 ON table1 ( col1 DESC )"));
   }
 }

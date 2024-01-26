@@ -36,7 +36,7 @@ public class ASTcolumn_def extends SimpleNode {
   }
 
   public String getColumnTypeString() {
-    return getColumnType().toString().toUpperCase();
+    return getColumnType().toString();
   }
 
   public ASTcolumn_type getColumnType() {
@@ -52,11 +52,15 @@ public class ASTcolumn_def extends SimpleNode {
   }
 
   public boolean isNotNull() {
-    return (children.length > 2 && children[2] instanceof ASTnot_null);
+    return ASTTreeUtils.getOptionalChildByType(children, ASTnot_null.class) != null;
   }
 
   public @Nullable ASToptions_clause getOptionsClause() {
     return ASTTreeUtils.getOptionalChildByType(children, ASToptions_clause.class);
+  }
+
+  public boolean isHidden() {
+    return ASTTreeUtils.getOptionalChildByType(children, ASThidden.class) != null;
   }
 
   @Override
@@ -72,6 +76,7 @@ public class ASTcolumn_def extends SimpleNode {
             (isNotNull() ? "NOT NULL" : null),
             getGenerationClause(),
             getColumnDefaultClause(),
+            (isHidden() ? "HIDDEN" : null),
             getOptionsClause());
   }
 
@@ -99,6 +104,10 @@ public class ASTcolumn_def extends SimpleNode {
       index++;
     }
     if (index < children.length && children[index] instanceof ASTcolumn_default_clause) {
+      // default value
+      index++;
+    }
+    if (index < children.length && children[index] instanceof ASThidden) {
       // default value
       index++;
     }

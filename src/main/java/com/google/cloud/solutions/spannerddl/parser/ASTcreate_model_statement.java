@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.google.cloud.solutions.spannerddl.parser;
 
-/** Abstract Syntax Tree parser object for "stored_column_list" token */
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
-import com.google.common.base.Joiner;
-
-public class ASTstored_column_list extends SimpleNode {
-
-  public ASTstored_column_list(int id) {
+// TODO
+public class ASTcreate_model_statement extends SimpleNode {
+  public ASTcreate_model_statement(int id) {
     super(id);
+    throw new UnsupportedOperationException("Not Implemented");
   }
 
-  public ASTstored_column_list(DdlParser p, int id) {
+  public ASTcreate_model_statement(DdlParser p, int id) {
     super(p, id);
-  }
-
-  @Override
-  public String toString() {
-    return "STORING ( "
-        + Joiner.on(", ").join(ASTTreeUtils.getChildrenAssertType(children, ASTstored_column.class))
-        + " )";
+    throw new UnsupportedOperationException("Not Implemented");
   }
 }

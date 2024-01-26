@@ -397,4 +397,35 @@ create table test1 (
 )
 primary key (col1);
 
+== TEST 44 IF NOT EXIST on table and index
+
+create table if not exists test1 ( col1 int64 ) primary key (col1);
+Create index if not exists test2 on test1 ( col1 );
+
+create table if not exists test3 ( col1 int64 ) primary key (col1);
+Create index if not exists test4 on test1 ( col1 );
+
+== TEST 45 mismatchng IF NOT EXISTS on table and index - no diff
+
+create table if not exists test1 ( col1 int64 ) primary key (col1);
+Create index if not exists test2 on test1 ( col1 );
+
+create table test3 ( col1 int64 ) primary key (col1);
+Create index test4 on test1 ( col1 );
+
+
+== TEST 46 change foreign key on delete clause
+
+create table test1 (
+    col1 int64,
+    col2 int64 NOT NULL,
+    constraint fk_in_table foreign key (col2) references othertable(othercol) ON DELETE CASCADE
+)
+primary key (col1);
+
+== TEST 47 Modifying index with IF NOT EXIST
+
+Create index IF NOT EXISTS test4 on test1 ( col1 ) STORING ( col2 )
+
 ==
+

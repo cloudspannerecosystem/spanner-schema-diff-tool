@@ -48,3 +48,87 @@ drop index test1
 
 drop table test1
 
+== Test 9 // TODO Change streams
+
+CREATE CHANGE STREAM change_stream_name FOR ALL
+
+== Test 9a - alter change stream not supported
+
+ALTER CHANGE STREAM change_stream_name DROP FOR ALL
+
+== Test 9b - drop change stream not supported
+
+DROP CHANGE STREAM change_stream_name
+
+== Test 10a // TODO roles
+
+CREATE ROLE database_role_name
+
+== Test 10b drop role not supported
+
+DROP ROLE database_role_name
+
+== Test 11a // TODO grants
+
+GRANT SELECT ON TABLE table_list TO ROLE role_list
+
+== Test 11b revoke grant not supported
+
+REVOKE SELECT ON TABLE table_list TO ROLE role_list
+
+== Test 12a // TODO views
+
+CREATE VIEW view_name AS query
+
+== Test 12b drop view not supported
+
+DROP VIEW view_name
+
+== Test 13 // TODO views
+
+CREATE OR REPLACE VIEW view_name AS query
+
+== Test 14a // TODO sequences
+
+CREATE SEQUENCE IF NOT EXISTS sequence_name OPTIONS ( sequence_kind='bit_reversed_positive' )
+
+== Test 14b alter sequence not supported
+
+ALTER SEQUENCE sequence_name SET OPTIONS (skip_range_min=1, skip_range_max=1234567)
+
+== Test 14c drop sequence not supported
+
+DROP SEQUENCE IF EXISTS sequence_name
+
+== Test 15a // TODO models
+
+CREATE MODEL IF NOT EXISTS model_name REMOTE OPTIONS ( endpoint = 'blah' )
+
+
+== Test 15b // TODO models
+
+CREATE OR REPLACE MODEL model_name INPUT (
+  length FLOAT64,
+  material STRING(MAX),
+  tag_array ARRAY<STRING(MAX)>
+)
+OUTPUT (
+  scores ARRAY<FLOAT64>,
+  classes ARRAY<STRING(MAX)>
+)
+REMOTE
+OPTIONS (
+  endpoint = 'blah'
+)
+
+
+== Test 15c alter model not supported
+
+ALTER MODEL IF EXISTS model_name SET OPTIONS ( default_batch_size = 10 )
+
+
+== Test 15d drop model not supported
+
+DROP MODEL IF EXISTS model_name
+
+==

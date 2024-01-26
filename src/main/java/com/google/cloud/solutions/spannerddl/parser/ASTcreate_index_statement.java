@@ -39,6 +39,15 @@ public class ASTcreate_index_statement extends SimpleNode
 
   @Override
   public String toString() {
+    return toStringOptionalExistClause(true);
+  }
+
+  /**
+   * Create string version, optionally including the IF NOT EXISTS clause
+   *
+   * @param includeExists
+   */
+  public String toStringOptionalExistClause(boolean includeExists) {
     validateChildren();
     ASTindex_interleave_clause interleave =
         getOptionalChildByType(children, ASTindex_interleave_clause.class);
@@ -50,7 +59,7 @@ public class ASTcreate_index_statement extends SimpleNode
             getOptionalChildByType(children, ASTunique_index.class),
             getOptionalChildByType(children, ASTnull_filtered.class),
             "INDEX",
-            getOptionalChildByType(children, ASTif_not_exists.class),
+            (includeExists ? getOptionalChildByType(children, ASTif_not_exists.class) : null),
             getIndexName(),
             "ON",
             getChildByType(children, ASTtable.class),
@@ -86,8 +95,9 @@ public class ASTcreate_index_statement extends SimpleNode
   @Override
   public boolean equals(Object other) {
     if (other instanceof ASTcreate_index_statement) {
-      // lazy: compare normalised text rendering.
-      return this.toString().equals(other.toString());
+      // lazy: compare text rendering, but don't take into account IF NOT EXISTS statements
+      return this.toStringOptionalExistClause(false)
+          .equals(((ASTcreate_index_statement) other).toStringOptionalExistClause(false));
     }
     return false;
   }

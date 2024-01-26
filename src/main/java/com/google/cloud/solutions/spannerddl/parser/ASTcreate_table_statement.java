@@ -91,6 +91,15 @@ public class ASTcreate_table_statement extends SimpleNode {
 
   @Override
   public String toString() {
+    return toStringOptionalExistClause(true);
+  }
+
+  /**
+   * Create string version, optionally including the IF NOT EXISTS clause
+   *
+   * @param includeExists
+   */
+  public String toStringOptionalExistClause(boolean includeExists) {
     verifyTableElements();
 
     List<String> tabledef = new ArrayList<>();
@@ -105,10 +114,12 @@ public class ASTcreate_table_statement extends SimpleNode {
         .skipNulls()
         .join(
             "CREATE TABLE",
-            Objects.toString(getOptionalChildByType(children, ASTif_not_exists.class), null),
+            (includeExists
+                ? Objects.toString(getOptionalChildByType(children, ASTif_not_exists.class), null)
+                : null),
             getTableName(),
             // add cols and constraints
-            "(" + Joiner.on(", ").skipNulls().join(tabledef) + ")",
+            "( " + Joiner.on(", ").skipNulls().join(tabledef) + " )",
             // add table suffixes, separated by ","
             Joiner.on(", ")
                 .skipNulls()
@@ -139,8 +150,9 @@ public class ASTcreate_table_statement extends SimpleNode {
   @Override
   public boolean equals(Object other) {
     if (other instanceof ASTcreate_table_statement) {
-      // lazy: compare text rendering.
-      return this.toString().equals(other.toString());
+      // lazy: compare text rendering, but don't take into account IF NOT EXISTS statements
+      return this.toStringOptionalExistClause(false)
+          .equals(((ASTcreate_table_statement) other).toStringOptionalExistClause(false));
     }
     return false;
   }

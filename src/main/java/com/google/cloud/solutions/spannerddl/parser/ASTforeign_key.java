@@ -17,6 +17,10 @@
 package com.google.cloud.solutions.spannerddl.parser;
 
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.common.base.Joiner;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ASTforeign_key extends SimpleNode {
 
@@ -51,7 +55,8 @@ public class ASTforeign_key extends SimpleNode {
   public String getReferencedTableName() {
     int child = 1;
     if (children[0] instanceof ASTconstraint_name) {
-      token = token.next;
+      // skip constraint name when specified.
+      child++;
     }
     return ASTTreeUtils.tokensToString((ASTreferenced_table) children[child], false);
   }
@@ -70,20 +75,20 @@ public class ASTforeign_key extends SimpleNode {
     if (deleteOption != null) {
       return " " + deleteOption;
     } else {
-      return "";
+      return " ON DELETE NO ACTION";
     }
   }
 
   public String toString() {
     return "CONSTRAINT "
         + getName()
-        + " FOREIGN KEY ("
+        + " FOREIGN KEY ( "
         + Joiner.on(", ").join(getConstrainedColumnNames())
-        + ") REFERENCES "
+        + " ) REFERENCES "
         + getReferencedTableName()
-        + " ("
+        + " ( "
         + Joiner.on(", ").join(getReferencedColumnNames())
-        + ")"
+        + " )"
         + getDeleteOption();
   }
 

@@ -16,9 +16,10 @@
 
 == Test 1 Create table with col default value
 
-CREATE TABLE test1
-  (keycol INT64,
-  value INT64 DEFAULT (keycol * 100 + PI ( ))) PRIMARY KEY (keycol ASC)
+CREATE TABLE test1 (
+  keycol INT64,
+  value INT64 DEFAULT (keycol * 100 + PI ( ))
+) PRIMARY KEY (keycol ASC)
 
 == Test 2
 
@@ -31,16 +32,25 @@ ADD ROW DELETION POLICY (OLDER_THAN ( timestamp_column, INTERVAL 1 DAY ))
 
 == Test 4
 
-CREATE UNIQUE NULL_FILTERED INDEX testindex ON testtable
-(col1 ASC,
+CREATE UNIQUE NULL_FILTERED INDEX testindex ON testtable (
+  col1 ASC,
   col2 DESC,
-  col3 ASC) STORING (col4, col5, col6),
+  col3 ASC
+) STORING ( col4, col5, col6 ) ,
 INTERLEAVE IN other_table
+
+== Test 4b
+
+CREATE UNIQUE NULL_FILTERED INDEX testindex ON testtable (
+  col1 ASC,
+  col2 DESC,
+  col3 ASC
+) , INTERLEAVE IN other_table
 
 == Test 5
 
-CREATE TABLE test.test
-(boolcol BOOL,
+CREATE TABLE test.test (
+    boolcol BOOL,
     intcol INT64 NOT NULL,
     floatcol FLOAT64,
     `sizedstring` STRING(55),
@@ -54,34 +64,64 @@ CREATE TABLE test.test
     jsoncol JSON,
     pgcolumn PG.SOMETHING,
     generatedcol STRING(MAX) AS ( sizedstring + strstr ( maxstring, strpos ( maxstring, 'xxx' ), length ( maxstring ) ) + 2.0 ) STORED,
-    CONSTRAINT fk_col_remote FOREIGN KEY (col1, col2) REFERENCES test.other_table (other_col1, other_col2) ON DELETE CASCADE,
-    CONSTRAINT fk_col_remote2 FOREIGN KEY (col1) REFERENCES test.other_table (other_col1) ON DELETE NO ACTION,
-    CONSTRAINT check_some_value CHECK (( length ( sizedstring ) > 100 OR sizedstring = "xxx" ) AND boolcol = TRUE AND intcol > -123.4 AND numericcol < 1.5))
-PRIMARY KEY (intcol ASC, floatcol DESC, boolcol ASC),
+    CONSTRAINT fk_col_remote FOREIGN KEY ( col1, col2 ) REFERENCES test.other_table ( other_col1, other_col2 ) ON DELETE CASCADE,
+    CONSTRAINT fk_col_remote2 FOREIGN KEY ( col1 ) REFERENCES test.other_table ( other_col1 ) ON DELETE NO ACTION,
+    CONSTRAINT check_some_value CHECK (( length ( sizedstring ) > 100 OR sizedstring = "xxx" ) AND boolcol = TRUE AND intcol > -123.4 AND numericcol < 1.5)
+) PRIMARY KEY (intcol ASC, floatcol DESC, boolcol ASC),
 INTERLEAVE IN PARENT `other_table` ON DELETE CASCADE,
 ROW DELETION POLICY (OLDER_THAN ( timestampcol, INTERVAL 10 DAY ))
 
 
 == Test 6 -- using quoted reserverd words as column names
 
-CREATE TABLE mytable
-(`key` INT64,
-`index` STRING(MAX),
-`table` BYTES(MAX),
-generatedcol INT64 AS ( KEY * INDEX ) STORED,
-CONSTRAINT fk_col_remote2 FOREIGN KEY (`key`) REFERENCES test.other_table (`key`))
-PRIMARY KEY (`key` ASC)
+CREATE TABLE mytable (
+   `key` INT64,
+   `index` STRING(MAX),
+   `table` BYTES(MAX),
+   generatedcol INT64 AS ( KEY * INDEX ) STORED,
+   CONSTRAINT fk_col_remote2 FOREIGN KEY ( `key` ) REFERENCES test.other_table ( `key` ) ON DELETE NO ACTION
+) PRIMARY KEY (`key` ASC)
 
 == Test 7 -- using unquoted reserverd words as column names
 
-CREATE TABLE mytable
-(key INT64,
-index STRING(MAX),
-table BYTES(MAX),
-generatedcol INT64 AS ( KEY * INDEX ) STORED,
-CONSTRAINT fk_col_remote2 FOREIGN KEY (key) REFERENCES test.other_table (key))
-PRIMARY KEY (key ASC, index ASC)
+CREATE TABLE mytable (
+  key INT64,
+  index STRING(MAX),
+  table BYTES(MAX),
+  generatedcol INT64 AS ( KEY * INDEX ) STORED,
+  CONSTRAINT fk_col_remote2 FOREIGN KEY ( key ) REFERENCES test.other_table ( key ) ON DELETE NO ACTION
+) PRIMARY KEY (key ASC, index ASC)
 
 == Test 7 -- using unquoted reserverd words as column names in index
 
-CREATE INDEX myIndex ON mytable (key ASC, index ASC) STORING (table)
+CREATE INDEX myIndex ON mytable ( key ASC, index ASC ) STORING ( table )
+
+== Test 8
+
+CREATE TABLE IF NOT EXISTS test_table ( intcol INT64 ) PRIMARY KEY (intcol ASC)
+
+== Test 9
+
+CREATE INDEX IF NOT EXISTS myindex ON mytable ( mycol ASC )
+
+== Test 10 foreign_key on delete
+
+CREATE TABLE test_table (
+  intcol INT64,
+  CONSTRAINT fk_other1 FOREIGN KEY ( intcol ) REFERENCES othertable ( othercol ) ON DELETE NO ACTION,
+  CONSTRAINT fk_other2 FOREIGN KEY ( intcol ) REFERENCES othertable ( othercol ) ON DELETE CASCADE
+) PRIMARY KEY (intcol ASC)
+
+== Test 11 struct cols
+
+CREATE TABLE test_table (
+  intcol INT64,
+  structcol1 STRUCT < col1 INT64, col2 INT64 >,
+  structcol2 STRUCT <>
+) PRIMARY KEY (intcol ASC)
+
+== Test 12 hidden column
+
+CREATE TABLE test_table ( intcol INT64 NOT NULL HIDDEN ) PRIMARY KEY (intcol ASC)
+
+==

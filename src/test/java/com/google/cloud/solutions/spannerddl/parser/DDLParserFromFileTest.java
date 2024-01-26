@@ -34,7 +34,7 @@ public class DDLParserFromFileTest {
         parser.ddl_statement();
         ASTddl_statement parsedStatement = (ASTddl_statement) parser.jjtree.rootNode();
 
-        assertWithMessage("Mismatch for section " + segmentName)
+        assertWithMessage("Mismatch for section " + segmentName + ":")
             .that(parsedStatement.toString())
             .isEqualTo(ddlStatement);
       } catch (ParseException e) {

@@ -32,8 +32,8 @@ public class ASTstored_column_list extends SimpleNode {
 
   @Override
   public String toString() {
-    return "STORING ("
+    return "STORING ( "
         + Joiner.on(", ").join(ASTTreeUtils.getChildrenAssertType(children, ASTstored_column.class))
-        + ")";
+        + " )";
   }
 }

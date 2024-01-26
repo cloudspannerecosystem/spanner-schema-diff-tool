@@ -62,6 +62,26 @@ INTERLEAVE IN PARENT `other_table` ON DELETE CASCADE,
 ROW DELETION POLICY (OLDER_THAN ( timestampcol, INTERVAL 10 DAY ))
 
 
-== Test 6 -- using reserverd words as column names
+== Test 6 -- using quoted reserverd words as column names
 
-CREATE TABLE mytable (`key` INT64, `index` STRING(MAX), `table` BYTES(MAX)) PRIMARY KEY (`key` ASC)
+CREATE TABLE mytable
+(`key` INT64,
+`index` STRING(MAX),
+`table` BYTES(MAX),
+generatedcol INT64 AS ( KEY * INDEX ) STORED,
+CONSTRAINT fk_col_remote2 FOREIGN KEY (`key`) REFERENCES test.other_table (`key`))
+PRIMARY KEY (`key` ASC)
+
+== Test 7 -- using unquoted reserverd words as column names
+
+CREATE TABLE mytable
+(key INT64,
+index STRING(MAX),
+table BYTES(MAX),
+generatedcol INT64 AS ( KEY * INDEX ) STORED,
+CONSTRAINT fk_col_remote2 FOREIGN KEY (key) REFERENCES test.other_table (key))
+PRIMARY KEY (key ASC, index ASC)
+
+== Test 7 -- using unquoted reserverd words as column names in index
+
+CREATE INDEX myIndex ON mytable (key ASC, index ASC) STORING (table)

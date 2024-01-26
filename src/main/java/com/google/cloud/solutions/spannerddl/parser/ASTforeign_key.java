@@ -48,7 +48,7 @@ public class ASTforeign_key extends SimpleNode {
 
   private List<String> identifierListToStringList(ASTidentifier_list idList) {
     return Arrays.stream(idList.children)
-        .map(o -> ASTTreeUtils.tokensToString((ASTidentifier) o))
+        .map(o -> ASTTreeUtils.tokensToString((ASTidentifier) o, false))
         .collect(Collectors.toList());
   }
 
@@ -57,7 +57,7 @@ public class ASTforeign_key extends SimpleNode {
     if (children[0] instanceof ASTconstraint_name) {
       child++;
     }
-    return ASTTreeUtils.tokensToString((ASTreferenced_table) children[child]);
+    return ASTTreeUtils.tokensToString((ASTreferenced_table) children[child], false);
   }
 
   public List<String> getReferencedColumnNames() {

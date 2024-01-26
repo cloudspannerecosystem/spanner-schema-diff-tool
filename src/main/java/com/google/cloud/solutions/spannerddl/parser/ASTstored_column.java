@@ -29,6 +29,6 @@ public class ASTstored_column extends SimpleNode {
 
   @Override
   public String toString() {
-    return children[0].toString();
+    return ((ASTpath)children[0]).toString();
   }
 }

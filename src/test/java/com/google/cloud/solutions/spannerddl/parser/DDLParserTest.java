@@ -119,13 +119,6 @@ public class DDLParserTest {
     parseAndVerifyToString("ALTER DATABASE dbname SET OPTIONS (opt1=NULL,opt2='1234',opt3=3)");
   }
 
-  @Test
-  public void parseReservedWordsColNames() throws ParseException {
-    parseAndVerifyToString(
-        "CREATE TABLE mytable (`key` INT64, `index` STRING(MAX), `table` BYTES(MAX)) PRIMARY KEY"
-            + " (`key` ASC)");
-  }
-
   private static void parseCheckingException(String ddlStatement, String exceptionContains) {
     try {
       parseAndVerifyToString(ddlStatement);

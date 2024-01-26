@@ -16,8 +16,11 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-/** Abstract Syntax Tree parser object for "create_index_statement" token */
+import static com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils.getChildByType;
+import static com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils.getOptionalChildByType;
+
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.common.base.Joiner;
 
 public class ASTcreate_index_statement extends SimpleNode
     implements Comparable<ASTcreate_index_statement> {
@@ -36,33 +39,43 @@ public class ASTcreate_index_statement extends SimpleNode
 
   @Override
   public String toString() {
-    StringBuilder ret = new StringBuilder("CREATE");
+    validateChildren();
+    ASTindex_interleave_clause interleave =
+        getOptionalChildByType(children, ASTindex_interleave_clause.class);
+
+    return Joiner.on(" ")
+        .skipNulls()
+        .join(
+            "CREATE",
+            getOptionalChildByType(children, ASTunique_index.class),
+            getOptionalChildByType(children, ASTnull_filtered.class),
+            "INDEX",
+            getOptionalChildByType(children, ASTif_not_exists.class),
+            getIndexName(),
+            "ON",
+            getChildByType(children, ASTtable.class),
+            getChildByType(children, ASTcolumns.class),
+            getOptionalChildByType(children, ASTstored_column_list.class),
+            (interleave != null ? "," : null),
+            interleave);
+  }
+
+  private void validateChildren() {
     for (Node child : children) {
       switch (child.getId()) {
         case DdlParserTreeConstants.JJTUNIQUE_INDEX:
         case DdlParserTreeConstants.JJTNULL_FILTERED:
         case DdlParserTreeConstants.JJTCOLUMNS:
         case DdlParserTreeConstants.JJTSTORED_COLUMN_LIST:
-          ret.append(" ");
-          ret.append(child);
-          break;
+        case DdlParserTreeConstants.JJTIF_NOT_EXISTS:
         case DdlParserTreeConstants.JJTNAME:
-          ret.append(" INDEX ");
-          ret.append(child);
-          break;
         case DdlParserTreeConstants.JJTTABLE:
-          ret.append(" ON ");
-          ret.append(child);
-          break;
         case DdlParserTreeConstants.JJTINDEX_INTERLEAVE_CLAUSE:
-          ret.append(", ");
-          ret.append(child);
           break;
         default:
-          throw new IllegalArgumentException("Unknown node ID " + child.getClass());
+          throw new IllegalArgumentException("Unknown child node " + child.getClass());
       }
     }
-    return ret.toString();
   }
 
   @Override
@@ -73,7 +86,7 @@ public class ASTcreate_index_statement extends SimpleNode
   @Override
   public boolean equals(Object other) {
     if (other instanceof ASTcreate_index_statement) {
-      // lazy: compare text rendering.
+      // lazy: compare normalised text rendering.
       return this.toString().equals(other.toString());
     }
     return false;

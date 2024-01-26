@@ -94,7 +94,7 @@ public class DDLParserTest {
         .isEqualTo(
             "CREATE UNIQUE NULL_FILTERED INDEX testindex ON testtable "
                 + "(col1 ASC, col2 DESC, col3 ASC) "
-                + "STORING (col4, col5, col6), "
+                + "STORING (col4, col5, col6) , "
                 + "INTERLEAVE IN other_table");
 
     // Test re-parse of toString output.
@@ -117,6 +117,46 @@ public class DDLParserTest {
   @Test
   public void parseAlterDatabase() throws ParseException {
     parseAndVerifyToString("ALTER DATABASE dbname SET OPTIONS (opt1=NULL,opt2='1234',opt3=3)");
+  }
+
+  @Test
+  public void parseHiddenColumn() throws ParseException {
+    parseAndVerifyToString(
+        "CREATE TABLE test_table (intcol INT64 NOT NULL HIDDEN) PRIMARY KEY (intcol ASC)");
+  }
+
+  @Test
+  public void parseStructColumn() throws ParseException {
+    parseAndVerifyToString(
+        "CREATE TABLE test_table ("
+            + "intcol INT64, "
+            + "structcol1 STRUCT < col1 INT64, col2 INT64 >, "
+            + "structcol2 STRUCT <>) "
+            + "PRIMARY KEY (intcol ASC)");
+  }
+
+  @Test
+  public void parseFkOnDeleteCascade() throws ParseException {
+    parseAndVerifyToString(
+        "CREATE TABLE test_table (intcol INT64, " //
+            + "CONSTRAINT fk_other1 FOREIGN KEY ( intcol )" //
+            + " REFERENCES othertable ( othercol ), " //
+            + "CONSTRAINT fk_other2 FOREIGN KEY ( intcol )" //
+            + " REFERENCES othertable ( othercol ) ON DELETE CASCADE, " //
+            + "CONSTRAINT fk_other3 FOREIGN KEY ( intcol )" //
+            + " REFERENCES othertable ( othercol ) ON DELETE NO ACTION" //
+            + ") PRIMARY KEY (intcol ASC)");
+  }
+
+  @Test
+  public void parseCreateTableIfNotExists() throws ParseException {
+    parseAndVerifyToString(
+        "CREATE TABLE IF NOT EXISTS test_table (intcol INT64) PRIMARY KEY (intcol ASC)");
+  }
+
+  @Test
+  public void parseCreateIndexIfNotExists() throws ParseException {
+    parseAndVerifyToString("CREATE INDEX IF NOT EXISTS myindex ON mytable (mycol ASC)");
   }
 
   private static void parseCheckingException(String ddlStatement, String exceptionContains) {

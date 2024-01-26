@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,17 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
-
-public class ASTalter_database_statement extends SimpleNode {
-  public ASTalter_database_statement(int id) {
+public class ASTif_not_exists extends SimpleNode {
+  public ASTif_not_exists(int id) {
     super(id);
   }
 
-  public ASTalter_database_statement(DdlParser p, int id) {
+  public ASTif_not_exists(DdlParser p, int id) {
     super(p, id);
-  }
-
-  public ASToptions_clause getOptionsClause() {
-    return (ASToptions_clause) jjtGetChild(1);
-  }
-
-  public String getDbName() {
-    return ASTTreeUtils.tokensToString((ASTdb_name) jjtGetChild(0));
   }
 
   @Override
   public String toString() {
-    return "ALTER DATABASE " + getDbName() + " SET " + getOptionsClause();
-  }
-
-  @Override
-  public boolean equals(Object other) {
-    return other instanceof ASTalter_table_statement && this.toString().equals(other.toString());
+    return "IF NOT EXISTS";
   }
 }

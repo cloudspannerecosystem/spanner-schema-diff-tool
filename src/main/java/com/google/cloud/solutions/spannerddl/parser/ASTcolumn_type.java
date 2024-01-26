@@ -45,21 +45,31 @@ public class ASTcolumn_type extends SimpleNode {
   public String toString() {
 
     String typeName = getTypeName();
-    if (children == null) {
-      return typeName;
-    } else {
-      switch (typeName) {
-        case "STRING":
-        case "BYTES":
-          // length.
-          return typeName + "(" + ((ASTlength) children[0]) + ")";
-        case "ARRAY":
-          return "ARRAY<" + ((ASTcolumn_type) children[0]) + ">";
-        case "PG": // PG.pgtype
+    switch (typeName) {
+      case "FLOAT64":
+      case "INT64":
+      case "BOOL":
+      case "TIMESTAMP":
+      case "DATE":
+      case "NUMERIC":
+      case "JSON":
+        return typeName;
+      case "STRING":
+      case "BYTES":
+        // length.
+        return typeName + "(" + ((ASTlength) children[0]) + ")";
+      case "ARRAY":
+        return "ARRAY<" + ((ASTcolumn_type) children[0]) + ">";
+      case "PG": // PG.pgtype
+        return ASTTreeUtils.tokensToString(this).toUpperCase();
+      case "STRUCT":
+        if (jjtGetNumChildren() > 0) {
           return ASTTreeUtils.tokensToString(this);
-        default:
-          throw new IllegalArgumentException("Unknown column type " + typeName);
-      }
+        } else {
+          return "STRUCT <>";
+        }
+      default:
+        throw new IllegalArgumentException("Unknown column type " + typeName);
     }
   }
 

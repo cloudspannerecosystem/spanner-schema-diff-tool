@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-// TODO
-public class ASTcreate_view_statement extends SimpleNode {
-  public ASTcreate_view_statement(int id) {
+public class ASTrevoke_statement extends SimpleNode {
+  public ASTrevoke_statement(int id) {
     super(id);
     throw new UnsupportedOperationException("Not Implemented");
   }
 
-  public ASTcreate_view_statement(DdlParser p, int id) {
+  public ASTrevoke_statement(DdlParser p, int id) {
     super(p, id);
     throw new UnsupportedOperationException("Not Implemented");
   }

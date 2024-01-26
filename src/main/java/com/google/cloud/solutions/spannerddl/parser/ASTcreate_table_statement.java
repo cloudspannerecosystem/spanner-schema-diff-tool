@@ -16,12 +16,16 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
+import static com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils.getOptionalChildByType;
+
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
 import com.google.common.base.Joiner;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /** Abstract Syntax Tree parser object for "create_table_statement" token */
 public class ASTcreate_table_statement extends SimpleNode {
@@ -38,7 +42,7 @@ public class ASTcreate_table_statement extends SimpleNode {
   }
 
   public String getTableName() {
-    return ASTTreeUtils.tokensToString((SimpleNode) children[0]);
+    return ASTTreeUtils.tokensToString(ASTTreeUtils.getChildByType(children, ASTname.class));
   }
 
   public LinkedHashMap<String, ASTcolumn_def> getColumns() {
@@ -72,20 +76,12 @@ public class ASTcreate_table_statement extends SimpleNode {
   }
 
   public synchronized Optional<ASTtable_interleave_clause> getInterleaveClause() {
-    try {
-      return Optional.of(ASTTreeUtils.getChildByType(children, ASTtable_interleave_clause.class));
-    } catch (IllegalArgumentException e) {
-      return Optional.empty();
-    }
+    return Optional.ofNullable(getOptionalChildByType(children, ASTtable_interleave_clause.class));
   }
 
   public synchronized Optional<ASTrow_deletion_policy_clause> getRowDeletionPolicyClause() {
-    try {
-      return Optional.of(
-          ASTTreeUtils.getChildByType(children, ASTrow_deletion_policy_clause.class));
-    } catch (IllegalArgumentException e) {
-      return Optional.empty();
-    }
+    return Optional.ofNullable(
+        getOptionalChildByType(children, ASTrow_deletion_policy_clause.class));
   }
 
   public ASTcreate_table_statement clearConstraints() {
@@ -96,33 +92,32 @@ public class ASTcreate_table_statement extends SimpleNode {
   @Override
   public String toString() {
     verifyTableElements();
-    StringBuilder ret = new StringBuilder("CREATE TABLE");
-    ret.append(" ");
-    // child 0 is name
-    ret.append(getTableName());
-    ret.append(" (");
-    // append column and constraint definitions.
-    List<SimpleNode> tableElements = new ArrayList<>(getColumns().values());
 
+    List<String> tabledef = new ArrayList<>();
+    tabledef.addAll(
+        getColumns().values().stream().map(Object::toString).collect(Collectors.toList()));
     if (this.withConstraints) {
-      tableElements.addAll(getConstraints().values());
-    }
-    ret.append(Joiner.on(", ").join(tableElements));
-    ret.append(") ");
-    ret.append(getPrimaryKey());
-
-    Optional<ASTtable_interleave_clause> interleaveClause = getInterleaveClause();
-    if (interleaveClause.isPresent()) {
-      ret.append(", ");
-      ret.append(interleaveClause.get()); // interleave optional
-    }
-    Optional<ASTrow_deletion_policy_clause> rowDeletionPolicyClause = getRowDeletionPolicyClause();
-    if (this.withConstraints && rowDeletionPolicyClause.isPresent()) {
-      ret.append(", ");
-      ret.append(rowDeletionPolicyClause.get()); // TTL optional
+      tabledef.addAll(
+          getConstraints().values().stream().map(Object::toString).collect(Collectors.toList()));
     }
 
-    return ret.toString();
+    return Joiner.on(" ")
+        .skipNulls()
+        .join(
+            "CREATE TABLE",
+            Objects.toString(getOptionalChildByType(children, ASTif_not_exists.class), null),
+            getTableName(),
+            // add cols and constraints
+            "(" + Joiner.on(", ").skipNulls().join(tabledef) + ")",
+            // add table suffixes, separated by ","
+            Joiner.on(", ")
+                .skipNulls()
+                .join(
+                    getPrimaryKey(),
+                    getOptionalChildByType(children, ASTtable_interleave_clause.class),
+                    (withConstraints
+                        ? getOptionalChildByType(children, ASTrow_deletion_policy_clause.class)
+                        : null)));
   }
 
   private void verifyTableElements() {
@@ -130,6 +125,7 @@ public class ASTcreate_table_statement extends SimpleNode {
       if (!(child instanceof ASTcolumn_def)
           && !(child instanceof ASTforeign_key)
           && !(child instanceof ASTname)
+          && !(child instanceof ASTif_not_exists)
           && !(child instanceof ASTcheck_constraint)
           && !(child instanceof ASTprimary_key)
           && !(child instanceof ASTtable_interleave_clause)

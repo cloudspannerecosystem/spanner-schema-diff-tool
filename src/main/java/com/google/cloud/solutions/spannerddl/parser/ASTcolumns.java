@@ -33,7 +33,9 @@ public class ASTcolumns extends SimpleNode {
   @Override
   public String toString() {
     return "("
-        + Joiner.on(", ").join(ASTTreeUtils.getChildrenAssertType(children, ASTkey_part.class))
+        + Joiner.on(", ")
+            .skipNulls()
+            .join(ASTTreeUtils.getChildrenAssertType(children, ASTkey_part.class))
         + ")";
   }
 }

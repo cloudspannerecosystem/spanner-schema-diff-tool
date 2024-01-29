@@ -41,7 +41,7 @@ public class ASTcheck_constraint extends SimpleNode {
     if (children[0] instanceof ASTconstraint_name) {
       child++;
     }
-    return (ASTTreeUtils.tokensToString((ASTcheck_constraint_expression) children[child]));
+    return (ASTTreeUtils.tokensToString((ASTcheck_constraint_expression) children[child], false));
   }
 
   public String toString() {

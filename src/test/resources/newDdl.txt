@@ -427,5 +427,14 @@ primary key (col1);
 
 Create index IF NOT EXISTS test4 on test1 ( col1 ) STORING ( col2 )
 
-==
+== TEST 48 change streams create modify delete in correct order wrt tables
 
+Create table myCreatedTable (mycol int64) primary key (mycol);
+create change stream toremain for all options (retention_period = '36h');
+create change stream toBeChanged for myTable2 ( col1, col3, col4), mytable3 () options (retention_period = '48h');
+create change stream toCreate for mytable4 options (retention_period = '36h');
+create change stream toCreateAll for all;
+create change stream toBeChangedOnlyTable for myTable1, myTable2 ( col1) options (retention_period = '36h');
+create change stream toBeChangedOnlyOptions for myTable1, myTable2 ( col1, col3) options (retention_period = '48h');
+
+==

@@ -149,6 +149,7 @@ create table test1 (
     constraint ch_in_test1 check (col1=col2 and col1 > 100 and col2 < -50)
 )
 primary key (col1);
+
 create table test2 (
     col1 int64,
     col2 int64 NOT NULL,
@@ -156,7 +157,9 @@ create table test2 (
     constraint ch_in_test2 check (col1=col2 and col1 > 100 and col2 < -50)
 )
 primary key (col1);
+
 create index index1 on test1 (col1);
+
 create index index2 on test2 (col1);
 
 
@@ -423,5 +426,15 @@ primary key (col1);
 
 Create index IF NOT EXISTS test4 on test1 ( col1 )
 
+== TEST 48 change streams create modify delete in correct order wrt tables
+
+Create table myToBeDeletedTable (mycol int64) primary key (mycol);
+create change stream toremain for all options (retention_period = '36h');
+create change stream toBeDeleted for myTable options (retention_period = '36h');
+create change stream toBeChanged for myTable1, myTable2 ( col1, col3) options (retention_period = '36h');
+create change stream toBeChangedOnlyTable for myTable1, myTable2 ( col1, col3) options (retention_period = '36h');
+create change stream toBeChangedOnlyOptions for myTable1, myTable2 ( col1, col3) options (retention_period = '36h');
+
 ==
+
 

@@ -32,10 +32,6 @@ CREATE OR REPLACE VIEW test1 SQL SECURITY INVOKER AS SELECT * from test2
 
 CREATE  VIEW test1 SQL SECURITY INVOKER AS SELECT * from test2
 
-== Test 5
-
-Create change stream test1 for test2
-
 == Test 6
 
 drop change stream test1
@@ -48,15 +44,11 @@ drop index test1
 
 drop table test1
 
-== Test 9 // TODO Change streams
-
-CREATE CHANGE STREAM change_stream_name FOR ALL
-
-== Test 9a - alter change stream not supported
+== Test 9 - alter change stream not supported
 
 ALTER CHANGE STREAM change_stream_name DROP FOR ALL
 
-== Test 9b - drop change stream not supported
+== Test 9a - drop change stream not supported
 
 DROP CHANGE STREAM change_stream_name
 

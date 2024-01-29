@@ -151,6 +151,30 @@ public class DDLParserTest {
                 .replaceAll("\\s+", " "));
   }
 
+  @Test
+  public void doNotNormalizeSQLExpressions() throws ParseException {
+
+    ASTcreate_table_statement statement =
+        (ASTcreate_table_statement)
+            parse(
+                    "create table myTest (\n"
+                        + "key int64,\n"
+                        + "value int64 AS ( key *100 ) STORED,\n"
+                        + "constraint ck_key CHECK (key > 0))\n"
+                        + "primary key (key)")
+                .jjtGetChild(0);
+
+    assertThat(statement.toString())
+        .isEqualTo(
+            "CREATE TABLE myTest ( key INT64, value INT64 AS ( key * 100 ) STORED, "
+                + "CONSTRAINT ck_key CHECK (key > 0) ) PRIMARY KEY (key ASC)");
+
+    // Test re-parse of toString output.
+    ASTcreate_table_statement statement2 =
+        (ASTcreate_table_statement) parseAndVerifyToString(statement.toString()).jjtGetChild(0);
+    assertThat(statement).isEqualTo(statement2);
+  }
+
   private static void parseCheckingException(String ddlStatement, String exceptionContains) {
     try {
       parseAndVerifyToString(ddlStatement);

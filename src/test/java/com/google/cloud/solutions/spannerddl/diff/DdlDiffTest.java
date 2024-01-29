@@ -407,7 +407,7 @@ public class DdlDiffTest {
 
     getDiffCheckDdlDiffException(
         "ALTER DATABASE dbname SET OPTIONS(hello='world');"
-            + "ALTER DATABASE otherdbname SET OPTIONS(hello='world');",
+            + "ALTER DATABASE otherdbname SET OPTIONS(goodbye='world');",
         "",
         true,
         "Multiple database IDs defined");

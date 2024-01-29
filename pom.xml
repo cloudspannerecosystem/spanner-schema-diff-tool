@@ -37,12 +37,18 @@
     <spotless.version>2.43.0</spotless.version>
     <exec-maven.version>3.1.1</exec-maven.version>
     <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
+    <auto-value.version>1.10.4</auto-value.version>
   </properties>
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.auto.value</groupId>
+      <artifactId>auto-value-annotations</artifactId>
+      <version>${auto-value.version}</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -101,6 +107,19 @@
       </plugins>
     </pluginManagement>
     <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.google.auto.value</groupId>
+              <artifactId>auto-value</artifactId>
+              <version>${auto-value.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>

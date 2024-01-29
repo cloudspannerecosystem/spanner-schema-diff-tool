@@ -124,4 +124,12 @@ CREATE TABLE test_table (
 
 CREATE TABLE test_table ( intcol INT64 NOT NULL HIDDEN ) PRIMARY KEY (intcol ASC)
 
+== Test 12 change stream for all
+
+CREATE CHANGE STREAM change_stream_name FOR ALL OPTIONS (retention_period='1d',value_capture_type='OLD_AND_NEW_VALUES')
+
+== Test 12b change stream for certain cols
+
+CREATE CHANGE STREAM change_stream_name FOR table1, table2 ( ), table3 ( col1, col2 ) OPTIONS (retention_period='7d',value_capture_type='NEW_ROW')
+
 ==

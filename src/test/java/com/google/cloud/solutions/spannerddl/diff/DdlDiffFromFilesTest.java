@@ -77,7 +77,7 @@ public class DdlDiffFromFilesTest {
         // build an expectedResults without any column or table drops.
         List<String> expectedDiffNoDrops =
             expectedDiff.stream()
-                .filter(statement -> !statement.matches(".*DROP (TABLE|COLUMN).*"))
+                .filter(statement -> !statement.matches(".*DROP (TABLE|COLUMN|CHANGE STREAM).*"))
                 .collect(Collectors.toCollection(LinkedList::new));
 
         // remove any drop indexes from the expectedResults if they do not have an equivalent
@@ -109,9 +109,11 @@ public class DdlDiffFromFilesTest {
             .isEqualTo(expectedDiffNoDrops);
       }
     } catch (DdlDiffException e) {
-      fail("DdlDiffException when processing segment " + segmentName + ": " + e);
+      fail("DdlDiffException when processing segment:\n'" + segmentName + "''\n" + e.getMessage());
     } catch (Exception e) {
-      throw new Error("Unexpected exception when processing segment " + segmentName + ": " + e, e);
+      throw new Error(
+          "Unexpected exception when processing segment \n'" + segmentName + "'\n" + e.getMessage(),
+          e);
     }
 
     if (originalSegmentIt.hasNext()) {

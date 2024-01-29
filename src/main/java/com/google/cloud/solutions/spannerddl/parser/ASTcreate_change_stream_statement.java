@@ -15,15 +15,44 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
+import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.common.base.Joiner;
+
+/**
+ * @link
+ *     https://cloud.google.com/spanner/docs/reference/standard-sql/data-definition-language#create-change-stream
+ */
 public class ASTcreate_change_stream_statement extends SimpleNode {
   public ASTcreate_change_stream_statement(int id) {
-
     super(id);
-    throw new UnsupportedOperationException("Not Implemented");
   }
 
   public ASTcreate_change_stream_statement(DdlParser p, int id) {
     super(p, id);
-    throw new UnsupportedOperationException("Not Implemented");
+  }
+
+  public String getName() {
+    return ASTTreeUtils.getChildByType(children, ASTname.class).toString();
+  }
+
+  public ASTchange_stream_for_clause getForClause() {
+    return ASTTreeUtils.getOptionalChildByType(children, ASTchange_stream_for_clause.class);
+  }
+
+  public ASToptions_clause getOptionsClause() {
+    return ASTTreeUtils.getOptionalChildByType(children, ASToptions_clause.class);
+  }
+
+  @Override
+  public String toString() {
+    return Joiner.on(" ")
+        .skipNulls()
+        .join("CREATE CHANGE STREAM", getName(), getForClause(), getOptionsClause());
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    return (other instanceof ASTcreate_change_stream_statement)
+        && this.toString().equals(other.toString());
   }
 }

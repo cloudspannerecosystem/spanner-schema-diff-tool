@@ -97,18 +97,18 @@ ALTER TABLE test1 DROP CONSTRAINT fk_in_alter
 
 DROP INDEX index2
 DROP INDEX index1
-ALTER TABLE test2 DROP CONSTRAINT ch_in_test2
 ALTER TABLE test2 DROP CONSTRAINT fk_in_test2
-ALTER TABLE test1 DROP CONSTRAINT ch_in_test1
+ALTER TABLE test2 DROP CONSTRAINT ch_in_test2
 ALTER TABLE test1 DROP CONSTRAINT fk_in_test1
+ALTER TABLE test1 DROP CONSTRAINT ch_in_test1
 DROP TABLE test2
 ALTER TABLE test1 ADD COLUMN col3 INT64
 CREATE TABLE test3 ( col1 INT64 ) PRIMARY KEY (col1 ASC)
 CREATE INDEX index1 ON test1 ( col3 ASC )
-ALTER TABLE test3 ADD CONSTRAINT ch_in_test3 CHECK (col1 = col3 and col1 > 100 and col2 < -50)
 ALTER TABLE test3 ADD CONSTRAINT fk_in_test3 FOREIGN KEY ( col3 ) REFERENCES othertable ( othercol ) ON DELETE NO ACTION
-ALTER TABLE test1 ADD CONSTRAINT ch_in_test1 CHECK (col1 = col3 and col1 > 100 and col2 < -50)
+ALTER TABLE test3 ADD CONSTRAINT ch_in_test3 CHECK (col1 = col3 and col1 > 100 and col2 < -50)
 ALTER TABLE test1 ADD CONSTRAINT fk_in_test1 FOREIGN KEY ( col3 ) REFERENCES othertable ( othercol ) ON DELETE NO ACTION
+ALTER TABLE test1 ADD CONSTRAINT ch_in_test1 CHECK (col1 = col3 and col1 > 100 and col2 < -50)
 
 == TEST 16 add check constraint via alter statement
 
@@ -251,6 +251,18 @@ ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY ( col2 ) REFERENCES oth
 
 DROP INDEX test4
 CREATE INDEX test4 ON test1 ( col1 ASC ) STORING ( col2 )
+
+== TEST 48 change streams create modify delete in correct order wrt tables
+
+DROP CHANGE STREAM toBeDeleted
+DROP TABLE myToBeDeletedTable
+CREATE TABLE myCreatedTable ( mycol INT64 ) PRIMARY KEY (mycol ASC)
+CREATE CHANGE STREAM toCreate FOR mytable4 OPTIONS (retention_period='36h')
+CREATE CHANGE STREAM toCreateAll FOR ALL
+ALTER CHANGE STREAM toBeChanged SET FOR myTable2 ( col1, col3, col4 ), mytable3 ( )
+ALTER CHANGE STREAM toBeChanged SET OPTIONS (retention_period='48h')
+ALTER CHANGE STREAM toBeChangedOnlyTable SET FOR myTable1, myTable2 ( col1 )
+ALTER CHANGE STREAM toBeChangedOnlyOptions SET OPTIONS (retention_period='48h')
 
 ==
 

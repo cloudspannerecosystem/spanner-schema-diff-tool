@@ -16,7 +16,7 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 
 /** Abstract Syntax Tree parser object for "index_interleave_clause" token */
 public class ASTindex_interleave_clause extends SimpleNode {
@@ -31,6 +31,6 @@ public class ASTindex_interleave_clause extends SimpleNode {
 
   @Override
   public String toString() {
-    return "INTERLEAVE IN " + ASTTreeUtils.tokensToString((ASTinterleave_in) children[0]);
+    return "INTERLEAVE IN " + AstTreeUtils.tokensToString((ASTinterleave_in) children[0]);
   }
 }

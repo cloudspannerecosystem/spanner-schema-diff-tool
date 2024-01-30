@@ -16,7 +16,7 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 
 /** Abstract Syntax Tree parser object for "name" token */
 public class ASTname extends SimpleNode {
@@ -31,6 +31,6 @@ public class ASTname extends SimpleNode {
 
   @Override
   public String toString() {
-    return ASTTreeUtils.tokensToString(this, false);
+    return AstTreeUtils.tokensToString(this, false);
   }
 }

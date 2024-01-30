@@ -15,7 +15,7 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 
 public class ASTalter_database_statement extends SimpleNode {
   public ASTalter_database_statement(int id) {
@@ -31,7 +31,7 @@ public class ASTalter_database_statement extends SimpleNode {
   }
 
   public String getDbName() {
-    return ASTTreeUtils.tokensToString((ASTdb_name) jjtGetChild(0));
+    return AstTreeUtils.tokensToString((ASTdb_name) jjtGetChild(0));
   }
 
   @Override

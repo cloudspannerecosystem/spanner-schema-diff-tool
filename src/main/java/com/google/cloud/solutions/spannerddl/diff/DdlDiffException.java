@@ -16,6 +16,7 @@
 
 package com.google.cloud.solutions.spannerddl.diff;
 
+/** Exception raised when failing to Diff 2 DDL files. */
 public class DdlDiffException extends Exception {
 
   public DdlDiffException(String s) {

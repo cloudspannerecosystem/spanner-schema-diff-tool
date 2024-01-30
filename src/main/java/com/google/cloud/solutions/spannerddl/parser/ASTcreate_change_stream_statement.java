@@ -15,7 +15,7 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
 
 public class ASTcreate_change_stream_statement extends SimpleNode {
@@ -28,15 +28,15 @@ public class ASTcreate_change_stream_statement extends SimpleNode {
   }
 
   public String getName() {
-    return ASTTreeUtils.getChildByType(children, ASTname.class).toString();
+    return AstTreeUtils.getChildByType(children, ASTname.class).toString();
   }
 
   public ASTchange_stream_for_clause getForClause() {
-    return ASTTreeUtils.getOptionalChildByType(children, ASTchange_stream_for_clause.class);
+    return AstTreeUtils.getOptionalChildByType(children, ASTchange_stream_for_clause.class);
   }
 
   public ASToptions_clause getOptionsClause() {
-    return ASTTreeUtils.getOptionalChildByType(children, ASToptions_clause.class);
+    return AstTreeUtils.getOptionalChildByType(children, ASToptions_clause.class);
   }
 
   @Override

@@ -16,7 +16,7 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +35,7 @@ public class ASTforeign_key extends SimpleNode {
   public String getName() {
     // name is optional
     if (children[0] instanceof ASTconstraint_name) {
-      return ASTTreeUtils.tokensToString((ASTconstraint_name) children[0]);
+      return AstTreeUtils.tokensToString((ASTconstraint_name) children[0]);
     } else {
       return ASTcreate_table_statement.ANONYMOUS_NAME;
     }
@@ -48,7 +48,7 @@ public class ASTforeign_key extends SimpleNode {
 
   private List<String> identifierListToStringList(ASTidentifier_list idList) {
     return Arrays.stream(idList.children)
-        .map(o -> ASTTreeUtils.tokensToString((ASTidentifier) o, false))
+        .map(o -> AstTreeUtils.tokensToString((ASTidentifier) o, false))
         .collect(Collectors.toList());
   }
 
@@ -58,7 +58,7 @@ public class ASTforeign_key extends SimpleNode {
       // skip constraint name when specified.
       child++;
     }
-    return ASTTreeUtils.tokensToString((ASTreferenced_table) children[child], false);
+    return AstTreeUtils.tokensToString((ASTreferenced_table) children[child], false);
   }
 
   public List<String> getReferencedColumnNames() {
@@ -71,7 +71,7 @@ public class ASTforeign_key extends SimpleNode {
   }
 
   public String getDeleteOption() {
-    ASTon_delete deleteOption = ASTTreeUtils.getOptionalChildByType(children, ASTon_delete.class);
+    ASTon_delete deleteOption = AstTreeUtils.getOptionalChildByType(children, ASTon_delete.class);
     if (deleteOption != null) {
       return " " + deleteOption;
     } else {

@@ -15,7 +15,7 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 
 public class ASTchange_stream_for_clause extends SimpleNode {
   public ASTchange_stream_for_clause(int id) {
@@ -29,9 +29,9 @@ public class ASTchange_stream_for_clause extends SimpleNode {
   @Override
   public String toString() {
     ASTchange_stream_tracked_tables tables =
-        ASTTreeUtils.getOptionalChildByType(children, ASTchange_stream_tracked_tables.class);
+        AstTreeUtils.getOptionalChildByType(children, ASTchange_stream_tracked_tables.class);
     if (tables != null) {
-      return "FOR " + ASTTreeUtils.tokensToString(tables, false);
+      return "FOR " + AstTreeUtils.tokensToString(tables, false);
     }
     return "FOR ALL";
   }

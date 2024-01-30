@@ -16,7 +16,7 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
 
 public class ASTkey extends SimpleNode {
@@ -35,7 +35,7 @@ public class ASTkey extends SimpleNode {
       return jjtGetFirstToken().toString();
     }
     return "("
-        + Joiner.on(", ").join(ASTTreeUtils.getChildrenAssertType(children, ASTkey_part.class))
+        + Joiner.on(", ").join(AstTreeUtils.getChildrenAssertType(children, ASTkey_part.class))
         + ")";
   }
 }

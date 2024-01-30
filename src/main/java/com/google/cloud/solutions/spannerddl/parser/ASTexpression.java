@@ -15,7 +15,7 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 
 public class ASTexpression extends SimpleNode {
 
@@ -29,7 +29,7 @@ public class ASTexpression extends SimpleNode {
 
   @Override
   public String toString() {
-    return ASTTreeUtils.tokensToString(this, false);
+    return AstTreeUtils.tokensToString(this, false);
   }
 
   @Override

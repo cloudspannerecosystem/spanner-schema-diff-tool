@@ -28,9 +28,9 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /** Utility functions for getting and casting Nodes in the parsed AST. */
-public class ASTTreeUtils {
+public class AstTreeUtils {
 
-  /** Gets (and casts) the first found child of a specific node type */
+  /** Gets (and casts) the first found child of a specific node type. */
   public static <T> T getOptionalChildByType(Node[] children, Class<T> type) {
     for (Node child : children) {
       if (type.isInstance(child)) {
@@ -40,6 +40,10 @@ public class ASTTreeUtils {
     return null;
   }
 
+  /**
+   * Gets (and casts) the first found child of a specific node type, throwing an exception if it
+   * does not exist.
+   */
   public static <T> T getChildByType(Node[] children, Class<T> type) {
     T child = getOptionalChildByType(children, type);
     if (child == null) {
@@ -55,6 +59,7 @@ public class ASTTreeUtils {
           .map(s -> s.substring(1, s.length() - 1))
           .collect(Collectors.toSet());
 
+  /** Checks if the word is a reserved word/known token. */
   public static boolean isReservedWord(String word) {
     return reservedWords.contains(word);
   }
@@ -69,7 +74,7 @@ public class ASTTreeUtils {
         .collect(Collectors.toList());
   }
 
-  private ASTTreeUtils() {}
+  private AstTreeUtils() {}
 
   /**
    * Generate the original parsed text between the 2 specified tokens, normalizing the text with

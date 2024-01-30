@@ -16,7 +16,7 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
 import javax.annotation.Nullable;
 
@@ -43,23 +43,23 @@ public class ASTcolumn_def extends SimpleNode {
   }
 
   public ASTgeneration_clause getGenerationClause() {
-    return ASTTreeUtils.getOptionalChildByType(children, ASTgeneration_clause.class);
+    return AstTreeUtils.getOptionalChildByType(children, ASTgeneration_clause.class);
   }
 
   public ASTcolumn_default_clause getColumnDefaultClause() {
-    return ASTTreeUtils.getOptionalChildByType(children, ASTcolumn_default_clause.class);
+    return AstTreeUtils.getOptionalChildByType(children, ASTcolumn_default_clause.class);
   }
 
   public boolean isNotNull() {
-    return ASTTreeUtils.getOptionalChildByType(children, ASTnot_null.class) != null;
+    return AstTreeUtils.getOptionalChildByType(children, ASTnot_null.class) != null;
   }
 
   public @Nullable ASToptions_clause getOptionsClause() {
-    return ASTTreeUtils.getOptionalChildByType(children, ASToptions_clause.class);
+    return AstTreeUtils.getOptionalChildByType(children, ASToptions_clause.class);
   }
 
   public boolean isHidden() {
-    return ASTTreeUtils.getOptionalChildByType(children, ASThidden.class) != null;
+    return AstTreeUtils.getOptionalChildByType(children, ASThidden.class) != null;
   }
 
   @Override

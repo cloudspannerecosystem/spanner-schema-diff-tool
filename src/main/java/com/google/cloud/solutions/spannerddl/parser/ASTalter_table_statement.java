@@ -16,7 +16,7 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 
 /** Abstract Syntax Tree parser object for "alter_table_statement" token */
 public class ASTalter_table_statement extends SimpleNode {
@@ -55,7 +55,7 @@ public class ASTalter_table_statement extends SimpleNode {
       ret.append(alterTableAction.jjtGetChild(0));
     } else {
       throw new IllegalArgumentException(
-          "Unrecognised Alter Table action in: " + ASTTreeUtils.tokensToString(this));
+          "Unrecognised Alter Table action in: " + AstTreeUtils.tokensToString(this));
     }
     return ret.toString();
   }

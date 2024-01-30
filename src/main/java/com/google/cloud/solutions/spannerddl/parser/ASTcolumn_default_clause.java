@@ -15,7 +15,7 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 
 public class ASTcolumn_default_clause extends SimpleNode {
   public ASTcolumn_default_clause(int id) {
@@ -34,7 +34,7 @@ public class ASTcolumn_default_clause extends SimpleNode {
   @Override
   public String toString() {
     return "DEFAULT ("
-        + ASTTreeUtils.tokensToString((ASTcolumn_default_expression) jjtGetChild(0))
+        + AstTreeUtils.tokensToString((ASTcolumn_default_expression) jjtGetChild(0))
         + ")";
   }
 

@@ -39,7 +39,7 @@
     <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
     <auto-value.version>1.10.4</auto-value.version>
     <error-prone.version>2.24.1</error-prone.version>
-    <maven-checkstyle.version>3.3.1</maven-checkstyle.version>
+    <maven-checkstyle-plugin.version>3.3.1</maven-checkstyle-plugin.version>
   </properties>
   <dependencies>
     <dependency>
@@ -134,7 +134,51 @@
           </annotationProcessorPaths>
         </configuration>
       </plugin>
-
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${maven-checkstyle-plugin.version}</version>
+        <configuration>
+          <encoding>UTF-8</encoding>
+          <consoleOutput>true</consoleOutput>
+          <failsOnError>true</failsOnError>
+          <failOnViolation>true</failOnViolation>
+          <linkXRef>false</linkXRef>
+          <suppressionsFileExpression>checkstyle.suppressions.xml</suppressionsFileExpression>
+          <excludeGeneratedSources>true</excludeGeneratedSources>
+          <violationSeverity>warning</violationSeverity>
+        </configuration>
+        <executions>
+          <execution>
+            <id>google-checkstyle</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <configLocation>google_checks.xml</configLocation>
+            </configuration>
+          </execution>
+          <execution>
+            <id>licence-header</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <checkstyleRules>
+                <module name="Checker">
+                  <module name="Header">
+                    <property name="headerFile" value="licence_header.java"></property>
+                    <property name="ignoreLines" value="2"></property>
+                    <property name="fileExtensions" value="java"></property>
+                    <message key="header.mismatch" value="File must start with the Apache2 licence header (see licence_header.java)."></message>
+                    <message key="header.missing" value="File must start with the Apache2 licence header (see licence_header.java)."></message>
+                  </module>
+                </module>
+              </checkstyleRules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>

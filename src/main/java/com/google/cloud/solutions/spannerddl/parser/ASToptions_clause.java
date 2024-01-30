@@ -16,7 +16,7 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,12 +34,12 @@ public class ASToptions_clause extends SimpleNode {
   @Override
   public String toString() {
     return "OPTIONS ("
-        + Joiner.on(",").join(ASTTreeUtils.getChildrenAssertType(children, ASToption_key_val.class))
+        + Joiner.on(",").join(AstTreeUtils.getChildrenAssertType(children, ASToption_key_val.class))
         + ")";
   }
 
   public Map<String, String> getKeyValueMap() {
-    return ASTTreeUtils.getChildrenAssertType(children, ASToption_key_val.class).stream()
+    return AstTreeUtils.getChildrenAssertType(children, ASToption_key_val.class).stream()
         .collect(Collectors.toMap(ASToption_key_val::getKey, ASToption_key_val::getValue));
   }
 }

@@ -16,9 +16,9 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-import static com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils.getOptionalChildByType;
+import static com.google.cloud.solutions.spannerddl.diff.AstTreeUtils.getOptionalChildByType;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -43,7 +43,7 @@ public class ASTcreate_table_statement extends SimpleNode {
   }
 
   public String getTableName() {
-    return ASTTreeUtils.tokensToString(ASTTreeUtils.getChildByType(children, ASTname.class));
+    return AstTreeUtils.tokensToString(AstTreeUtils.getChildByType(children, ASTname.class));
   }
 
   public Map<String, ASTcolumn_def> getColumns() {
@@ -73,7 +73,7 @@ public class ASTcreate_table_statement extends SimpleNode {
   }
 
   public synchronized ASTprimary_key getPrimaryKey() {
-    return ASTTreeUtils.getChildByType(children, ASTprimary_key.class);
+    return AstTreeUtils.getChildByType(children, ASTprimary_key.class);
   }
 
   public synchronized Optional<ASTtable_interleave_clause> getInterleaveClause() {

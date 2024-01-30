@@ -45,7 +45,7 @@ public class DdlDiffTest {
             + "-- more comment\n"
             + "; -- stray semicolon";
 
-    List<ASTddl_statement> result = DdlDiff.parseDDL(DDL);
+    List<ASTddl_statement> result = DdlDiff.parseDdl(DDL);
 
     assertThat(result).hasSize(4);
 
@@ -63,7 +63,7 @@ public class DdlDiffTest {
   @Test
   public void parseCreateTable_anonForeignKey() throws DdlDiffException {
     try {
-      DdlDiff.parseDDL(
+      DdlDiff.parseDdl(
           "create table test ("
               + "intcol int64 not null, "
               + "FOREIGN KEY(col1, col2) REFERENCES other_table(other_col1, other_col2)"
@@ -79,7 +79,7 @@ public class DdlDiffTest {
   @Test
   public void parseCreateTable_anonCheckConstraint() throws DdlDiffException {
     try {
-      DdlDiff.parseDDL(
+      DdlDiff.parseDdl(
           "create table test ("
               + "intcol int64 not null, "
               + "check (intcol>1)"
@@ -94,37 +94,37 @@ public class DdlDiffTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableAlterColumn() throws DdlDiffException {
-    DdlDiff.parseDDL("alter table test1 alter column col1 int64 not null");
+    DdlDiff.parseDdl("alter table test1 alter column col1 int64 not null");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableAddColumn() throws DdlDiffException {
-    DdlDiff.parseDDL("alter table test1 add column col1 int64 not null");
+    DdlDiff.parseDdl("alter table test1 add column col1 int64 not null");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableDropColumn() throws DdlDiffException {
-    DdlDiff.parseDDL("alter table test1 drop column col1");
+    DdlDiff.parseDdl("alter table test1 drop column col1");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableDropConstraint() throws DdlDiffException {
-    DdlDiff.parseDDL("alter table test1 drop constraint xxx");
+    DdlDiff.parseDdl("alter table test1 drop constraint xxx");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableSetOnDelete() throws DdlDiffException {
-    DdlDiff.parseDDL("alter table test1 set on delete cascade");
+    DdlDiff.parseDdl("alter table test1 set on delete cascade");
   }
 
   @Test
   public void parseDDLAlterTableAddConstraint() throws DdlDiffException {
-    DdlDiff.parseDDL("alter table test1 add constraint XXX FOREIGN KEY (yyy) references zzz(xxx)");
+    DdlDiff.parseDdl("alter table test1 add constraint XXX FOREIGN KEY (yyy) references zzz(xxx)");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void parseDDLNoAlterTableAddAnonConstraint() throws DdlDiffException {
-    DdlDiff.parseDDL("alter table test1 add FOREIGN KEY (yyy) references zzz(xxx)");
+    DdlDiff.parseDdl("alter table test1 add FOREIGN KEY (yyy) references zzz(xxx)");
   }
 
   @Test

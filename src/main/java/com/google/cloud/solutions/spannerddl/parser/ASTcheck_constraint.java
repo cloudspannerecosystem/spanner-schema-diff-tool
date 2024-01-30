@@ -15,7 +15,7 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 
 public class ASTcheck_constraint extends SimpleNode {
 
@@ -30,7 +30,7 @@ public class ASTcheck_constraint extends SimpleNode {
   public String getName() {
     // name is optional
     if (children[0] instanceof ASTconstraint_name) {
-      return ASTTreeUtils.tokensToString((ASTconstraint_name) children[0]);
+      return AstTreeUtils.tokensToString((ASTconstraint_name) children[0]);
     } else {
       return ASTcreate_table_statement.ANONYMOUS_NAME;
     }
@@ -41,7 +41,7 @@ public class ASTcheck_constraint extends SimpleNode {
     if (children[0] instanceof ASTconstraint_name) {
       child++;
     }
-    return ASTTreeUtils.tokensToString((ASTcheck_constraint_expression) children[child], false);
+    return AstTreeUtils.tokensToString((ASTcheck_constraint_expression) children[child], false);
   }
 
   @Override

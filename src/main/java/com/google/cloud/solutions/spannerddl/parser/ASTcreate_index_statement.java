@@ -16,10 +16,10 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-import static com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils.getChildByType;
-import static com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils.getOptionalChildByType;
+import static com.google.cloud.solutions.spannerddl.diff.AstTreeUtils.getChildByType;
+import static com.google.cloud.solutions.spannerddl.diff.AstTreeUtils.getOptionalChildByType;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
 
 public class ASTcreate_index_statement extends SimpleNode
@@ -34,7 +34,7 @@ public class ASTcreate_index_statement extends SimpleNode
   }
 
   public String getIndexName() {
-    return ASTTreeUtils.getChildByType(children, ASTname.class).toString();
+    return AstTreeUtils.getChildByType(children, ASTname.class).toString();
   }
 
   @Override

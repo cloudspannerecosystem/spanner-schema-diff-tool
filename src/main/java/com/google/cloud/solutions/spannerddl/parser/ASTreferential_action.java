@@ -15,7 +15,7 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 
 public class ASTreferential_action extends SimpleNode {
   public ASTreferential_action(int id) {
@@ -28,7 +28,7 @@ public class ASTreferential_action extends SimpleNode {
 
   @Override
   public String toString() {
-    return ASTTreeUtils.tokensToString(this);
+    return AstTreeUtils.tokensToString(this);
   }
 
   @Override

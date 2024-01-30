@@ -15,7 +15,7 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 
 /**
  * This defines the row deletion policy used in: Create Table, Alter Table add ROW DELETION POLICY
@@ -33,8 +33,8 @@ public class ASTrow_deletion_policy_clause extends SimpleNode {
   @Override
   public String toString() {
     ASTrow_deletion_policy_expression expression =
-        ASTTreeUtils.getChildByType(children, ASTrow_deletion_policy_expression.class);
-    return "ROW DELETION POLICY (" + ASTTreeUtils.tokensToString(expression) + ")";
+        AstTreeUtils.getChildByType(children, ASTrow_deletion_policy_expression.class);
+    return "ROW DELETION POLICY (" + AstTreeUtils.tokensToString(expression) + ")";
   }
 
   @Override

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.cloud.solutions.spannerddl.diff;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -133,6 +134,7 @@ public abstract class DdlDiffOptions {
     System.exit(exitStatus);
   }
 
+  /** Parse the command line according to defined options. */
   public static DdlDiffOptions parseCommandLine(String[] args) {
     try {
       CommandLine commandLine = new DefaultParser().parse(buildOptions(), args);

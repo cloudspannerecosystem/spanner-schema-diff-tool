@@ -16,7 +16,7 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 
 /** Abstract Syntax Tree parser object for "option_key_val" token */
 public class ASToption_key_val extends SimpleNode {
@@ -39,6 +39,6 @@ public class ASToption_key_val extends SimpleNode {
   }
 
   public String getValue() {
-    return ASTTreeUtils.tokensToString((SimpleNode) children[1]);
+    return AstTreeUtils.tokensToString((SimpleNode) children[1]);
   }
 }

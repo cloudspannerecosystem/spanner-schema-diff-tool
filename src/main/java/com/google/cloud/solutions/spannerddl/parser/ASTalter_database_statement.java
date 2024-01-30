@@ -43,4 +43,9 @@ public class ASTalter_database_statement extends SimpleNode {
   public boolean equals(Object other) {
     return other instanceof ASTalter_table_statement && this.toString().equals(other.toString());
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

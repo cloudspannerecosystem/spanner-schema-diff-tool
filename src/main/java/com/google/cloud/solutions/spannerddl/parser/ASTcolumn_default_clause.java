@@ -37,4 +37,9 @@ public class ASTcolumn_default_clause extends SimpleNode {
         + ASTTreeUtils.tokensToString((ASTcolumn_default_expression) jjtGetChild(0))
         + ")";
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

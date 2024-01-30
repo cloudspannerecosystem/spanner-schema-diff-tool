@@ -16,7 +16,6 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-/** Abstract Syntax Tree parser object for column definitions */
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
 import com.google.common.base.Joiner;
 import javax.annotation.Nullable;
@@ -128,5 +127,10 @@ public class ASTcolumn_def extends SimpleNode {
       return this.toString().equals(other.toString());
     }
     return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
   }
 }

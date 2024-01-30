@@ -7,7 +7,6 @@ import com.google.cloud.solutions.spannerddl.testUtils.ReadTestDatafile;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.junit.Test;
@@ -17,8 +16,7 @@ public class DDLParserFromFileTest {
   @Test
   public void validateDDLfromFile() throws IOException {
 
-    LinkedHashMap<String, String> tests =
-        ReadTestDatafile.readDdlSegmentsFromFile("ddlParserValidation.txt");
+    Map<String, String> tests = ReadTestDatafile.readDdlSegmentsFromFile("ddlParserValidation.txt");
 
     Iterator<Map.Entry<String, String>> testIt = tests.entrySet().iterator();
 
@@ -53,7 +51,7 @@ public class DDLParserFromFileTest {
   @Test
   public void validateUnsupportedDDLfromFile() throws Exception {
 
-    LinkedHashMap<String, String> tests =
+    Map<String, String> tests =
         ReadTestDatafile.readDdlSegmentsFromFile("ddlParserUnsupported.txt");
 
     Iterator<Map.Entry<String, String>> testIt = tests.entrySet().iterator();

@@ -15,27 +15,27 @@
  */
 package com.google.cloud.solutions.spannerddl.testUtils;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 public abstract class ReadTestDatafile {
 
   /**
    * Reads the test data file, parsing out the test titles and data from the file.
    *
-   * @param filename
    * @return LinkedHashMap of segment name => contents
-   * @throws IOException
    */
-  public static LinkedHashMap<String, String> readDdlSegmentsFromFile(String filename)
-      throws IOException {
+  public static Map<String, String> readDdlSegmentsFromFile(String filename) throws IOException {
     File file = new File("src/test/resources/" + filename).getAbsoluteFile();
     LinkedHashMap<String, String> output = new LinkedHashMap<>();
 
-    try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+    try (BufferedReader in = Files.newBufferedReader(file.toPath(), UTF_8)) {
 
       String sectionName = null;
       StringBuilder section = new StringBuilder();

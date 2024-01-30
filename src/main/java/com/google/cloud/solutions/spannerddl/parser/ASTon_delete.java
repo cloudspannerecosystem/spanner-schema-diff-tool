@@ -37,4 +37,9 @@ public class ASTon_delete extends SimpleNode {
   public boolean equals(Object other) {
     return (other instanceof ASTon_delete && this.toString().equals(other.toString()));
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

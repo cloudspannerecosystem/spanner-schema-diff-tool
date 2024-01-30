@@ -7,13 +7,13 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.fail;
 
 import com.google.cloud.solutions.spannerddl.testUtils.ReadTestDatafile;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -30,11 +30,10 @@ public class DdlDiffFromFilesTest {
     // Uses 3 files: 2 containing DDL segments to run diffs on, 1 with the expected results
     // if allowRecreateIndexes and allowDropStatements are set.
 
-    LinkedHashMap<String, String> originalSegments =
+    Map<String, String> originalSegments =
         ReadTestDatafile.readDdlSegmentsFromFile("originalDdl.txt");
-    LinkedHashMap<String, String> newSegments =
-        ReadTestDatafile.readDdlSegmentsFromFile("newDdl.txt");
-    LinkedHashMap<String, String> expectedOutputs =
+    Map<String, String> newSegments = ReadTestDatafile.readDdlSegmentsFromFile("newDdl.txt");
+    Map<String, String> expectedOutputs =
         ReadTestDatafile.readDdlSegmentsFromFile("expectedDdlDiff.txt");
 
     Iterator<Map.Entry<String, String>> originalSegmentIt = originalSegments.entrySet().iterator();
@@ -50,12 +49,13 @@ public class DdlDiffFromFilesTest {
         Map.Entry<String, String> expectedOutput = expectedOutputIt.next();
 
         // verify segment name order for sanity.
-        assertWithMessage("mismatched section names in newDdl.txt")
-            .that(newSegment.getKey())
-            .isEqualTo(segmentName);
-        assertWithMessage("mismatched section names in expectedDdlDiff.txt")
-            .that(expectedOutput.getKey())
-            .isEqualTo(segmentName);
+        assertWithMessage("section name in newDdl.txt differs from originalDdl.txt")
+            .that(segmentName)
+            .isEqualTo(newSegment.getKey());
+        assertWithMessage("section name in expectedDdlDiff.txt differs from originalDdl.txt")
+            .that(segmentName)
+            .isEqualTo(expectedOutput.getKey());
+
         List<String> expectedDiff =
             expectedOutput.getValue() != null
                 ? Arrays.asList(expectedOutput.getValue().split("\n"))
@@ -82,14 +82,14 @@ public class DdlDiffFromFilesTest {
         List<String> expectedDiffNoDrops =
             expectedDiff.stream()
                 .filter(statement -> !statement.matches(".*DROP (TABLE|COLUMN|CHANGE STREAM).*"))
-                .collect(Collectors.toCollection(LinkedList::new));
+                .collect(Collectors.toList());
 
         // remove any drop indexes from the expectedResults if they do not have an equivalent
         // CREATE statement. This is because we are allowing recreation of indexes, but not allowing
         // dropping of removed indexes.
         for (String statement : expectedDiff) {
           if (statement.startsWith("DROP INDEX ")) {
-            String indexName = statement.split(" ")[2];
+            String indexName = Iterables.get(Splitter.on(' ').split(statement), 2);
             // see if there is a matching create statement
             Pattern p = Pattern.compile("CREATE .*INDEX " + indexName + " ");
             if (expectedDiffNoDrops.stream().noneMatch(s -> p.matcher(s).find())) {

@@ -16,6 +16,8 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
+import java.util.Locale;
+
 /** Abstract Syntax Tree parser object for "key_part" token */
 public class ASTkey_part extends SimpleNode {
 
@@ -37,7 +39,9 @@ public class ASTkey_part extends SimpleNode {
       return ((ASTpath) children[0]).toString() + " ASC"; // key name without direction ;
     } else {
       // key name and ASC/DESC
-      return ((ASTpath) children[0]).toString() + " " + children[1].toString().toUpperCase();
+      return ((ASTpath) children[0]).toString()
+          + " "
+          + children[1].toString().toUpperCase(Locale.ROOT);
     }
   }
 }

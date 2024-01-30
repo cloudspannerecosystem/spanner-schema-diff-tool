@@ -18,10 +18,6 @@ package com.google.cloud.solutions.spannerddl.parser;
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
 import com.google.common.base.Joiner;
 
-/**
- * @link
- *     https://cloud.google.com/spanner/docs/reference/standard-sql/data-definition-language#create-change-stream
- */
 public class ASTcreate_change_stream_statement extends SimpleNode {
   public ASTcreate_change_stream_statement(int id) {
     super(id);
@@ -54,5 +50,10 @@ public class ASTcreate_change_stream_statement extends SimpleNode {
   public boolean equals(Object other) {
     return (other instanceof ASTcreate_change_stream_statement)
         && this.toString().equals(other.toString());
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
   }
 }

@@ -35,4 +35,9 @@ public class ASTreferential_action extends SimpleNode {
   public boolean equals(Object other) {
     return (other instanceof ASTreferential_action && this.toString().equals(other.toString()));
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

@@ -17,6 +17,7 @@
 package com.google.cloud.solutions.spannerddl.parser;
 
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
+import java.util.Locale;
 
 /** Abstract Syntax Tree parser object for "column_type" token */
 public class ASTcolumn_type extends SimpleNode {
@@ -61,7 +62,7 @@ public class ASTcolumn_type extends SimpleNode {
       case "ARRAY":
         return "ARRAY<" + ((ASTcolumn_type) children[0]) + ">";
       case "PG": // PG.pgtype
-        return ASTTreeUtils.tokensToString(this).toUpperCase();
+        return ASTTreeUtils.tokensToString(this).toUpperCase(Locale.ROOT);
       case "STRUCT":
         if (jjtGetNumChildren() > 0) {
           return ASTTreeUtils.tokensToString(this);
@@ -74,6 +75,6 @@ public class ASTcolumn_type extends SimpleNode {
   }
 
   public String getTypeName() {
-    return jjtGetFirstToken().toString().toUpperCase();
+    return jjtGetFirstToken().toString().toUpperCase(Locale.ROOT);
   }
 }

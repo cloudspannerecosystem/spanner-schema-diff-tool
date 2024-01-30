@@ -23,6 +23,7 @@ import com.google.common.base.Joiner;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -45,7 +46,7 @@ public class ASTcreate_table_statement extends SimpleNode {
     return ASTTreeUtils.tokensToString(ASTTreeUtils.getChildByType(children, ASTname.class));
   }
 
-  public LinkedHashMap<String, ASTcolumn_def> getColumns() {
+  public Map<String, ASTcolumn_def> getColumns() {
     LinkedHashMap<String, ASTcolumn_def> columns = new LinkedHashMap<>();
     for (Node child : children) {
       if (child instanceof ASTcolumn_def) {
@@ -56,7 +57,7 @@ public class ASTcreate_table_statement extends SimpleNode {
     return columns;
   }
 
-  public LinkedHashMap<String, SimpleNode> getConstraints() {
+  public Map<String, SimpleNode> getConstraints() {
     LinkedHashMap<String, SimpleNode> constraints = new LinkedHashMap<>();
     for (Node child : children) {
       if (child instanceof ASTforeign_key) {
@@ -94,11 +95,7 @@ public class ASTcreate_table_statement extends SimpleNode {
     return toStringOptionalExistClause(true);
   }
 
-  /**
-   * Create string version, optionally including the IF NOT EXISTS clause
-   *
-   * @param includeExists
-   */
+  /** Create string version, optionally including the IF NOT EXISTS clause */
   public String toStringOptionalExistClause(boolean includeExists) {
     verifyTableElements();
 
@@ -155,5 +152,10 @@ public class ASTcreate_table_statement extends SimpleNode {
           .equals(((ASTcreate_table_statement) other).toStringOptionalExistClause(false));
     }
     return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return toStringOptionalExistClause(false).hashCode();
   }
 }

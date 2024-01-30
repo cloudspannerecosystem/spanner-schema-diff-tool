@@ -19,8 +19,11 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DdlDiffFromFilesTest {
+  private static final Logger LOG = LoggerFactory.getLogger(DdlDiffFromFilesTest.class);
 
   @Test
   public void compareDddTextFiles() throws IOException {
@@ -58,6 +61,7 @@ public class DdlDiffFromFilesTest {
                 ? Arrays.asList(expectedOutput.getValue().split("\n"))
                 : Collections.emptyList();
 
+        LOG.info("Processing segment (with drops): " + segmentName);
         DdlDiff ddlDiff = DdlDiff.build(originalSegment.getValue(), newSegment.getValue());
         // Run diff with allowRecreateIndexes and allowDropStatements
         List<String> diff =
@@ -94,6 +98,7 @@ public class DdlDiffFromFilesTest {
           }
         }
 
+        LOG.info("Processing segment (without drops): " + segmentName);
         diff =
             ddlDiff.generateDifferenceStatements(
                 ImmutableMap.of(

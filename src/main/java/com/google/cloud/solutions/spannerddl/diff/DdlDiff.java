@@ -45,11 +45,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.MapDifference.ValueDifference;
 import com.google.common.collect.Maps;
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -61,11 +58,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,8 +77,8 @@ import org.slf4j.LoggerFactory;
  *    .generateDifferenceStatements(true, true);
  * </pre>
  *
- * or execute the {@link #main(String[]) main()} function with the {@link #buildOptions()
- * appropriate command line options}.
+ * or execute the {@link #main(String[]) main()} function with the {@link
+ * DdlDiffOptions#buildOptions() appropriate command line options}.
  */
 public class DdlDiff {
 
@@ -160,6 +152,7 @@ public class DdlDiff {
     if (!alterDatabaseOptionsDifferences.areEqual()) {
       String optionsUpdates = generateOptionsUpdates(alterDatabaseOptionsDifferences);
       if (!Strings.isNullOrEmpty(optionsUpdates)) {
+        LOG.info("Updating database options");
         output.add("ALTER DATABASE " + databaseName + " SET OPTIONS (" + optionsUpdates + ")");
       }
     }
@@ -190,12 +183,14 @@ public class DdlDiff {
 
     // Drop deleted constraints
     for (ConstraintWrapper fk : constraintDifferences.entriesOnlyOnLeft().values()) {
+      LOG.info("Dropping constraint: {}", fk.getName());
       output.add("ALTER TABLE " + fk.tableName() + " DROP CONSTRAINT " + fk.getName());
     }
 
     // Drop modified constraints that need to be re-created...
     for (ValueDifference<ConstraintWrapper> fkDiff :
         constraintDifferences.entriesDiffering().values()) {
+      LOG.info("Dropping changed constraint for re-creation: {}", fkDiff.leftValue().getName());
       output.add(
           "ALTER TABLE "
               + fkDiff.leftValue().tableName()
@@ -205,6 +200,7 @@ public class DdlDiff {
 
     // Drop deleted TTLs
     for (String tableName : ttlDifferences.entriesOnlyOnLeft().keySet()) {
+      LOG.info("Dropping row deletion policy for : {}", tableName);
       output.add("ALTER TABLE " + tableName + " DROP ROW DELETION POLICY");
     }
 
@@ -241,12 +237,14 @@ public class DdlDiff {
     // Create new TTLs
     for (Map.Entry<String, ASTrow_deletion_policy_clause> newTtl :
         ttlDifferences.entriesOnlyOnRight().entrySet()) {
+      LOG.info("Adding new row deletion policy for : {}", newTtl.getKey());
       output.add("ALTER TABLE " + newTtl.getKey() + " ADD " + newTtl.getValue());
     }
 
     // update existing TTLs
     for (Entry<String, ValueDifference<ASTrow_deletion_policy_clause>> differentTtl :
         ttlDifferences.entriesDiffering().entrySet()) {
+      LOG.info("Updating row deletion policy for : {}", differentTtl.getKey());
       output.add(
           "ALTER TABLE "
               + differentTtl.getKey()
@@ -269,12 +267,14 @@ public class DdlDiff {
 
     // Create new constraints.
     for (ConstraintWrapper fk : constraintDifferences.entriesOnlyOnRight().values()) {
+      LOG.info("Creating new constraint: {}", fk.getName());
       output.add("ALTER TABLE " + fk.tableName() + " ADD " + fk.constraint());
     }
 
     // Re-create modified constraints.
     for (ValueDifference<ConstraintWrapper> constraintDiff :
         constraintDifferences.entriesDiffering().values()) {
+      LOG.info("Re-creating changed constraint: {}", constraintDiff.rightValue().getName());
       output.add(
           "ALTER TABLE "
               + constraintDiff.rightValue().tableName()
@@ -292,6 +292,7 @@ public class DdlDiff {
     // Alter existing change streams
     for (ValueDifference<ASTcreate_change_stream_statement> changedChangeStream :
         changeStreamDifferences.entriesDiffering().values()) {
+      LOG.info("Updating change stream: {}", changedChangeStream.rightValue().getName());
       String oldForClause = changedChangeStream.leftValue().getForClause().toString();
       String newForClause = changedChangeStream.rightValue().getForClause().toString();
 
@@ -572,7 +573,8 @@ public class DdlDiff {
       return originalName;
     }
     if (!originalName.equals(newName)) {
-      throw new DdlDiffException("Database IDs differ in ALTER DATABASE statements");
+      throw new DdlDiffException(
+          "Database IDs differ in old and new DDL ALTER DATABASE statements");
     }
     return newName;
   }
@@ -582,12 +584,11 @@ public class DdlDiff {
     Set<String> names =
         statements.stream()
             .filter(s -> s.jjtGetChild(0) instanceof ASTalter_database_statement)
-            .map(s -> ((ASTalter_database_statement) s.jjtGetChild(0)))
-            .map(ASTalter_database_statement::getDbName)
+            .map(s -> ((ASTalter_database_statement) s.jjtGetChild(0)).getDbName())
             .collect(Collectors.toSet());
     if (names.size() > 1) {
       throw new DdlDiffException(
-          "Multiple database IDs defined in ALTER DATABASE statements in original DDL");
+          "Multiple database IDs defined in ALTER DATABASE statements in DDL");
     } else if (names.size() == 0) {
       return null;
     } else {
@@ -682,29 +683,14 @@ public class DdlDiff {
 
   public static void main(String[] args) {
 
-    CommandLine commandLine;
+    DdlDiffOptions options = DdlDiffOptions.parseCommandLine(args);
+    ;
     try {
-      commandLine = new DefaultParser().parse(buildOptions(), args);
-      if (commandLine.hasOption(HELP_OPT)) {
-        printHelpAndExit(0);
-      }
-      Map<String, Boolean> options =
-          ImmutableMap.of(
-              ALLOW_RECREATE_INDEXES_OPT, commandLine.hasOption(ALLOW_RECREATE_INDEXES_OPT),
-              ALLOW_DROP_STATEMENTS_OPT, commandLine.hasOption(ALLOW_DROP_STATEMENTS_OPT),
-              ALLOW_RECREATE_CONSTRAINTS_OPT,
-                  commandLine.hasOption(ALLOW_RECREATE_CONSTRAINTS_OPT));
       List<String> alterStatements =
           DdlDiff.build(
-                  new String(
-                      Files.readAllBytes(
-                          new File(commandLine.getOptionValue(ORIGINAL_DDL_FILE_OPT)).toPath()),
-                      UTF_8),
-                  new String(
-                      Files.readAllBytes(
-                          new File(commandLine.getOptionValue(NEW_DDL_FILE_OPT)).toPath()),
-                      UTF_8))
-              .generateDifferenceStatements(options);
+                  new String(Files.readAllBytes(options.originalDdlPath()), UTF_8),
+                  new String(Files.readAllBytes(options.newDdlPath()), UTF_8))
+              .generateDifferenceStatements(options.args());
 
       StringBuilder output = new StringBuilder();
       for (String statement : alterStatements) {
@@ -712,113 +698,14 @@ public class DdlDiff {
         output.append(";\n\n");
       }
 
-      Files.write(
-          new File(commandLine.getOptionValue(OUTPUT_DDL_FILE_OPT)).toPath(),
-          output.toString().getBytes(UTF_8));
+      Files.write(options.outputDdlPath(), output.toString().getBytes(UTF_8));
 
       System.exit(0);
-
-    } catch (org.apache.commons.cli.ParseException e) {
-      System.err.println("Failed parsing command line options: " + e.getMessage());
-    } catch (InvalidPathException e) {
-      System.err.println("Invalid file path: " + e.getInput() + "\n" + e.getReason());
     } catch (IOException e) {
       System.err.println("Cannot read DDL file: " + e);
     } catch (DdlDiffException e) {
       e.printStackTrace();
     }
-    System.err.println();
-    printHelpAndExit(1);
-  }
-
-  @VisibleForTesting
-  static Options buildOptions() {
-    Options options = new Options();
-    options.addOption(
-        Option.builder()
-            .longOpt(ORIGINAL_DDL_FILE_OPT)
-            .desc("File path to the original DDL definition.")
-            .hasArg()
-            .argName("FILE")
-            .type(File.class)
-            .required()
-            .build());
-    options.addOption(
-        Option.builder()
-            .longOpt(NEW_DDL_FILE_OPT)
-            .desc("File path to the new DDL definition.")
-            .hasArg()
-            .argName("FILE")
-            .type(File.class)
-            .required()
-            .build());
-    options.addOption(
-        Option.builder()
-            .longOpt(OUTPUT_DDL_FILE_OPT)
-            .desc("File path to the output DDL to write.")
-            .hasArg()
-            .argName("FILE")
-            .required()
-            .build());
-    options.addOption(
-        Option.builder()
-            .longOpt(ALLOW_RECREATE_INDEXES_OPT)
-            .desc("Allows dropping and recreating secondary Indexes to apply changes.")
-            .build());
-    options.addOption(
-        Option.builder()
-            .longOpt(ALLOW_RECREATE_CONSTRAINTS_OPT)
-            .desc(
-                "Allows dropping and recreating Check and Foreign Key constraints (and their "
-                    + "backing Indexes) to apply changes.")
-            .build());
-    options.addOption(
-        Option.builder()
-            .longOpt(ALLOW_DROP_STATEMENTS_OPT)
-            .desc(
-                "Enables output of DROP commands to delete columns, tables or indexes not used"
-                    + " in the new DDL file.")
-            .build());
-    options.addOption(Option.builder().longOpt(HELP_OPT).desc("Show help").build());
-    return options;
-  }
-
-  private static void printHelpAndExit(int exitStatus) {
-    try (PrintWriter pw = new PrintWriter(System.err)) {
-      new HelpFormatter()
-          .printHelp(
-              pw,
-              132,
-              "DdlDiff",
-              "Compares original and new DDL files and creates a DDL file with DROP, CREATE and"
-                  + " ALTER statements which convert the original Schema to the new Schema.\n\n"
-                  + "Incompatible table changes (table hierarchy changes. column type changes) are"
-                  + " not supported and will cause this tool to fail.\n\n"
-                  + "To prevent accidental data loss, DROP statements are not generated for removed"
-                  + " tables, columns and indexes. This can be overridden using the"
-                  + " --"
-                  + ALLOW_DROP_STATEMENTS_OPT
-                  + " command line argument.\n\n"
-                  + "By default, changes to indexes will also cause a failure. The"
-                  + " --"
-                  + ALLOW_RECREATE_INDEXES_OPT
-                  + " command line option enables index changes by generating statements to drop"
-                  + " and recreate the index which will trigger a long running operation to rebuild"
-                  + " the index.\n\n"
-                  + "By default, changes to Check and Foreign key constraints will also cause a"
-                  + " failure. The --"
-                  + ALLOW_RECREATE_CONSTRAINTS_OPT
-                  + " command line option enables check and foreign key constraint changes by"
-                  + " generating statements to drop and recreate the constraint. These are disabled"
-                  + " by default because they trigger long running operations to rebuild indexes"
-                  + " and validate constraints on existing rows\n\n",
-              buildOptions(),
-              1,
-              4,
-              "",
-              true);
-    }
-    System.exit(exitStatus);
   }
 }
 
@@ -939,7 +826,6 @@ abstract class DatbaseDefinition {
               "Unsupported statement: " + ASTTreeUtils.tokensToString(ddlStatement));
       }
     }
-    System.out.println(constraints.keySet());
     return new AutoValue_DatbaseDefinition(
         ImmutableMap.copyOf(tablesInCreationOrder),
         ImmutableMap.copyOf(indexes),

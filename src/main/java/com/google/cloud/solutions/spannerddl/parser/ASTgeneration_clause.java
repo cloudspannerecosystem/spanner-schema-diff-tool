@@ -25,6 +25,7 @@ public class ASTgeneration_clause extends SimpleNode {
     super(p, id);
   }
 
+  @Override
   public String toString() {
     final ASTexpression exp = (ASTexpression) children[0];
     return "AS ( " + exp.toString() + " ) STORED";

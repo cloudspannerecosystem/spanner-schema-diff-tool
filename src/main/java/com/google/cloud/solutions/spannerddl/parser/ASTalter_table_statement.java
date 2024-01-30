@@ -59,4 +59,9 @@ public class ASTalter_table_statement extends SimpleNode {
     }
     return ret.toString();
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

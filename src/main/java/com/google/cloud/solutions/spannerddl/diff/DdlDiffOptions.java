@@ -15,14 +15,17 @@
  */
 package com.google.cloud.solutions.spannerddl.diff;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -40,7 +43,7 @@ public abstract class DdlDiffOptions {
 
   public abstract Path outputDdlPath();
 
-  public abstract Map<String, Boolean> args();
+  public abstract ImmutableMap<String, Boolean> args();
 
   @VisibleForTesting
   static Options buildOptions() {
@@ -93,40 +96,40 @@ public abstract class DdlDiffOptions {
   }
 
   static void printHelpAndExit(int exitStatus) {
-    try (PrintWriter pw = new PrintWriter(System.err)) {
-      new HelpFormatter()
-          .printHelp(
-              pw,
-              132,
-              "DdlDiff",
-              "Compares original and new DDL files and creates a DDL file with DROP, CREATE and"
-                  + " ALTER statements which convert the original Schema to the new Schema.\n"
-                  + "\n"
-                  + "Incompatible table changes (table hierarchy changes. column type changes) are"
-                  + " not supported and will cause this tool to fail.\n"
-                  + "\n"
-                  + "To prevent accidental data loss, and to make it easier to apply DDL changes,"
-                  + " DROP statements are not generated for removed tables, columns, indexes and"
-                  + " change streams. This can be overridden using the "
-                  + DdlDiff.ALLOW_DROP_STATEMENTS_OPT
-                  + " command line argument.\n"
-                  + "\n"
-                  + "By default, changes to indexes will also cause a failure. The "
-                  + DdlDiff.ALLOW_RECREATE_INDEXES_OPT
-                  + " command line option enables index changes by"
-                  + " generating statements to drop and recreate the index.\n"
-                  + "\n"
-                  + "By default, changes to foreign key constraints will also cause a failure. The "
-                  + DdlDiff.ALLOW_RECREATE_CONSTRAINTS_OPT
-                  + " command line option enables foreign key changes by"
-                  + " generating statements to drop and recreate the constraint.\n"
-                  + "\n",
-              buildOptions(),
-              1,
-              4,
-              "",
-              true);
-    }
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.err, UTF_8)));
+    new HelpFormatter()
+        .printHelp(
+            pw,
+            132,
+            "DdlDiff",
+            "Compares original and new DDL files and creates a DDL file with DROP, CREATE and"
+                + " ALTER statements which convert the original Schema to the new Schema.\n"
+                + "\n"
+                + "Incompatible table changes (table hierarchy changes. column type changes) are"
+                + " not supported and will cause this tool to fail.\n"
+                + "\n"
+                + "To prevent accidental data loss, and to make it easier to apply DDL changes,"
+                + " DROP statements are not generated for removed tables, columns, indexes and"
+                + " change streams. This can be overridden using the "
+                + DdlDiff.ALLOW_DROP_STATEMENTS_OPT
+                + " command line argument.\n"
+                + "\n"
+                + "By default, changes to indexes will also cause a failure. The "
+                + DdlDiff.ALLOW_RECREATE_INDEXES_OPT
+                + " command line option enables index changes by"
+                + " generating statements to drop and recreate the index.\n"
+                + "\n"
+                + "By default, changes to foreign key constraints will also cause a failure. The "
+                + DdlDiff.ALLOW_RECREATE_CONSTRAINTS_OPT
+                + " command line option enables foreign key changes by"
+                + " generating statements to drop and recreate the constraint.\n"
+                + "\n",
+            buildOptions(),
+            1,
+            4,
+            "",
+            true);
+    pw.flush();
     System.exit(exitStatus);
   }
 
@@ -143,7 +146,7 @@ public abstract class DdlDiffOptions {
       Path outputDdlPath =
           new File(commandLine.getOptionValue(DdlDiff.OUTPUT_DDL_FILE_OPT)).toPath();
 
-      Map<String, Boolean> argsMap =
+      ImmutableMap<String, Boolean> argsMap =
           ImmutableMap.of(
               DdlDiff.ALLOW_RECREATE_INDEXES_OPT,
                   commandLine.hasOption(DdlDiff.ALLOW_RECREATE_INDEXES_OPT),

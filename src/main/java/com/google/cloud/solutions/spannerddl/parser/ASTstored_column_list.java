@@ -16,7 +16,6 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
-/** Abstract Syntax Tree parser object for "stored_column_list" token */
 import com.google.cloud.solutions.spannerddl.diff.ASTTreeUtils;
 import com.google.common.base.Joiner;
 

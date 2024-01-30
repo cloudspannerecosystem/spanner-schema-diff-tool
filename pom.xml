@@ -38,6 +38,8 @@
     <exec-maven.version>3.1.1</exec-maven.version>
     <build-helper-maven-plugin.version>3.5.0</build-helper-maven-plugin.version>
     <auto-value.version>1.10.4</auto-value.version>
+    <error-prone.version>2.24.1</error-prone.version>
+    <maven-checkstyle.version>3.3.1</maven-checkstyle.version>
   </properties>
   <dependencies>
     <dependency>
@@ -108,13 +110,26 @@
     </pluginManagement>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
+          <showWarnings>true</showWarnings>
+          <failOnWarning>true</failOnWarning>
+          <compilerArgs>
+            <arg>-Xlint:-options</arg>
+            <arg>-XDcompilePolicy=simple</arg>
+            <arg>-Xplugin:ErrorProne -XepExcludedPaths:${project.build.directory}/generated-sources/.* -XepDisableWarningsInGeneratedCode</arg>
+          </compilerArgs>
           <annotationProcessorPaths>
             <path>
               <groupId>com.google.auto.value</groupId>
               <artifactId>auto-value</artifactId>
               <version>${auto-value.version}</version>
+            </path>
+            <path>
+              <groupId>com.google.errorprone</groupId>
+              <artifactId>error_prone_core</artifactId>
+              <version>${error-prone.version}</version>
             </path>
           </annotationProcessorPaths>
         </configuration>

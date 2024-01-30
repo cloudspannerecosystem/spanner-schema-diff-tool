@@ -16,6 +16,8 @@
 
 package com.google.cloud.solutions.spannerddl.parser;
 
+import java.util.Locale;
+
 /** Abstract Syntax Tree parser object for "length" token */
 public class ASTlength extends SimpleNode {
 
@@ -31,10 +33,10 @@ public class ASTlength extends SimpleNode {
   public String toString() {
     if (children == null) {
       // MAX
-      return jjtGetFirstToken().toString().toUpperCase();
+      return jjtGetFirstToken().toString().toUpperCase(Locale.ROOT);
     } else {
       // Length
-      return children[0].toString().toUpperCase();
+      return children[0].toString().toUpperCase(Locale.ROOT);
     }
   }
 }

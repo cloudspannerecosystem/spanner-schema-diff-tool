@@ -39,6 +39,7 @@ import com.google.cloud.solutions.spannerddl.parser.ParseException;
 import com.google.cloud.solutions.spannerddl.parser.SimpleNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -341,10 +342,10 @@ public class DdlDiff {
     }
 
     if (left.getInterleaveClause().isPresent()
-        && !(left.getInterleaveClause()
+        && !left.getInterleaveClause()
             .get()
             .getParentTableName()
-            .equals(right.getInterleaveClause().get().getParentTableName()))) {
+            .equals(right.getInterleaveClause().get().getParentTableName())) {
       throw new DdlDiffException(
           "Cannot change interleaved parent of table " + left.getTableName());
     }
@@ -356,10 +357,10 @@ public class DdlDiff {
 
     // On delete changed
     if (left.getInterleaveClause().isPresent()
-        && !(left.getInterleaveClause()
+        && !left.getInterleaveClause()
             .get()
             .getOnDelete()
-            .equals(right.getInterleaveClause().get().getOnDelete()))) {
+            .equals(right.getInterleaveClause().get().getOnDelete())) {
       alterStatements.add(
           "ALTER TABLE "
               + left.getTableName()
@@ -391,9 +392,7 @@ public class DdlDiff {
   }
 
   private static void addColumnDiffs(
-      String tableName,
-      ArrayList<String> alterStatements,
-      ValueDifference<ASTcolumn_def> columnDiff)
+      String tableName, List<String> alterStatements, ValueDifference<ASTcolumn_def> columnDiff)
       throws DdlDiffException {
 
     // check for compatible type changes.
@@ -599,8 +598,8 @@ public class DdlDiff {
   @VisibleForTesting
   static List<ASTddl_statement> parseDDL(String original) throws DdlDiffException {
     // Remove "--" comments and split by ";"
-    String[] statements = original.replaceAll("--.*(\n|$)", "").split(";");
-    ArrayList<ASTddl_statement> ddlStatements = new ArrayList<>(statements.length);
+    List<String> statements = Splitter.on(';').splitToList(original.replaceAll("--.*(\n|$)", ""));
+    ArrayList<ASTddl_statement> ddlStatements = new ArrayList<>(statements.size());
 
     for (String statement : statements) {
       statement = statement.trim();
@@ -612,40 +611,38 @@ public class DdlDiff {
         int statementType = ddlStatement.jjtGetChild(0).getId();
 
         switch (statementType) {
-          case (DdlParserTreeConstants.JJTALTER_TABLE_STATEMENT):
-            {
-              ASTalter_table_statement alterTableStatement =
-                  (ASTalter_table_statement) ddlStatement.jjtGetChild(0);
-              // child 0 = table name
-              // child 1 = alter statement. Only ASTforeign_key is supported
-              if (!(alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key)
-                  && !(alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint)
-                  && !(alterTableStatement.jjtGetChild(1) instanceof ASTadd_row_deletion_policy)) {
-                throw new IllegalArgumentException(
-                    "Unsupported statement:\n"
-                        + statement
-                        + "\n"
-                        + "Can only create diffs from 'CREATE TABLE, CREATE INDEX and 'ALTER TABLE"
-                        + " table_name ADD [constraint|row deletion policy]' DDL statements");
-              }
-              if (alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key
-                  && ((ASTforeign_key) alterTableStatement.jjtGetChild(1))
-                      .getName()
-                      .equals(ASTcreate_table_statement.ANONYMOUS_NAME)) {
-                throw new IllegalArgumentException(
-                    "Unsupported statement:\n"
-                        + statement
-                        + "\nCan not create diffs when anonymous constraints are used.");
-              }
-              if (alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint
-                  && ((ASTcheck_constraint) alterTableStatement.jjtGetChild(1))
-                      .getName()
-                      .equals(ASTcreate_table_statement.ANONYMOUS_NAME)) {
-                throw new IllegalArgumentException(
-                    "Unsupported statement:\n"
-                        + statement
-                        + "\nCan not create diffs when anonymous constraints are used.");
-              }
+          case DdlParserTreeConstants.JJTALTER_TABLE_STATEMENT:
+            ASTalter_table_statement alterTableStatement =
+                (ASTalter_table_statement) ddlStatement.jjtGetChild(0);
+            // child 0 = table name
+            // child 1 = alter statement. Only ASTforeign_key is supported
+            if (!(alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key)
+                && !(alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint)
+                && !(alterTableStatement.jjtGetChild(1) instanceof ASTadd_row_deletion_policy)) {
+              throw new IllegalArgumentException(
+                  "Unsupported statement:\n"
+                      + statement
+                      + "\n"
+                      + "Can only create diffs from 'CREATE TABLE, CREATE INDEX and 'ALTER TABLE"
+                      + " table_name ADD [constraint|row deletion policy]' DDL statements");
+            }
+            if (alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key
+                && ((ASTforeign_key) alterTableStatement.jjtGetChild(1))
+                    .getName()
+                    .equals(ASTcreate_table_statement.ANONYMOUS_NAME)) {
+              throw new IllegalArgumentException(
+                  "Unsupported statement:\n"
+                      + statement
+                      + "\nCan not create diffs when anonymous constraints are used.");
+            }
+            if (alterTableStatement.jjtGetChild(1) instanceof ASTcheck_constraint
+                && ((ASTcheck_constraint) alterTableStatement.jjtGetChild(1))
+                    .getName()
+                    .equals(ASTcreate_table_statement.ANONYMOUS_NAME)) {
+              throw new IllegalArgumentException(
+                  "Unsupported statement:\n"
+                      + statement
+                      + "\nCan not create diffs when anonymous constraints are used.");
             }
             break;
           case DdlParserTreeConstants.JJTCREATE_TABLE_STATEMENT:
@@ -703,8 +700,10 @@ public class DdlDiff {
       System.exit(0);
     } catch (IOException e) {
       System.err.println("Cannot read DDL file: " + e);
+      System.exit(1);
     } catch (DdlDiffException e) {
-      e.printStackTrace();
+      System.err.println("Failed to generate a diff: " + e.getMessage());
+      System.exit(1);
     }
   }
 }
@@ -835,15 +834,15 @@ abstract class DatbaseDefinition {
         ImmutableMap.copyOf(alterDatabaseOptions));
   }
 
-  abstract Map<String, ASTcreate_table_statement> tablesInCreationOrder();
+  abstract ImmutableMap<String, ASTcreate_table_statement> tablesInCreationOrder();
 
-  abstract Map<String, ASTcreate_index_statement> indexes();
+  abstract ImmutableMap<String, ASTcreate_index_statement> indexes();
 
-  abstract Map<String, ConstraintWrapper> constraints();
+  abstract ImmutableMap<String, ConstraintWrapper> constraints();
 
-  abstract Map<String, ASTrow_deletion_policy_clause> ttls();
+  abstract ImmutableMap<String, ASTrow_deletion_policy_clause> ttls();
 
-  abstract Map<String, ASTcreate_change_stream_statement> changeStreams();
+  abstract ImmutableMap<String, ASTcreate_change_stream_statement> changeStreams();
 
-  abstract Map<String, String> alterDatabaseOptions();
+  abstract ImmutableMap<String, String> alterDatabaseOptions();
 }

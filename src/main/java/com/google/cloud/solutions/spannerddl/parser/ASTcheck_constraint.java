@@ -41,9 +41,10 @@ public class ASTcheck_constraint extends SimpleNode {
     if (children[0] instanceof ASTconstraint_name) {
       child++;
     }
-    return (ASTTreeUtils.tokensToString((ASTcheck_constraint_expression) children[child], false));
+    return ASTTreeUtils.tokensToString((ASTcheck_constraint_expression) children[child], false);
   }
 
+  @Override
   public String toString() {
     return "CONSTRAINT " + getName() + " CHECK (" + getExpression() + ")";
   }
@@ -54,5 +55,10 @@ public class ASTcheck_constraint extends SimpleNode {
       return this.toString().equals(other.toString());
     }
     return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
   }
 }

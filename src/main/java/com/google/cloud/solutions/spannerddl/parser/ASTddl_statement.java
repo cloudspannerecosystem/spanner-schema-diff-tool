@@ -36,4 +36,9 @@ public class ASTddl_statement extends SimpleNode {
   public boolean equals(Object obj) {
     return obj instanceof ASTddl_statement && this.toString().equals(obj.toString());
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

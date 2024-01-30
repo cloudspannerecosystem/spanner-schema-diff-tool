@@ -42,11 +42,7 @@ public class ASTcreate_index_statement extends SimpleNode
     return toStringOptionalExistClause(true);
   }
 
-  /**
-   * Create string version, optionally including the IF NOT EXISTS clause
-   *
-   * @param includeExists
-   */
+  /** Create string version, optionally including the IF NOT EXISTS clause */
   public String toStringOptionalExistClause(boolean includeExists) {
     validateChildren();
     ASTindex_interleave_clause interleave =
@@ -100,5 +96,10 @@ public class ASTcreate_index_statement extends SimpleNode
           .equals(((ASTcreate_index_statement) other).toStringOptionalExistClause(false));
     }
     return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return toStringOptionalExistClause(false).hashCode();
   }
 }

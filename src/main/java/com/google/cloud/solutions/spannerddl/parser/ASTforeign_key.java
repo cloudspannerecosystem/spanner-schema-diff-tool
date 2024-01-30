@@ -79,6 +79,7 @@ public class ASTforeign_key extends SimpleNode {
     }
   }
 
+  @Override
   public String toString() {
     return "CONSTRAINT "
         + getName()
@@ -98,5 +99,10 @@ public class ASTforeign_key extends SimpleNode {
       return this.toString().equals(other.toString());
     }
     return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
   }
 }

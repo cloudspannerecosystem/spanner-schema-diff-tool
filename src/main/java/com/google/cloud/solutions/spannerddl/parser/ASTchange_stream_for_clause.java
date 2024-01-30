@@ -35,4 +35,9 @@ public class ASTchange_stream_for_clause extends SimpleNode {
     }
     return "FOR ALL";
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

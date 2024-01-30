@@ -33,4 +33,9 @@ public class ASTcolumn_length extends SimpleNode {
   public String toString() {
     return ASTTreeUtils.tokensToString(this);
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

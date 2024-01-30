@@ -22,6 +22,7 @@ import com.google.cloud.solutions.spannerddl.parser.SimpleNode;
 import com.google.cloud.solutions.spannerddl.parser.Token;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -88,7 +89,7 @@ public class ASTTreeUtils {
     Token t = firstToken;
     while (t != lastToken) {
       String tok = t.toString();
-      sb.append(isReservedWord(tok) && upperCaseReserved ? tok.toUpperCase() : tok);
+      sb.append(isReservedWord(tok) && upperCaseReserved ? tok.toUpperCase(Locale.ROOT) : tok);
 
       if (t.next != null
           && !t.next.toString().equals(",")
@@ -100,7 +101,7 @@ public class ASTTreeUtils {
     }
     // append last token
     String tok = t.toString();
-    sb.append(isReservedWord(tok) && upperCaseReserved ? tok.toUpperCase() : tok);
+    sb.append(isReservedWord(tok) && upperCaseReserved ? tok.toUpperCase(Locale.ROOT) : tok);
     return sb.toString();
   }
 

@@ -43,4 +43,9 @@ public class ASTrow_deletion_policy_clause extends SimpleNode {
     return (other instanceof ASTrow_deletion_policy_clause
         && this.toString().equals(other.toString()));
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

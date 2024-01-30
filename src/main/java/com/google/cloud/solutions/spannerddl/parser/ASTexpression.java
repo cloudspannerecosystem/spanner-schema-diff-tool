@@ -31,4 +31,9 @@ public class ASTexpression extends SimpleNode {
   public String toString() {
     return ASTTreeUtils.tokensToString(this, false);
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

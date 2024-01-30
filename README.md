@@ -21,6 +21,7 @@ The tool can only make changes that are allowable by Cloud Spanner's `CREATE`,
 * Add or remove column `DEFAULT` value clauses.
 * Modify `ON DELETE` rules on interleaved child tables.
 * Add or remove table row deletion policies
+* Add or remove or update change streams.
 
 If the tool cannot parse the DDL files, or the changes between the two DDL files
 cannot be made using ALTER statements (eg, change of column type, change of
@@ -49,17 +50,18 @@ statements in the DDL file. This has the following implications:
   table creation DDL statement, and also by using `ALTER` statements after the
   table has been created.
 
-### Note on dropped database objects.
+## Note on dropped database objects
 
 By default, to prevent accidental data loss, the tool _does not_ generate
-statements to drop existing tables, indexes or columns. This behavior can be
-overridden using the command line arguments `--allowDropStatements`, which
-allows the tool to additionally generate the following statements for any
-differences found:
+statements to drop existing tables, indexes columns or change streams. This
+behavior can be overridden using the command line arguments
+`--allowDropStatements`, which allows the tool to additionally generate the
+following statements for any differences found:
 
 * Drop Tables.
 * Drop Indexes.
 * Drop Columns in a Table.
+* Drop change streams.
 
 Constraints and row deletion policies will always be dropped if they are not
 present in the new DDL.
@@ -81,10 +83,15 @@ dropped
 column.
 
 As this tool does not _understand_ the contents of the expression, it cannot
-know that this is required, so by not dropping the column, steps 1 and 2 are
+know that this is reqnuired, so by not dropping the column, steps 1 and 2 are
 not required.
 
-### Note on modified indexes
+Similarly dropping a column or table which is explicitly specified in a change
+stream configuration is not supported, even if the change stream is updated in
+the new DDL file, as change stream updates are only applied after table updates
+are applied.
+
+## Note on modified indexes
 
 Modifications to indexes are not possible via `ALTER` statements, but if the
 `--allowRecreateIndexes` command line option is specified, the tool can modify
@@ -92,11 +99,11 @@ indexes by first dropping then recreating them. This is a slow operation
 especially on large tables, so is disabled by default, and index differences
 will cause the tool to fail.
 
-### Note on constraints
+## Note on constraints
 
 `FOREIGN KEY` amd `CHECK` constraints _must_ be explicitly named, either within
-a
-`CREATE TABLE` statement, or using an `ALTER TABLE` statement, using the syntax:
+a `CREATE TABLE` statement, or using an `ALTER TABLE` statement, using the
+syntax:
 
 ```sql
 CONSTRAINT fk_constraint_name FOREIGN KEY ...
@@ -141,9 +148,9 @@ As of the last edit of this file, the features known not to be supported are:
 * `ALTER DATABASE` statements
 * Views (create, drop, alter)
 
-## Usage:
+## Usage
 
-### Prerequisites:
+### Prerequisites
 
 Install a [JAVA development kit](https://jdk.java.net/) (supporting Java 8
 or above) and [Apache Maven](https://maven.apache.org/)
@@ -157,7 +164,7 @@ to the new.ddl file, and generate an alter.ddl file. The options specify that
 modified indexes and foreign keys will be dropped and recreated, but removed
 tables, columns and indexes will not be dropped.
 
-### Compile and run directly from source:
+### Compile and run directly from source
 
 ```sh
 mvn generate-resources compile exec:java \
@@ -171,7 +178,7 @@ mvn generate-resources compile exec:java \
       "
 ```
 
-### Generate JAR with dependencies and run from JAR file:
+### Generate JAR with dependencies and run from JAR file
 
 ```sh
 mvn clean generate-resources compile assembly:assembly
@@ -296,19 +303,20 @@ CREATE INDEX index1 ON test1 (col2 ASC);
 CREATE INDEX index2 ON test2 (col1 DESC);
 ```
 
-## Help Text:
+## Help Text
 
-```
+```text
 usage: DdlDiff [--allowDropStatements] [--allowRecreateForeignKeys] [--allowRecreateIndexes] [--help] --newDdlFile <FILE> --originalDdlFile <FILE> --outputDdlFile <FILE>
-Compares original and new DDL files and creates a DDL file with DROP, CREATE 
+Compares original and new DDL files and creates a DDL file with DROP, CREATE
 and ALTER statements which convert the original Schema to the new Schema.
 
 Incompatible table changes (table hierarchy changes. column type changes) are
  not supported and will cause this tool to fail.
 
-To prevent accidental data loss, DROP statements are not generated for removed
-tables, columns and indexes. This can be overridden using the
- --allowDropStatements command line argument.
+To prevent accidental data loss, and to make it easier to apply DDL changes,
+DROP statements are not generated for removed tables, columns, indexes and
+change streams. This can be overridden using the --allowDropStatements command
+line argument.
 
 By default, changes to indexes will also cause a failure. The
 --allowRecreateIndexes command line option enables index changes by
@@ -331,7 +339,7 @@ generating statements to drop and recreate the constraint.
     --outputDdlFile <FILE>        File path to the output DDL to write.
 ```
 
-## Usage in a CI/CD pipeline.
+## Usage in a CI/CD pipeline
 
 In a CI/CD pipeline, the tool should be run as follows:
 
@@ -379,7 +387,7 @@ gcloud spanner databases ddl update "${SPANNER_DATABASE}" --instance="${SPANNER_
 
 ## License
 
-```
+```text
 Copyright 2023 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");

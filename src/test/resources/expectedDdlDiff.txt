@@ -264,5 +264,19 @@ ALTER CHANGE STREAM toBeChanged SET OPTIONS (retention_period='48h')
 ALTER CHANGE STREAM toBeChangedOnlyTable SET FOR myTable1, myTable2 ( col1 )
 ALTER CHANGE STREAM toBeChangedOnlyOptions SET OPTIONS (retention_period='48h')
 
+== TEST 49 Change stream with changing options
+
+ALTER CHANGE STREAM USER_CHANGES SET OPTIONS (new_option='abc',old_option_to_remove=NULL,option_to_change='789')
+
+== TEST 50 Change stream with adding options
+
+ALTER CHANGE STREAM USER_CHANGES SET OPTIONS (retention_period='7d')
+
+== TEST 51 Change stream with removing options
+
+ALTER CHANGE STREAM USER_CHANGES SET OPTIONS (retention_period=NULL)
+
 ==
+
+
 

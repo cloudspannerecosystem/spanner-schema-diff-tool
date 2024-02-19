@@ -291,8 +291,8 @@ public class DdlDiff {
       String oldForClause = changedChangeStream.leftValue().getForClause().toString();
       String newForClause = changedChangeStream.rightValue().getForClause().toString();
 
-      String oldOptions = changedChangeStream.leftValue().getOptionsClause().toString();
-      String newOptions = changedChangeStream.rightValue().getOptionsClause().toString();
+      String oldOptions = Objects.toString(changedChangeStream.leftValue().getOptionsClause(), "");
+      String newOptions = Objects.toString(changedChangeStream.rightValue().getOptionsClause(), "");
 
       if (!oldForClause.equals(newForClause)) {
         output.add(
@@ -302,11 +302,27 @@ public class DdlDiff {
                 + newForClause);
       }
       if (!oldOptions.equals(newOptions)) {
+
+        // need to look at old and new options values individually
+
+        Map<String, String> oldOptionsKv =
+            changedChangeStream.leftValue().getOptionsClause() == null
+                ? Map.of()
+                : changedChangeStream.leftValue().getOptionsClause().getKeyValueMap();
+
+        Map<String, String> newOptionsKv =
+            changedChangeStream.rightValue().getOptionsClause() == null
+                ? Map.of()
+                : changedChangeStream.rightValue().getOptionsClause().getKeyValueMap();
+
+        String optionsDiff = generateOptionsUpdates(Maps.difference(oldOptionsKv, newOptionsKv));
+
         output.add(
             "ALTER CHANGE STREAM "
                 + changedChangeStream.rightValue().getName()
-                + " SET "
-                + newOptions);
+                + " SET OPTIONS ("
+                + optionsDiff
+                + ")");
       }
     }
 

@@ -435,6 +435,24 @@ create change stream toBeChanged for myTable1, myTable2 ( col1, col3) options (r
 create change stream toBeChangedOnlyTable for myTable1, myTable2 ( col1, col3) options (retention_period = '36h');
 create change stream toBeChangedOnlyOptions for myTable1, myTable2 ( col1, col3) options (retention_period = '36h');
 
+== TEST 49 Change stream with changing options
+
+CREATE CHANGE STREAM USER_CHANGES
+  FOR USER OPTIONS (
+  old_option_to_remove = '123',
+  option_to_change='456'
+);
+
+== TEST 50 Change stream with adding options
+
+CREATE CHANGE STREAM USER_CHANGES
+  FOR USER;
+
+== TEST 51 Change stream with removing options
+
+CREATE CHANGE STREAM USER_CHANGES
+  FOR USER  OPTIONS (retention_period='7d');
+
 ==
 
 

@@ -437,4 +437,22 @@ create change stream toCreateAll for all;
 create change stream toBeChangedOnlyTable for myTable1, myTable2 ( col1) options (retention_period = '36h');
 create change stream toBeChangedOnlyOptions for myTable1, myTable2 ( col1, col3) options (retention_period = '48h');
 
+== TEST 49 Change stream with changing options
+
+CREATE CHANGE STREAM USER_CHANGES
+  FOR USER OPTIONS (
+  option_to_change='789',
+  new_option='abc'
+);
+
+== TEST 50 Change stream with adding options
+
+CREATE CHANGE STREAM USER_CHANGES
+  FOR USER OPTIONS (retention_period='7d');
+
+== TEST 51 Change stream with removing options
+
+CREATE CHANGE STREAM USER_CHANGES
+  FOR USER;
+
 ==

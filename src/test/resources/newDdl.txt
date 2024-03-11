@@ -425,7 +425,7 @@ primary key (col1);
 
 == TEST 47 Modifying index with IF NOT EXIST
 
-Create index IF NOT EXISTS test4 on test1 ( col1 ) STORING ( col2 )
+Create UNIQUE NULL_filtered index IF NOT EXISTS test4 on test1 ( col1 ) STORING ( col2 )
 
 == TEST 48 change streams create modify delete in correct order wrt tables
 
@@ -454,5 +454,19 @@ CREATE CHANGE STREAM USER_CHANGES
 
 CREATE CHANGE STREAM USER_CHANGES
   FOR USER;
+
+== TEST 52 Modifying index STORING clause only - add
+
+CREATE UNIQUE NULL_FILTERED INDEX test4 ON test1 ( col1 ASC ) STORING ( col2, col3, col4 );
+CREATE UNIQUE NULL_FILTERED INDEX test5 ON test1 ( col1 ASC ) STORING ( col2 );
+
+== TEST 53 Modifying index STORING clause only - remove
+
+CREATE UNIQUE NULL_FILTERED INDEX test4 ON test1 ( col1 ASC ) STORING ( col2 );
+CREATE UNIQUE NULL_FILTERED INDEX test5 ON test1 ( col1 ASC );
+
+== TEST 54 Modifying index STORING clause only - add/remove
+
+CREATE UNIQUE NULL_FILTERED INDEX test4 ON test1 ( col1 ASC ) STORING ( col3, col5, col4 );
 
 ==

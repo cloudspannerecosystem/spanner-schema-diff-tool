@@ -18,6 +18,7 @@ package com.google.cloud.solutions.spannerddl.parser;
 
 import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
+import java.util.List;
 
 public class ASTstored_column_list extends SimpleNode {
 
@@ -31,8 +32,10 @@ public class ASTstored_column_list extends SimpleNode {
 
   @Override
   public String toString() {
-    return "STORING ( "
-        + Joiner.on(", ").join(AstTreeUtils.getChildrenAssertType(children, ASTstored_column.class))
-        + " )";
+    return "STORING ( " + Joiner.on(", ").join(getStoredColumns()) + " )";
+  }
+
+  public List<ASTstored_column> getStoredColumns() {
+    return AstTreeUtils.getChildrenAssertType(children, ASTstored_column.class);
   }
 }

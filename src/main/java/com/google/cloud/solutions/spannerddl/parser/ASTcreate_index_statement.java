@@ -21,6 +21,9 @@ import static com.google.cloud.solutions.spannerddl.diff.AstTreeUtils.getOptiona
 
 import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ASTcreate_index_statement extends SimpleNode
     implements Comparable<ASTcreate_index_statement> {
@@ -65,6 +68,31 @@ public class ASTcreate_index_statement extends SimpleNode
             interleave);
   }
 
+  /**
+   * Gets the Index definition without the Stored column clause (and any EXISTS clause).
+   *
+   * <p>Used for comparing indexes for compatible changes.
+   */
+  public String getDefinitionWithoutStoring() {
+    validateChildren();
+    ASTindex_interleave_clause interleave =
+        getOptionalChildByType(children, ASTindex_interleave_clause.class);
+
+    return Joiner.on(" ")
+        .skipNulls()
+        .join(
+            "CREATE",
+            getOptionalChildByType(children, ASTunique_index.class),
+            getOptionalChildByType(children, ASTnull_filtered.class),
+            "INDEX",
+            getIndexName(),
+            "ON",
+            getChildByType(children, ASTtable.class),
+            getChildByType(children, ASTcolumns.class),
+            (interleave != null ? "," : null),
+            interleave);
+  }
+
   private void validateChildren() {
     for (Node child : children) {
       switch (child.getId()) {
@@ -81,6 +109,14 @@ public class ASTcreate_index_statement extends SimpleNode
           throw new IllegalArgumentException("Unknown child node " + child.getClass());
       }
     }
+  }
+
+  public List<String> getStoredColumnNames() {
+    ASTstored_column_list cols = getOptionalChildByType(children, ASTstored_column_list.class);
+    if (cols == null) {
+      return Collections.emptyList();
+    }
+    return cols.getStoredColumns().stream().map(Object::toString).collect(Collectors.toList());
   }
 
   @Override

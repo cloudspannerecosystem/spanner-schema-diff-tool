@@ -440,6 +440,53 @@ public class DdlDiffTest {
         .isEmpty();
   }
 
+  @Test
+  public void diffCreateIndexOnlyStoring() throws DdlDiffException {
+    assertThat(
+            DdlDiff.build(
+                    "CREATE INDEX myindex ON mytable ( col1 ) STORING (col2, col3);",
+                    "CREATE INDEX myindex ON mytable ( col1 ) STORING (col3, col4);")
+                .generateDifferenceStatements(
+                    ImmutableMap.of(
+                        ALLOW_RECREATE_INDEXES_OPT,
+                        false,
+                        ALLOW_DROP_STATEMENTS_OPT,
+                        false,
+                        ALLOW_RECREATE_CONSTRAINTS_OPT,
+                        false)))
+        .containsExactly(
+            "ALTER INDEX myindex DROP STORED COLUMN col2",
+            "ALTER INDEX myindex ADD STORED COLUMN col4");
+  }
+
+  @Test
+  public void diffCreateIndexNotOnlyStoringRecreates() throws DdlDiffException {
+    assertThat(
+            DdlDiff.build(
+                    "CREATE UNIQUE INDEX myindex ON mytable ( col1 ) STORING (col2, col3);",
+                    "CREATE INDEX myindex ON mytable ( col1 ) STORING (col3, col4);")
+                .generateDifferenceStatements(
+                    ImmutableMap.of(
+                        ALLOW_RECREATE_INDEXES_OPT,
+                        true,
+                        ALLOW_DROP_STATEMENTS_OPT,
+                        false,
+                        ALLOW_RECREATE_CONSTRAINTS_OPT,
+                        false)))
+        .containsExactly(
+            "DROP INDEX myindex",
+            "CREATE INDEX myindex ON mytable ( col1 ASC ) STORING ( col3, col4 )");
+  }
+
+  @Test
+  public void diffCreateIndexNotOnlyStoringThrows() throws DdlDiffException {
+    getDiffCheckDdlDiffException(
+        "CREATE UNIQUE INDEX myindex ON mytable ( col1 ) STORING (col2, col3);",
+        "CREATE INDEX myindex ON mytable ( col1 ) STORING (col3, col4);",
+        false,
+        "At least one Index differs, and allowRecreateIndexes is not set");
+  }
+
   private static void getDiffCheckDdlDiffException(
       String originalDdl, String newDdl, boolean allowDropStatements, String exceptionContains) {
     try {
@@ -458,7 +505,9 @@ public class DdlDiffTest {
                 ALLOW_RECREATE_CONSTRAINTS_OPT,
                 true,
                 ALLOW_DROP_STATEMENTS_OPT,
-                allowDropStatements));
+                allowDropStatements,
+                ALLOW_RECREATE_INDEXES_OPT,
+                false));
   }
 
   @Test

@@ -53,6 +53,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,12 +127,23 @@ public class DdlDiff {
 
     if (!indexDifferences.entriesDiffering().isEmpty()
         && !options.get(ALLOW_RECREATE_INDEXES_OPT)) {
-      throw new DdlDiffException(
-          "At least one Index differs, and "
-              + ALLOW_RECREATE_INDEXES_OPT
-              + " is not set.\n"
-              + "Indexes: "
-              + Joiner.on(", ").join(indexDifferences.entriesDiffering().keySet()));
+
+      long numChangedIndexes =
+          indexDifferences.entriesDiffering().values().stream()
+              // Check if the indexes only difference is the STORING clause
+              .map((diff) -> DdlDiff.checkIndexDiffOnlyStoring(diff))
+              // Filter out those who have only changed Storing clauses
+              .filter((v) -> !v)
+              .count();
+
+      if (numChangedIndexes > 0) {
+        throw new DdlDiffException(
+            "At least one Index differs, and "
+                + ALLOW_RECREATE_INDEXES_OPT
+                + " is not set.\n"
+                + "Indexes: "
+                + Joiner.on(", ").join(indexDifferences.entriesDiffering().keySet()));
+      }
     }
 
     if (!constraintDifferences.entriesDiffering().isEmpty()
@@ -171,9 +183,13 @@ public class DdlDiff {
     }
 
     // Drop modified indexes that need to be re-created...
-    for (String indexName : indexDifferences.entriesDiffering().keySet()) {
-      LOG.info("Dropping changed index for re-creation: {}", indexName);
-      output.add("DROP INDEX " + indexName);
+    for (ValueDifference<ASTcreate_index_statement> difference :
+        indexDifferences.entriesDiffering().values()) {
+      if (!checkIndexDiffOnlyStoring(difference)) {
+        LOG.info(
+            "Dropping changed index for re-creation: {}", difference.leftValue().getIndexName());
+        output.add("DROP INDEX " + difference.leftValue().getIndexName());
+      }
     }
 
     // Drop deleted constraints
@@ -256,8 +272,36 @@ public class DdlDiff {
     // Re-create modified indexes...
     for (ValueDifference<ASTcreate_index_statement> difference :
         indexDifferences.entriesDiffering().values()) {
-      LOG.info("Re-creating changed index: {}", difference.leftValue().getIndexName());
-      output.add(difference.rightValue().toStringOptionalExistClause(false));
+
+      if (checkIndexDiffOnlyStoring(difference)) {
+        LOG.info("Updating STORING clause on index: {}", difference.leftValue().getIndexName());
+        Map<String, String> originalStoredCols =
+            difference.leftValue().getStoredColumnNames().stream()
+                .collect(Collectors.toMap(Function.identity(), Function.identity()));
+        Map<String, String> newStoredCols =
+            difference.rightValue().getStoredColumnNames().stream()
+                .collect(Collectors.toMap(Function.identity(), Function.identity()));
+
+        MapDifference<String, String> colDiff = Maps.difference(originalStoredCols, newStoredCols);
+
+        for (String deletedCol : colDiff.entriesOnlyOnLeft().values()) {
+          output.add(
+              "ALTER INDEX "
+                  + difference.leftValue().getIndexName()
+                  + " DROP STORED COLUMN "
+                  + deletedCol);
+        }
+        for (String deletedCol : colDiff.entriesOnlyOnRight().values()) {
+          output.add(
+              "ALTER INDEX "
+                  + difference.leftValue().getIndexName()
+                  + " ADD STORED COLUMN "
+                  + deletedCol);
+        }
+      } else {
+        LOG.info("Re-creating changed index: {}", difference.leftValue().getIndexName());
+        output.add(difference.rightValue().toStringOptionalExistClause(false));
+      }
     }
 
     // Create new constraints.
@@ -327,6 +371,16 @@ public class DdlDiff {
     }
 
     return output.build();
+  }
+
+  /** Verify that different indexes are only different in STORING clause. */
+  private static boolean checkIndexDiffOnlyStoring(
+      ValueDifference<ASTcreate_index_statement> indexDifference) {
+
+    return indexDifference
+        .leftValue()
+        .getDefinitionWithoutStoring()
+        .equals(indexDifference.rightValue().getDefinitionWithoutStoring());
   }
 
   @VisibleForTesting

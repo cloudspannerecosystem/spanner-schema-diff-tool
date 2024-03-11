@@ -250,7 +250,7 @@ ALTER TABLE test1 ADD CONSTRAINT fk_in_table FOREIGN KEY ( col2 ) REFERENCES oth
 == TEST 47 Modifying index with IF NOT EXIST
 
 DROP INDEX test4
-CREATE INDEX test4 ON test1 ( col1 ASC ) STORING ( col2 )
+CREATE UNIQUE NULL_FILTERED INDEX test4 ON test1 ( col1 ASC ) STORING ( col2 )
 
 == TEST 48 change streams create modify delete in correct order wrt tables
 
@@ -276,7 +276,22 @@ ALTER CHANGE STREAM USER_CHANGES SET OPTIONS (retention_period='7d')
 
 ALTER CHANGE STREAM USER_CHANGES SET OPTIONS (retention_period=NULL)
 
+== TEST 52 Modifying index STORING clause only - add
+
+ALTER INDEX test4 ADD STORED COLUMN col4
+ALTER INDEX test5 ADD STORED COLUMN col2
+
+== TEST 53 Modifying index STORING clause only - remove
+
+ALTER INDEX test4 DROP STORED COLUMN col3
+ALTER INDEX test5 DROP STORED COLUMN col2
+ALTER INDEX test5 DROP STORED COLUMN col3
+
+== TEST 54 Modifying index STORING clause only - add/remove
+
+ALTER INDEX test4 DROP STORED COLUMN col2
+ALTER INDEX test4 ADD STORED COLUMN col4
+ALTER INDEX test4 ADD STORED COLUMN col5
+
 ==
-
-
 

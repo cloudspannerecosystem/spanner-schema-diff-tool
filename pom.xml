@@ -254,6 +254,9 @@
             <includes>
               <include>**/*.md</include>
             </includes>
+            <excludes>
+              <exclude>CHANGELOG.md</exclude>
+            </excludes>
             <flexmark></flexmark>
           </markdown>
           <pom>

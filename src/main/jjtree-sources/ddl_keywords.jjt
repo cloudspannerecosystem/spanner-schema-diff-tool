@@ -161,6 +161,7 @@ TOKEN:
   | <PRIMARY:                  "primary">
   | <REFERENCES:               "references">
   | <REMOTE:                   "remote">
+  | <RENAME:                   "rename">
   | <REPLACE:                  "replace">
   | <REVOKE:                   "revoke">
   | <ROLE:                     "role">
@@ -175,6 +176,7 @@ TOKEN:
   | <STORING:                  "storing">
   | <STREAM:                   "stream">
   | <STRING:                   "string">
+  | <SYNONYM:                  "synonym">
   | <TABLE:                    "table">
   | <TIMESTAMP:                "timestamp">
   | <TOKENLIST:                "tokenlist">
@@ -233,6 +235,7 @@ void pseudoReservedWord() #void :
   | <PRIMARY>
   | <REFERENCES>
   | <REMOTE>
+  | <RENAME>
   | <REPLACE>
   | <REVOKE>
   | <ROLE>
@@ -247,6 +250,7 @@ void pseudoReservedWord() #void :
   | <STORING>
   | <STREAM>
   | <STRING>
+  | <SYNONYM>
   | <TABLE>
   | <TIMESTAMP>
   | <TOKENLIST>

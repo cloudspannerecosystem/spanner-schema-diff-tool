@@ -55,7 +55,10 @@ public class ASTalter_table_statement extends SimpleNode {
       ret.append(alterTableAction.jjtGetChild(0));
     } else {
       throw new IllegalArgumentException(
-          "Unrecognised Alter Table action in: " + AstTreeUtils.tokensToString(this));
+          "Unrecognised Alter Table action : "
+              + alterTableAction.getClass()
+              + " in: "
+              + AstTreeUtils.tokensToString(this));
     }
     return ret.toString();
   }

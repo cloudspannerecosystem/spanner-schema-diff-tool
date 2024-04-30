@@ -17,7 +17,7 @@
 package com.google.cloud.solutions.spannerddl.parser;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import java.io.StringReader;
 import org.junit.Test;
@@ -121,13 +121,14 @@ public class DDLParserTest {
 
   @Test
   public void parseDDLCreateTableSyntaxError() {
-    parseCheckingException(
+    parseCheckingParseException(
         "Create table test1 ( col1 int64 )", "Was expecting:\n\n\"primary\" ...");
   }
 
   @Test
   public void parseDDLCreateIndexSyntaxError() {
-    parseCheckingException("Create index index1 on test1", "Was expecting one of:\n\n\"(\" ...");
+    parseCheckingParseException(
+        "Create index index1 on test1", "Was expecting one of:\n\n\"(\" ...");
   }
 
   @Test
@@ -175,13 +176,10 @@ public class DDLParserTest {
     assertThat(statement).isEqualTo(statement2);
   }
 
-  private static void parseCheckingException(String ddlStatement, String exceptionContains) {
-    try {
-      parseAndVerifyToString(ddlStatement);
-      fail("Expected ParseException not thrown.");
-    } catch (ParseException e) {
-      assertThat(e.getMessage()).contains(exceptionContains);
-    }
+  private static void parseCheckingParseException(String ddlStatement, String exceptionContains) {
+    ParseException e =
+        assertThrows(ParseException.class, () -> parseAndVerifyToString(ddlStatement));
+    assertThat(e.getMessage()).contains(exceptionContains);
   }
 
   private static ASTddl_statement parse(String DDLStatement) throws ParseException {

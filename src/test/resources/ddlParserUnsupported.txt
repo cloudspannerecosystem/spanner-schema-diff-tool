@@ -123,4 +123,36 @@ ALTER MODEL IF EXISTS model_name SET OPTIONS ( default_batch_size = 10 )
 
 DROP MODEL IF EXISTS model_name
 
+== Test 16a rename table
+
+ALTER TABLE table_name RENAME TO new_table_name
+
+== Test 16b rename table with SYNONYM
+
+ALTER TABLE table_name RENAME TO new_table_name, ADD SYNONYM table_name
+
+== Test 16c drop SYNONYM
+
+ALTER TABLE table_name DROP SYNONYM table_name
+
+== Test 16d // TODO add SYNONYM
+
+ALTER TABLE table_name ADD SYNONYM table_name
+
+== Test 17a // TODO Create proto bundle
+
+CREATE PROTO BUNDLE (proto.path.name, other.proto.path)
+
+== Test 17b Alter proto bundle INSERT
+
+ALTER PROTO BUNDLE INSERT (proto.path.name, other.proto.path)
+
+== Test 17c Alter proto bundle UPDATE
+
+ALTER PROTO BUNDLE UPDATE (proto.path.name, other.proto.path)
+
+== Test 17d Alter proto bundle DELETE
+
+ALTER PROTO BUNDLE DELETE (proto.path.name, other.proto.path)
+
 ==

@@ -31,7 +31,7 @@ public class ASTalter_database_statement extends SimpleNode {
   }
 
   public String getDbName() {
-    return AstTreeUtils.tokensToString((ASTdb_name) jjtGetChild(0));
+    return AstTreeUtils.tokensToString((ASTdatabase_name) jjtGetChild(0));
   }
 
   @Override

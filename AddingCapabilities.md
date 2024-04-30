@@ -15,7 +15,7 @@ to build the `ddl_keywords.jjt`
 `bazel build backend/schema/parser:ddl_keywords_jjt`
 
 1) Compare and synchronize the generated `ddl_keywords.jjt`
-in `bazel-bin/bazel-bin/backend/schema/parser/` with
+in `bazel-bin//backend/schema/parser/` with
 the [ddl_keywords.jjt](src%2Fmain%2Fjjtree-sources%2Fddl_keywords.jjt) in
 this repo
 
@@ -62,9 +62,9 @@ You do not necessarily have to do this for all classes, but for ones which
 add new high level parser capabilities such as top level statements, table
 options, etc.
 
-5) Optionally, but recommended add test cases to the `DDLParserTest` class to
-verify that these unsupported
-operations fail during parsing.
+5) For each parser capability that has been added, add test cases to the
+`src/test/resources/ddlParserUnsupported.txt` file to verify that these
+unsupported operations fail during parsing.
 
 ## Run a test and fix bugs
 

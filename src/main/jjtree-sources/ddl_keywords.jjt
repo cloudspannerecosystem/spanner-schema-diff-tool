@@ -130,11 +130,13 @@ TOKEN:
   | <DATABASE:                 "database">
   | <DATE:                     "date">
   | <DAY:                      "day">
+  | <DEFINER:                  "definer">
   | <DELETE:                   "delete">
   | <DELETION:                 "deletion">
   | <DROP:                     "drop">
   | <EXECUTE:                  "execute">
   | <FIRST:                    "first">
+  | <FLOAT32:                  "float32">
   | <FLOAT64:                  "float64">
   | <FOREIGN:                  "foreign">
   | <FUNCTION:                 "function">
@@ -204,11 +206,13 @@ void pseudoReservedWord() #void :
   | <DATABASE>
   | <DATE>
   | <DAY>
+  | <DEFINER> // Not supported by emulator
   | <DELETE>
   | <DELETION>
   | <DROP>
   | <EXECUTE>
   | <FIRST>
+  | <FLOAT32> // Not supported by emulator
   | <FLOAT64>
   | <FOREIGN>
   | <FUNCTION>

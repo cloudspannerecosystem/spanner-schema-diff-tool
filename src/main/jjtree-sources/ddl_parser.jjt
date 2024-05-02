@@ -239,7 +239,8 @@ void column_def_alter() :
 void column_type() :
 {}
 {
-    <FLOAT64>
+    <FLOAT32> // not supported by emulator
+  | <FLOAT64>
   | <INT64>
   | <BOOL>
   | <STRING> "(" column_length() #length ")"
@@ -562,6 +563,7 @@ void sql_security() :
 {}
 {
   <INVOKER>
+  | <DEFINER> // Not supported by emulator
 }
 
 void create_view_statement() :

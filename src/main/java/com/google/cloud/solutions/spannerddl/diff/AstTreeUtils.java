@@ -125,4 +125,18 @@ public class AstTreeUtils {
   public static String tokensToString(SimpleNode node, boolean upperCaseReserved) {
     return tokensToString(node.jjtGetFirstToken(), node.jjtGetLastToken(), upperCaseReserved);
   }
+
+  /** Verifies that each child is one of the specified classes. */
+  public static void validateChildrenClasses(
+      Node[] children, Set<Class<? extends SimpleNode>> validChildClasses) {
+    for (Node child : children) {
+      if (!validChildClasses.contains(child.getClass())) {
+        throw new IllegalArgumentException(
+            "Unexpected child node "
+                + child.getClass().getSimpleName()
+                + " in parent "
+                + child.jjtGetParent().getClass().getSimpleName());
+      }
+    }
+  }
 }

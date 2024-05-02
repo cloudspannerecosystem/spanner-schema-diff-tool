@@ -30,7 +30,8 @@ public class DDLParserTest {
     ASTcreate_table_statement statement =
         (ASTcreate_table_statement)
             parse(
-                    "create table test.test (boolcol bool, intcol int64 not null, floatcol float64,"
+                    "create table test.test (boolcol bool, intcol int64 not null, "
+                        + " float32col float32, floatcol float64,"
                         + " `sizedstring` string(55), maxstring string(max) NOT NULL DEFAULT"
                         + " (\"prefix\" || sizedstring || \"suffix\"), sizedbytes bytes(55),"
                         + " maxbytes bytes(max), datecol date, timestampcol timestamp options"
@@ -55,6 +56,7 @@ public class DDLParserTest {
                     + "(\n"
                     + "  boolcol BOOL, \n"
                     + "  intcol INT64 NOT NULL, \n"
+                    + "  float32col FLOAT32, \n"
                     + "  floatcol FLOAT64, \n"
                     + "  `sizedstring` STRING(55), \n"
                     + "  maxstring STRING(MAX) NOT NULL DEFAULT (\"prefix\" || sizedstring ||\n"

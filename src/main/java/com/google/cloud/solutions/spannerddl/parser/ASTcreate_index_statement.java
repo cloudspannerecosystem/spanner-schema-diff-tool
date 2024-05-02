@@ -21,6 +21,7 @@ import static com.google.cloud.solutions.spannerddl.diff.AstTreeUtils.getOptiona
 
 import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -94,21 +95,17 @@ public class ASTcreate_index_statement extends SimpleNode
   }
 
   private void validateChildren() {
-    for (Node child : children) {
-      switch (child.getId()) {
-        case DdlParserTreeConstants.JJTUNIQUE_INDEX:
-        case DdlParserTreeConstants.JJTNULL_FILTERED:
-        case DdlParserTreeConstants.JJTCOLUMNS:
-        case DdlParserTreeConstants.JJTSTORED_COLUMN_LIST:
-        case DdlParserTreeConstants.JJTIF_NOT_EXISTS:
-        case DdlParserTreeConstants.JJTNAME:
-        case DdlParserTreeConstants.JJTTABLE:
-        case DdlParserTreeConstants.JJTINDEX_INTERLEAVE_CLAUSE:
-          break;
-        default:
-          throw new IllegalArgumentException("Unknown child node " + child.getClass());
-      }
-    }
+    AstTreeUtils.validateChildrenClasses(
+        children,
+        ImmutableSet.of(
+            ASTunique_index.class,
+            ASTnull_filtered.class,
+            ASTcolumns.class,
+            ASTstored_column_list.class,
+            ASTif_not_exists.class,
+            ASTname.class,
+            ASTtable.class,
+            ASTindex_interleave_clause.class));
   }
 
   public List<String> getStoredColumnNames() {

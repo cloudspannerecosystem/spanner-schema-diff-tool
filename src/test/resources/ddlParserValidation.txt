@@ -52,6 +52,7 @@ CREATE UNIQUE NULL_FILTERED INDEX testindex ON testtable (
 CREATE TABLE test.test (
     boolcol BOOL,
     intcol INT64 NOT NULL,
+    float32col FLOAT32,
     floatcol FLOAT64,
     `sizedstring` STRING(55),
     maxstring STRING(MAX) NOT NULL DEFAULT ("prefix" | | sizedstring | | "suffix"),

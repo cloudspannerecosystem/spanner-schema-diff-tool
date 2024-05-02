@@ -47,6 +47,7 @@ public class ASTcolumn_type extends SimpleNode {
 
     String typeName = getTypeName();
     switch (typeName) {
+      case "FLOAT32":
       case "FLOAT64":
       case "INT64":
       case "BOOL":

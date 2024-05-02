@@ -20,6 +20,7 @@ import static com.google.cloud.solutions.spannerddl.diff.AstTreeUtils.getOptiona
 
 import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -97,7 +98,7 @@ public class ASTcreate_table_statement extends SimpleNode {
 
   /** Create string version, optionally including the IF NOT EXISTS clause */
   public String toStringOptionalExistClause(boolean includeExists) {
-    verifyTableElements();
+    validateChildren();
 
     List<String> tabledef = new ArrayList<>();
     tabledef.addAll(
@@ -128,20 +129,18 @@ public class ASTcreate_table_statement extends SimpleNode {
                         : null)));
   }
 
-  private void verifyTableElements() {
-    for (Node child : children) {
-      if (!(child instanceof ASTcolumn_def)
-          && !(child instanceof ASTforeign_key)
-          && !(child instanceof ASTname)
-          && !(child instanceof ASTif_not_exists)
-          && !(child instanceof ASTcheck_constraint)
-          && !(child instanceof ASTprimary_key)
-          && !(child instanceof ASTtable_interleave_clause)
-          && !(child instanceof ASTrow_deletion_policy_clause)) {
-        throw new IllegalArgumentException(
-            "Unknown child type " + child.getClass().getSimpleName() + " - " + child);
-      }
-    }
+  private void validateChildren() {
+    AstTreeUtils.validateChildrenClasses(
+        children,
+        ImmutableSet.of(
+            ASTcolumn_def.class,
+            ASTforeign_key.class,
+            ASTname.class,
+            ASTif_not_exists.class,
+            ASTcheck_constraint.class,
+            ASTprimary_key.class,
+            ASTtable_interleave_clause.class,
+            ASTrow_deletion_policy_clause.class));
   }
 
   @Override

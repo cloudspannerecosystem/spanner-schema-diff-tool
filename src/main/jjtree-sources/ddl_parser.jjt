@@ -107,7 +107,7 @@ void create_statement() #void :
     | create_proto_bundle_statement()
     | create_table_statement()
     | create_index_statement()
-
+    | create_search_index_statement()
     | create_or_replace_statement()
     | create_change_stream_statement()
     | create_sequence_statement()
@@ -167,6 +167,17 @@ void alter_index_statement() :
   ( <ADD> #add | <DROP> #drop )
   <STORED> <COLUMN>
   ( identifier() #column_name )
+}
+
+void alter_search_index_statement() :
+{}
+{
+  <SEARCH><INDEX> (qualified_identifier() #name)
+  (   LOOKAHEAD(2) <ADD> <STORED> <COLUMN> stored_column() #add_stored_column
+    | LOOKAHEAD(2) <DROP> <STORED> <COLUMN> identifier() #drop_stored_column_name
+    | LOOKAHEAD(2) <ADD> <COLUMN> key_part() #add_token_column
+    | LOOKAHEAD(2) <DROP> <COLUMN> key_part() #drop_token_column
+  )
 }
 
 void options_clause() :
@@ -251,7 +262,7 @@ void column_type() :
   | <PG> "." qualified_identifier() #pgtype
   | <JSON>
   | <ARRAY> "<" column_type() ">"
-
+  | <TOKENLIST>
   | <STRUCT> ( "<" struct_fields() ">" | "<>" )
   | dotted_path()
 }
@@ -376,6 +387,57 @@ void create_index_statement() :
   [ LOOKAHEAD(2) "," index_interleave_clause() ]
 }
 
+void create_search_index_statement() :
+{}
+{
+  <SEARCH> <INDEX> qualified_identifier() #name
+  <ON> qualified_identifier() #table
+  token_key_list()
+  [ <STORING> stored_column_list() ]
+  [ <PARTITION> <BY> partition_key() ]
+  [ <ORDER> <BY> order_by_key() ]
+  [ <WHERE> create_index_where_clause() ]
+  [ LOOKAHEAD(2) "," index_interleave_clause() ]
+  [ options_clause() ]
+}
+
+void token_key_list() :
+{}
+{
+  "("
+    [ key_part()
+      ("," key_part() )*
+    ]
+  ")"
+}
+
+void partition_key() :
+{}
+{
+  key_part()
+  // The special {} inside the LOOKAHEAD here inserts a little bit of code into
+  // the generated parser, and makes parsing of the immediately following tokens
+  // conditional on that expression evaluating to true. Here, we peek ahead 3
+  // tokens, and make sure it's not "IN" from the possible following
+  // INTERLEAVE IN clause.
+
+  // Note for schema-diff-tool. This code has been converted from C++ to java.
+  ( LOOKAHEAD(3, {(getToken(3) == null || getToken(3).kind != IN)})
+    "," key_part() )*
+}
+
+void order_by_key() :
+{}
+{
+  key_part()
+  // See partition_key() above for a detailed explanation of this
+  // unusual-looking LOOKAHEAD block. Here, we're avoiding INTERLEAVE IN being
+  // ambiguous, since INTERLEAVE is a pseudo-reserved word.
+
+  // Note for schema-diff-tool. This code has been converted from C++ to java.
+  ( LOOKAHEAD(3, {(getToken(3) == null || getToken(3).kind != IN)})
+    "," key_part() )*
+}
 
 void create_index_where_clause() :
 {}
@@ -625,7 +687,7 @@ void drop_statement() :
   (
     ( <TABLE> #table [ if_exists() ]
       | <INDEX> #index [ if_exists() ]
-
+      | <SEARCH> <INDEX> #search_index [ if_exists() ]
       | <VIEW> #view [ if_exists() ]
       | <CHANGE> <STREAM> #change_stream
       | <ROLE> #role
@@ -646,6 +708,7 @@ void alter_statement() #void :
     | alter_table_statement()
     | alter_change_stream_statement()
     | alter_index_statement()
+    | alter_search_index_statement()
     | alter_proto_bundle_statement()
     | alter_sequence_statement()
     | alter_model_statement()

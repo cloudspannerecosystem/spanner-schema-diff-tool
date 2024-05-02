@@ -33,4 +33,9 @@ public class ASTtable extends SimpleNode {
   public String toString() {
     return AstTreeUtils.tokensToString(this);
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

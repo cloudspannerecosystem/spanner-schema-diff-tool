@@ -29,19 +29,24 @@ public class ASTkey_part extends SimpleNode {
     super(p, id);
   }
 
+  public String getKeyPath() {
+    if (children == null) {
+      return jjtGetFirstToken().toString();
+    }
+    return ((ASTpath) children[0]).toString();
+  }
+
   @Override
   public String toString() {
     if (children == null) {
       return jjtGetFirstToken().toString();
     }
-    if (children.length == 1) {
 
-      return ((ASTpath) children[0]).toString() + " ASC"; // key name without direction ;
+    if (children.length == 1) {
+      return getKeyPath() + " ASC"; // key name without direction ;
     } else {
       // key name and ASC/DESC
-      return ((ASTpath) children[0]).toString()
-          + " "
-          + children[1].toString().toUpperCase(Locale.ROOT);
+      return getKeyPath() + " " + children[1].toString().toUpperCase(Locale.ROOT);
     }
   }
 }

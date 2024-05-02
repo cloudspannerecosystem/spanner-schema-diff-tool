@@ -81,7 +81,9 @@ public class DdlDiffFromFilesTest {
         // build an expectedResults without any column or table drops.
         List<String> expectedDiffNoDrops =
             expectedDiff.stream()
-                .filter(statement -> !statement.matches(".*DROP (TABLE|COLUMN|CHANGE STREAM).*"))
+                .filter(
+                    statement ->
+                        !statement.matches(".*DROP (TABLE|COLUMN|CHANGE STREAM|SEARCH INDEX).*"))
                 .collect(Collectors.toList());
 
         // remove any drop indexes from the expectedResults if they do not have an equivalent

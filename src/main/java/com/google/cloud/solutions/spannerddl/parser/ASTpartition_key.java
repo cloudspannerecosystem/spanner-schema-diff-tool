@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,36 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-public class ASTgeneration_clause extends SimpleNode {
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
+import com.google.common.base.Joiner;
 
-  public ASTgeneration_clause(int id) {
+public class ASTpartition_key extends SimpleNode {
+  public ASTpartition_key(int id) {
     super(id);
   }
 
-  public ASTgeneration_clause(DdlParser p, int id) {
+  public ASTpartition_key(DdlParser p, int id) {
     super(p, id);
+  }
+
+  private void validateChildren() {
+    AstTreeUtils.validateChildrenClass(children, ASTkey_part.class);
   }
 
   @Override
   public String toString() {
-    final ASTexpression exp = (ASTexpression) children[0];
-    final String storedOpt =
-        children.length > 1 && children[1].getClass() == ASTstored.class ? " STORED" : "";
-    return "AS ( " + exp.toString() + " )" + storedOpt;
+    validateChildren();
+    return "PARTITION BY "
+        + Joiner.on(", ").join(AstTreeUtils.getChildrenAssertType(children, ASTkey_part.class));
   }
 
   @Override
   public int hashCode() {
-    return this.toString().hashCode();
+    return toString().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return toString().equals(obj.toString());
   }
 }

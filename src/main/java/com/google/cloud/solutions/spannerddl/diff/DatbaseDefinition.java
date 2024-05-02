@@ -23,6 +23,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTalter_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcheck_constraint;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_change_stream_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTforeign_key;
@@ -49,6 +50,7 @@ abstract class DatbaseDefinition {
     // Use LinkedHashMap to preserve creation order in original DDL.
     LinkedHashMap<String, ASTcreate_table_statement> tablesInCreationOrder = new LinkedHashMap<>();
     LinkedHashMap<String, ASTcreate_index_statement> indexes = new LinkedHashMap<>();
+    LinkedHashMap<String, ASTcreate_search_index_statement> searchIndexes = new LinkedHashMap<>();
     LinkedHashMap<String, ConstraintWrapper> constraints = new LinkedHashMap<>();
     LinkedHashMap<String, ASTrow_deletion_policy_clause> ttls = new LinkedHashMap<>();
     LinkedHashMap<String, ASTcreate_change_stream_statement> changeStreams = new LinkedHashMap<>();
@@ -75,6 +77,11 @@ abstract class DatbaseDefinition {
           final Optional<ASTrow_deletion_policy_clause> rowDeletionPolicyClause =
               createTable.getRowDeletionPolicyClause();
           rowDeletionPolicyClause.ifPresent(rdp -> ttls.put(createTable.getTableName(), rdp));
+          break;
+        case DdlParserTreeConstants.JJTCREATE_SEARCH_INDEX_STATEMENT:
+          searchIndexes.put(
+              ((ASTcreate_search_index_statement) statement).getName(),
+              (ASTcreate_search_index_statement) statement);
           break;
         case DdlParserTreeConstants.JJTCREATE_INDEX_STATEMENT:
           indexes.put(
@@ -118,6 +125,7 @@ abstract class DatbaseDefinition {
     }
     return new AutoValue_DatbaseDefinition(
         ImmutableMap.copyOf(tablesInCreationOrder),
+        ImmutableMap.copyOf(searchIndexes),
         ImmutableMap.copyOf(indexes),
         ImmutableMap.copyOf(constraints),
         ImmutableMap.copyOf(ttls),
@@ -126,6 +134,8 @@ abstract class DatbaseDefinition {
   }
 
   abstract ImmutableMap<String, ASTcreate_table_statement> tablesInCreationOrder();
+
+  abstract ImmutableMap<String, ASTcreate_search_index_statement> searchIndexes();
 
   abstract ImmutableMap<String, ASTcreate_index_statement> indexes();
 

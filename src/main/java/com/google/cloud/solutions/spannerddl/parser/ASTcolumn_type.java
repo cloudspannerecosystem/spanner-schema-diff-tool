@@ -55,6 +55,7 @@ public class ASTcolumn_type extends SimpleNode {
       case "DATE":
       case "NUMERIC":
       case "JSON":
+      case "TOKENLIST":
         return typeName;
       case "STRING":
       case "BYTES":

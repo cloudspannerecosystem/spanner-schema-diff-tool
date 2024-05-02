@@ -155,4 +155,12 @@ ALTER PROTO BUNDLE UPDATE (proto.path.name, other.proto.path)
 
 ALTER PROTO BUNDLE DELETE (proto.path.name, other.proto.path)
 
+== Test 18a alter search index
+
+ALTER SEARCH INDEX AlbumsIndex ADD STORED COLUMN test
+
+== Test 18b alter search index
+
+ALTER SEARCH INDEX AlbumsIndex ADD COLUMN add_token_column
+
 ==

@@ -65,6 +65,7 @@ CREATE TABLE test.test (
     jsoncol JSON,
     pgcolumn PG.SOMETHING,
     generatedcol STRING(MAX) AS ( sizedstring + strstr ( maxstring, strpos ( maxstring, 'xxx' ), length ( maxstring ) ) + 2.0 ) STORED,
+    tokenlistCol TOKENLIST AS ( TOKENIZE_FULLTEXT ( maxstring ) ) HIDDEN,
     CONSTRAINT fk_col_remote FOREIGN KEY ( col1, col2 ) REFERENCES test.other_table ( other_col1, other_col2 ) ON DELETE CASCADE,
     CONSTRAINT fk_col_remote2 FOREIGN KEY ( col1 ) REFERENCES test.other_table ( other_col1 ) ON DELETE NO ACTION,
     CONSTRAINT check_some_value CHECK (( length ( sizedstring ) > 100 OR sizedstring = "xxx" ) AND boolcol = TRUE AND intcol > -123.4 AND numericcol < 1.5)
@@ -132,5 +133,21 @@ CREATE CHANGE STREAM change_stream_name FOR ALL OPTIONS (retention_period='1d',v
 == Test 12b change stream for certain cols
 
 CREATE CHANGE STREAM change_stream_name FOR table1, table2 ( ), table3 ( col1, col2 ) OPTIONS (retention_period='7d',value_capture_type='NEW_ROW')
+
+== Test 13a create search index full
+
+CREATE SEARCH INDEX AlbumsIndex
+ON Albums ( AlbumTitle_Tokens ASC, Rating_Tokens ASC )
+STORING ( Genre, albumName )
+PARTITION BY SingerId ASC
+ORDER BY ReleaseTimestamp DESC
+WHERE Genre IS NOT NULL AND albumName IS NOT NULL ,
+INTERLEAVE IN Singers
+OPTIONS (sort_order_sharding=TRUE)
+
+== Test 13b create search index Simple
+
+CREATE SEARCH INDEX AlbumsIndex
+ON Albums ( AlbumTitle_Tokens ASC )
 
 ==

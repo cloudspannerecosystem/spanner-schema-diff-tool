@@ -293,5 +293,24 @@ ALTER INDEX test4 DROP STORED COLUMN col2
 ALTER INDEX test4 ADD STORED COLUMN col4
 ALTER INDEX test4 ADD STORED COLUMN col5
 
-==
+== TEST 55 Creating new search index - after table creation
 
+CREATE TABLE test2 ( col1 INT64 ) PRIMARY KEY (col1 ASC)
+
+CREATE SEARCH INDEX AlbumsIndex ON Albums ( AlbumTitle_Tokens ASC )
+
+== TEST 56 Dropping search index - before table dropping
+
+DROP SEARCH INDEX AlbumsIndex
+DROP TABLE test2
+
+== TEST 57 Changing search index - before and after table changes
+
+ALTER SEARCH INDEX AlbumsIndex DROP COLUMN col2
+ALTER SEARCH INDEX AlbumsIndex DROP STORED COLUMN scol2
+ALTER TABLE test1 DROP COLUMN col2
+ALTER TABLE test1 ADD COLUMN col3 INT64
+ALTER SEARCH INDEX AlbumsIndex ADD COLUMN col3 ASC
+ALTER SEARCH INDEX AlbumsIndex ADD STORED COLUMN scol3
+
+==

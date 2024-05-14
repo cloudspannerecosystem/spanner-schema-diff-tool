@@ -139,4 +139,18 @@ public class AstTreeUtils {
       }
     }
   }
+
+  /** Verifies that each child is the specified class. */
+  public static void validateChildrenClass(
+      Node[] children, Class<? extends SimpleNode> validChildClass) {
+    for (Node child : children) {
+      if (validChildClass != child.getClass()) {
+        throw new IllegalArgumentException(
+            "Unexpected child node "
+                + child.getClass().getSimpleName()
+                + " in parent "
+                + child.jjtGetParent().getClass().getSimpleName());
+      }
+    }
+  }
 }

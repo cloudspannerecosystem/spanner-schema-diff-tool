@@ -33,4 +33,9 @@ public class ASTpath extends SimpleNode {
   public String toString() {
     return AstTreeUtils.tokensToString(this, false);
   }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
 }

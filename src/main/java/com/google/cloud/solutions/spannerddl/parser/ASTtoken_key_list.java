@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.cloud.solutions.spannerddl.parser;
 
-public class ASTgeneration_clause extends SimpleNode {
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
+import java.util.List;
 
-  public ASTgeneration_clause(int id) {
+public class ASTtoken_key_list extends SimpleNode {
+  public ASTtoken_key_list(int id) {
     super(id);
   }
 
-  public ASTgeneration_clause(DdlParser p, int id) {
+  public ASTtoken_key_list(DdlParser p, int id) {
     super(p, id);
+  }
+
+  private void validateChildren() {
+    AstTreeUtils.validateChildrenClasses(children, ImmutableSet.of(ASTkey_part.class));
   }
 
   @Override
   public String toString() {
-    final ASTexpression exp = (ASTexpression) children[0];
-    final String storedOpt =
-        children.length > 1 && children[1].getClass() == ASTstored.class ? " STORED" : "";
-    return "AS ( " + exp.toString() + " )" + storedOpt;
+    validateChildren();
+    return "( " + Joiner.on(", ").join(getKeyParts()) + " )";
+  }
+
+  public List<ASTkey_part> getKeyParts() {
+    return AstTreeUtils.getChildrenAssertType(children, ASTkey_part.class);
   }
 
   @Override
   public int hashCode() {
-    return this.toString().hashCode();
+    return toString().hashCode();
   }
 }

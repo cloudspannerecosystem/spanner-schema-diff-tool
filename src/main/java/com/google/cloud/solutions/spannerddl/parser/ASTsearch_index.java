@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,14 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-public class ASTgeneration_clause extends SimpleNode {
-
-  public ASTgeneration_clause(int id) {
+public class ASTsearch_index extends SimpleNode {
+  public ASTsearch_index(int id) {
     super(id);
+    throw new UnsupportedOperationException("Not Implemented");
   }
 
-  public ASTgeneration_clause(DdlParser p, int id) {
+  public ASTsearch_index(DdlParser p, int id) {
     super(p, id);
-  }
-
-  @Override
-  public String toString() {
-    final ASTexpression exp = (ASTexpression) children[0];
-    final String storedOpt =
-        children.length > 1 && children[1].getClass() == ASTstored.class ? " STORED" : "";
-    return "AS ( " + exp.toString() + " )" + storedOpt;
-  }
-
-  @Override
-  public int hashCode() {
-    return this.toString().hashCode();
+    throw new UnsupportedOperationException("Not Implemented");
   }
 }

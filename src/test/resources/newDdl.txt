@@ -469,4 +469,24 @@ CREATE UNIQUE NULL_FILTERED INDEX test5 ON test1 ( col1 ASC );
 
 CREATE UNIQUE NULL_FILTERED INDEX test4 ON test1 ( col1 ASC ) STORING ( col3, col5, col4 );
 
+== TEST 55 Creating new search index - after table creation
+
+create table test1 ( col1 int64 ) primary key (col1);
+
+create table test2 ( col1 int64 ) primary key (col1);
+
+CREATE SEARCH INDEX AlbumsIndex ON Albums ( AlbumTitle_Tokens );
+
+== TEST 56 Dropping search index - before table dropping
+
+create table test1 ( col1 int64 ) primary key (col1);
+
+== TEST 57 Changing search index - before and after table changes
+
+create table test1 ( col1 int64, col3 int64 ) primary key (col1);
+
+CREATE SEARCH INDEX AlbumsIndex
+ON Albums (col1, col3)
+STORING (scol1, scol3);
+
 ==

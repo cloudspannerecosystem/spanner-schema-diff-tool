@@ -27,6 +27,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_default_clause;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_type;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_change_stream_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTforeign_key;
@@ -96,6 +97,7 @@ public class DdlDiff {
   private final MapDifference<String, ASTrow_deletion_policy_clause> ttlDifferences;
   private final MapDifference<String, String> alterDatabaseOptionsDifferences;
   private final MapDifference<String, ASTcreate_change_stream_statement> changeStreamDifferences;
+  private final MapDifference<String, ASTcreate_search_index_statement> searchIndexDifferences;
   private final String databaseName; // for alter Database
 
   private DdlDiff(DatbaseDefinition originalDb, DatbaseDefinition newDb, String databaseName)
@@ -113,6 +115,8 @@ public class DdlDiff {
         Maps.difference(originalDb.alterDatabaseOptions(), newDb.alterDatabaseOptions());
     this.changeStreamDifferences =
         Maps.difference(originalDb.changeStreams(), newDb.changeStreams());
+    this.searchIndexDifferences =
+        Maps.difference(originalDb.searchIndexes(), newDb.searchIndexes());
 
     if (!alterDatabaseOptionsDifferences.areEqual() && Strings.isNullOrEmpty(databaseName)) {
       // should never happen, but...
@@ -182,6 +186,14 @@ public class DdlDiff {
       }
     }
 
+    // drop deleted search indexes.
+    if (options.get(ALLOW_DROP_STATEMENTS_OPT)) {
+      for (String searchIndexName : searchIndexDifferences.entriesOnlyOnLeft().keySet()) {
+        LOG.info("Dropping deleted search index: {}", searchIndexName);
+        output.add("DROP SEARCH INDEX " + searchIndexName);
+      }
+    }
+
     // Drop modified indexes that need to be re-created...
     for (ValueDifference<ASTcreate_index_statement> difference :
         indexDifferences.entriesDiffering().values()) {
@@ -214,6 +226,12 @@ public class DdlDiff {
       LOG.info("Dropping row deletion policy for : {}", tableName);
       output.add("ALTER TABLE " + tableName + " DROP ROW DELETION POLICY");
     }
+
+    // For each changed search index, apply the drop column statements
+    SchemaUpdateStatements searchIndexUpdateStatements =
+        ASTcreate_search_index_statement.generateAlterStatementsFor(
+            searchIndexDifferences.entriesDiffering(), options.get(ALLOW_DROP_STATEMENTS_OPT));
+    output.addAll(searchIndexUpdateStatements.dropStatements());
 
     if (options.get(ALLOW_DROP_STATEMENTS_OPT)) {
       // Drop tables that have been deleted -- need to do it in reverse creation order.
@@ -369,6 +387,17 @@ public class DdlDiff {
                 + ")");
       }
     }
+
+    for (ASTcreate_search_index_statement searchIndex :
+        searchIndexDifferences.entriesOnlyOnRight().values()) {
+      LOG.info("Creating new search index: {}", searchIndex.getName());
+      output.add(searchIndex.toString());
+    }
+
+    // For each changed search index, apply the add column statements
+    output.addAll(searchIndexUpdateStatements.createStatements());
+
+    // Add all new search indexes
 
     return output.build();
   }
@@ -722,6 +751,7 @@ public class DdlDiff {
           case DdlParserTreeConstants.JJTCREATE_INDEX_STATEMENT:
           case DdlParserTreeConstants.JJTALTER_DATABASE_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_CHANGE_STREAM_STATEMENT:
+          case DdlParserTreeConstants.JJTCREATE_SEARCH_INDEX_STATEMENT:
             // no-op
             break;
           default:

@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.22.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.21.0...v1.22.0) (2024-05-14)
+
+
+### Features
+
+* Add support for FLOAT32 column type ([e5ee7c1](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/e5ee7c15f5e0b07ad03ea73e3edf1c598d956e75))
+* Support for diffs on Create Search Index ([#104](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/104)) ([5a567ed](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/5a567ed6abf3f3ba5e0beb33a50d793162c06f28))
+
+
+### Bug Fixes
+
+* **deps:** bump com.google.errorprone:error_prone_core ([#108](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/108)) ([4a4c0ad](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/4a4c0adabc9f0f5994bfa71f8fe3a233fd563f5f))
+* **deps:** bump com.google.guava:guava from 33.1.0-jre to 33.2.0-jre ([#107](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/107)) ([548e2cb](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/548e2cb5552f4a7f0d7a1ec00d8493dd972c0347))
+
 ## [1.21.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.20.0...v1.21.0) (2024-05-01)
 
 

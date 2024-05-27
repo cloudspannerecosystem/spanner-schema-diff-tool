@@ -99,7 +99,7 @@ public class ASTcreate_search_index_statement extends SimpleNode
 
   @Override
   public boolean equals(Object other) {
-    if (other instanceof ASTcreate_index_statement) {
+    if (other instanceof ASTcreate_search_index_statement) {
       return this.toString().equals(other.toString());
     }
     return false;

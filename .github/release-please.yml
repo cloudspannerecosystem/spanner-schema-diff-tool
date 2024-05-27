@@ -1,2 +1,2 @@
 handleGHRelease: true
-releaseType: simple
+manifest: true

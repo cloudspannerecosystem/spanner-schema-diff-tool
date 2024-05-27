@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.22.1](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.22.0...v1.22.1) (2024-05-27)
+
+
+### Bug Fixes
+
+* correct config of maven assembly plugin ([#116](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/116)) ([380799b](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/380799bb65c7e9f299a3570f831eeb31d01f09eb)), closes [#109](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/109)
+* create_search_index_statement equals ([#114](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/114)) ([6ea341e](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/6ea341e0ad24448048835dc0fc0548be811796c2)), closes [#111](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/111)
+* **deps:** bump commons-cli:commons-cli from 1.7.0 to 1.8.0 ([#112](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/112)) ([c9ec7a1](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/c9ec7a1fb2f5be59f72c09cb3f8c0dedafaca7ed))
+* **deps:** bump org.codehaus.mojo:build-helper-maven-plugin ([#110](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/110)) ([0fbc5db](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/0fbc5db72812bf462c1541545aba893d98b58b61))
+* **deps:** bump org.codehaus.mojo:exec-maven-plugin from 3.2.0 to 3.3.0 ([#113](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/113)) ([f63a7c8](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/f63a7c846fa009c247d814e5d3a85d94edc60ebb))
+
 ## [1.22.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.21.0...v1.22.0) (2024-05-14)
 
 

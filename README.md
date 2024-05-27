@@ -181,7 +181,7 @@ mvn generate-resources compile exec:java \
 ### Generate JAR with dependencies and run from JAR file
 
 ```sh
-mvn clean generate-resources compile assembly:assembly
+mvn clean generate-resources compile package
 
 java -jar target/spanner-ddl-diff-*-jar-with-dependencies.jar \
       --allowRecreateIndexes \

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.22.2](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.22.1...v1.22.2) (2024-06-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency com.google.guava:guava to v33.2.1-jre ([#124](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/124)) ([4da2a06](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/4da2a06a0bd458ac725a3faf3974e9a9294f016f))
+* handle cases where there are no stored columns in search indexes ([#136](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/136)) ([caf211a](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/caf211ac4e869567315da7b9472f5692a316f977)), closes [#118](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/118)
+
 ## [1.22.1](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.22.0...v1.22.1) (2024-05-27)
 
 

@@ -487,6 +487,25 @@ CREATE SEARCH INDEX AlbumsIndex
 ON Albums (col1, col2)
 STORING (scol1, scol2);
 
+== TEST 58 Add col to search index - no stored columns
+
+CREATE SEARCH INDEX AlbumsIndex
+ON Albums (col1, col2)
+
+== TEST 59 Add stored col to search index
+
+CREATE SEARCH INDEX AlbumsIndex
+ON Albums (col1, col2)
+
+== TEST 60 Remove stored cols from search index
+
+CREATE SEARCH INDEX AlbumsIndex
+ON Albums (col1, col2)
+STORING (scol1)
+
 ==
+
+
+
 
 

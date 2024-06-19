@@ -313,4 +313,18 @@ ALTER TABLE test1 ADD COLUMN col3 INT64
 ALTER SEARCH INDEX AlbumsIndex ADD COLUMN col3 ASC
 ALTER SEARCH INDEX AlbumsIndex ADD STORED COLUMN scol3
 
+== TEST 58 Add col to search index - no stored columns
+
+ALTER SEARCH INDEX AlbumsIndex ADD COLUMN col3 ASC
+
+== TEST 59 Add stored col to search index
+
+ALTER SEARCH INDEX AlbumsIndex ADD STORED COLUMN scol1
+
+== TEST 60 Remove stored cols from search index
+
+ALTER SEARCH INDEX AlbumsIndex DROP STORED COLUMN scol1
+
 ==
+
+

@@ -205,22 +205,31 @@ public class ASTcreate_search_index_statement extends SimpleNode
     // Look for differences in storedColumnList
     // Easiest is to use Maps.difference, but first we need some maps, and we need to preserve order
     // so convert the keyParts to String, and then add to a LinkedHashMap.
+    ASTstored_column_list origStoredColList =
+        getOptionalChildByType(original.children, ASTstored_column_list.class);
     Map<String, ASTstored_column> originalStoredColumns =
-        getChildByType(original.children, ASTstored_column_list.class).getStoredColumns().stream()
-            .collect(
-                Collectors.toMap(
-                    ASTstored_column::toString,
-                    Function.identity(),
-                    (x, y) -> y,
-                    LinkedHashMap::new));
+        origStoredColList == null
+            ? Map.of()
+            : origStoredColList.getStoredColumns().stream()
+                .collect(
+                    Collectors.toMap(
+                        ASTstored_column::toString,
+                        Function.identity(),
+                        (x, y) -> y,
+                        LinkedHashMap::new));
+
+    ASTstored_column_list newStoredColList =
+        getOptionalChildByType(other.children, ASTstored_column_list.class);
     Map<String, ASTstored_column> newStoredColumns =
-        getChildByType(other.children, ASTstored_column_list.class).getStoredColumns().stream()
-            .collect(
-                Collectors.toMap(
-                    ASTstored_column::toString,
-                    Function.identity(),
-                    (x, y) -> y,
-                    LinkedHashMap::new));
+        newStoredColList == null
+            ? Map.of()
+            : newStoredColList.getStoredColumns().stream()
+                .collect(
+                    Collectors.toMap(
+                        ASTstored_column::toString,
+                        Function.identity(),
+                        (x, y) -> y,
+                        LinkedHashMap::new));
     MapDifference<String, ASTstored_column> storedColDiff =
         Maps.difference(originalStoredColumns, newStoredColumns);
 

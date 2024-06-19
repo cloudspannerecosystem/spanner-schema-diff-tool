@@ -149,5 +149,6 @@ OPTIONS (sort_order_sharding=TRUE)
 
 CREATE SEARCH INDEX AlbumsIndex
 ON Albums ( AlbumTitle_Tokens ASC )
+OPTIONS (sort_order_sharding=TRUE)
 
 ==

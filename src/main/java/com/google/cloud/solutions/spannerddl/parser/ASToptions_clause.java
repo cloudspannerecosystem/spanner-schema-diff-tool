@@ -42,4 +42,9 @@ public class ASToptions_clause extends SimpleNode {
     return AstTreeUtils.getChildrenAssertType(children, ASToption_key_val.class).stream()
         .collect(Collectors.toMap(ASToption_key_val::getKey, ASToption_key_val::getValue));
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    return toString().equals(obj.toString());
+  }
 }

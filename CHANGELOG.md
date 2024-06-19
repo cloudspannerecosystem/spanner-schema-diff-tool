@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.3](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.22.2...v1.22.3) (2024-06-19)
+
+
+### Bug Fixes
+
+* add equals to ASToptions_clause ([#138](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/138)) ([1fddeea](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/1fddeeab8b921eb4de73788022288886c6dd39fe)), closes [#117](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/117)
+
 ## [1.22.2](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.22.1...v1.22.2) (2024-06-19)
 
 

@@ -481,7 +481,7 @@ CREATE SEARCH INDEX AlbumsIndex ON Albums ( AlbumTitle_Tokens ASC, Rating_Tokens
 
 == TEST 57 Changing search index - before and after table changes
 
-create table test1 ( col1 int64, col2 int64 ) primary key (col1);
+create table test1 ( col1 int64, col2 int64 ) primary key (col1) ;
 
 CREATE SEARCH INDEX AlbumsIndex
 ON Albums (col1, col2)
@@ -491,6 +491,7 @@ STORING (scol1, scol2);
 
 CREATE SEARCH INDEX AlbumsIndex
 ON Albums (col1, col2)
+OPTIONS (sort_order_sharding=TRUE)
 
 == TEST 59 Add stored col to search index
 
@@ -504,8 +505,3 @@ ON Albums (col1, col2)
 STORING (scol1)
 
 ==
-
-
-
-
-

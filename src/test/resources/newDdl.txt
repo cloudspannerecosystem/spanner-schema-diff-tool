@@ -493,6 +493,7 @@ STORING (scol1, scol3);
 
 CREATE SEARCH INDEX AlbumsIndex
 ON Albums (col1, col2, col3)
+OPTIONS (sort_order_sharding=TRUE)
 
 == TEST 59 Add stored col to search index
 
@@ -506,4 +507,3 @@ CREATE SEARCH INDEX AlbumsIndex
 ON Albums (col1, col2)
 
 ==
-

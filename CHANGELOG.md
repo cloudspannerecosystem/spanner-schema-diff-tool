@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.4](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.22.3...v1.22.4) (2024-08-06)
+
+
+### Bug Fixes
+
+* **deps:** bump com.google.errorprone:error_prone_core ([#147](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/147)) ([170ac33](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/170ac3375a94c09a6a8788ec7f24eeacbb89d78b))
+
 ## [1.22.3](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.22.2...v1.22.3) (2024-06-19)
 
 

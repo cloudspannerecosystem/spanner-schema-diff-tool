@@ -631,7 +631,7 @@ public class DdlDiff {
     }
   }
 
-  static DdlDiff build(String originalDdl, String newDdl) throws DdlDiffException {
+  public static DdlDiff build(String originalDdl, String newDdl) throws DdlDiffException {
     List<ASTddl_statement> originalStatements;
     List<ASTddl_statement> newStatements;
     try {
@@ -775,18 +775,18 @@ public class DdlDiff {
   /**
    * Main entrypoint for this tool.
    *
-   * @see DdlDiffOptions.java for command line options.
+   * @see DdlDiffOptions for command line options.
    */
   public static void main(String[] args) {
-
     DdlDiffOptions options = DdlDiffOptions.parseCommandLine(args);
-    ;
+
     try {
-      List<String> alterStatements =
+      DdlDiff ddlDiff =
           DdlDiff.build(
-                  new String(Files.readAllBytes(options.originalDdlPath()), UTF_8),
-                  new String(Files.readAllBytes(options.newDdlPath()), UTF_8))
-              .generateDifferenceStatements(options.args());
+              new String(Files.readAllBytes(options.originalDdlPath()), UTF_8),
+              new String(Files.readAllBytes(options.newDdlPath()), UTF_8));
+
+      List<String> alterStatements = ddlDiff.generateDifferenceStatements(options.args());
 
       StringBuilder output = new StringBuilder();
       for (String statement : alterStatements) {

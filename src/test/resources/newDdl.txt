@@ -431,6 +431,11 @@ Create UNIQUE NULL_filtered index IF NOT EXISTS test4 on test1 ( col1 ) STORING 
 
 Create table myCreatedTable (mycol int64) primary key (mycol);
 create change stream toremain for all options (retention_period = '36h');
+create change stream toremain2 for all
+OPTIONS (
+value_capture_type = 'OLD_AND_NEW_VALUES',
+retention_period = '7d',
+exclude_ttl_deletes = true);
 create change stream toBeChanged for myTable2 ( col1, col3, col4), mytable3 () options (retention_period = '48h');
 create change stream toCreate for mytable4 options (retention_period = '36h');
 create change stream toCreateAll for all;

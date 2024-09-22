@@ -380,12 +380,12 @@ public class DdlDiff {
         String optionsDiff = generateOptionsUpdates(Maps.difference(oldOptionsKv, newOptionsKv));
 
         if (optionsDiff != null) {
-        output.add(
-            "ALTER CHANGE STREAM "
-                + changedChangeStream.rightValue().getName()
-                + " SET OPTIONS ("
-                + optionsDiff
-                + ")");
+          output.add(
+              "ALTER CHANGE STREAM "
+                  + changedChangeStream.rightValue().getName()
+                  + " SET OPTIONS ("
+                  + optionsDiff
+                  + ")");
         }
       }
     }

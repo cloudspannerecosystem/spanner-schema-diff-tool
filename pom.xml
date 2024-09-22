@@ -30,7 +30,7 @@
     <commons-cli.version>1.9.0</commons-cli.version>
     <maven-clean-plugin.version>3.4.0</maven-clean-plugin.version>
     <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
-    <maven-surefire-plugin.version>3.3.1</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.5.0</maven-surefire-plugin.version>
     <ph-javacc-maven-plugin.version>4.1.5</ph-javacc-maven-plugin.version>
     <truth.version>1.4.4</truth.version>
     <junit.version>4.13.2</junit.version>

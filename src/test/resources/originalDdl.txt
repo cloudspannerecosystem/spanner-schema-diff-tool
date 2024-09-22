@@ -430,6 +430,11 @@ Create index IF NOT EXISTS test4 on test1 ( col1 )  STORING ( col2 )
 
 Create table myToBeDeletedTable (mycol int64) primary key (mycol);
 create change stream toremain for all options (retention_period = '36h');
+create change stream toremain2 for all
+OPTIONS (
+retention_period = '7d',
+value_capture_type = 'OLD_AND_NEW_VALUES',
+exclude_ttl_deletes = true);
 create change stream toBeDeleted for myTable options (retention_period = '36h');
 create change stream toBeChanged for myTable1, myTable2 ( col1, col3) options (retention_period = '36h');
 create change stream toBeChangedOnlyTable for myTable1, myTable2 ( col1, col3) options (retention_period = '36h');

@@ -89,8 +89,8 @@ public class DdlDiff {
   public static final String ALLOW_DROP_STATEMENTS_OPT = "allowDropStatements";
   public static final String HELP_OPT = "help";
 
-  private final DatbaseDefinition originalDb;
-  private final DatbaseDefinition newDb;
+  private final DatabaseDefinition originalDb;
+  private final DatabaseDefinition newDb;
   private final MapDifference<String, ASTcreate_index_statement> indexDifferences;
   private final MapDifference<String, ASTcreate_table_statement> tableDifferences;
   private final MapDifference<String, ConstraintWrapper> constraintDifferences;
@@ -100,7 +100,7 @@ public class DdlDiff {
   private final MapDifference<String, ASTcreate_search_index_statement> searchIndexDifferences;
   private final String databaseName; // for alter Database
 
-  private DdlDiff(DatbaseDefinition originalDb, DatbaseDefinition newDb, String databaseName)
+  private DdlDiff(DatabaseDefinition originalDb, DatabaseDefinition newDb, String databaseName)
       throws DdlDiffException {
     this.originalDb = originalDb;
     this.newDb = newDb;
@@ -631,7 +631,16 @@ public class DdlDiff {
     }
   }
 
-  static DdlDiff build(String originalDdl, String newDdl) throws DdlDiffException {
+  /**
+   * Build a DdlDiff instance that can compares two Cloud Spanner Schema (DDL) strings.
+   * generateDifferenceStatements can be invoked to generate the ALTER statements
+   *
+   * @param originalDdl Original DDL
+   * @param newDdl New DDL
+   * @return DdlDiff instance
+   * @throws DdlDiffException if there is an error in paring the DDL
+   */
+  public static DdlDiff build(String originalDdl, String newDdl) throws DdlDiffException {
     List<ASTddl_statement> originalStatements;
     List<ASTddl_statement> newStatements;
     try {
@@ -645,8 +654,8 @@ public class DdlDiff {
       throw new DdlDiffException("Failed parsing NEW DDL: " + e.getMessage(), e);
     }
 
-    DatbaseDefinition originalDb = DatbaseDefinition.create(originalStatements);
-    DatbaseDefinition newDb = DatbaseDefinition.create(newStatements);
+    DatabaseDefinition originalDb = DatabaseDefinition.create(originalStatements);
+    DatabaseDefinition newDb = DatabaseDefinition.create(newStatements);
 
     return new DdlDiff(
         originalDb, newDb, getDatabaseNameFromAlterDatabase(originalStatements, newStatements));
@@ -775,18 +784,18 @@ public class DdlDiff {
   /**
    * Main entrypoint for this tool.
    *
-   * @see DdlDiffOptions.java for command line options.
+   * @see DdlDiffOptions for command line options.
    */
   public static void main(String[] args) {
-
     DdlDiffOptions options = DdlDiffOptions.parseCommandLine(args);
-    ;
+
     try {
-      List<String> alterStatements =
+      DdlDiff ddlDiff =
           DdlDiff.build(
-                  new String(Files.readAllBytes(options.originalDdlPath()), UTF_8),
-                  new String(Files.readAllBytes(options.newDdlPath()), UTF_8))
-              .generateDifferenceStatements(options.args());
+              new String(Files.readAllBytes(options.originalDdlPath()), UTF_8),
+              new String(Files.readAllBytes(options.newDdlPath()), UTF_8));
+
+      List<String> alterStatements = ddlDiff.generateDifferenceStatements(options.args());
 
       StringBuilder output = new StringBuilder();
       for (String statement : alterStatements) {

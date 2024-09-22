@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Separarates the different DDL creation statements into separate maps.
+ * Separates the different DDL creation statements into separate maps.
  *
  * <p>Constraints which were created inline with their table are separated into a map with any other
  * ALTER statements which adds constraints.
@@ -45,8 +45,8 @@ import java.util.Optional;
  * the same way as if they were created separately with ALTER statements.
  */
 @AutoValue
-abstract class DatbaseDefinition {
-  static DatbaseDefinition create(List<ASTddl_statement> statements) {
+public abstract class DatabaseDefinition {
+  static DatabaseDefinition create(List<ASTddl_statement> statements) {
     // Use LinkedHashMap to preserve creation order in original DDL.
     LinkedHashMap<String, ASTcreate_table_statement> tablesInCreationOrder = new LinkedHashMap<>();
     LinkedHashMap<String, ASTcreate_index_statement> indexes = new LinkedHashMap<>();
@@ -123,7 +123,7 @@ abstract class DatbaseDefinition {
               "Unsupported statement: " + AstTreeUtils.tokensToString(ddlStatement));
       }
     }
-    return new AutoValue_DatbaseDefinition(
+    return new AutoValue_DatabaseDefinition(
         ImmutableMap.copyOf(tablesInCreationOrder),
         ImmutableMap.copyOf(searchIndexes),
         ImmutableMap.copyOf(indexes),
@@ -133,11 +133,11 @@ abstract class DatbaseDefinition {
         ImmutableMap.copyOf(alterDatabaseOptions));
   }
 
-  abstract ImmutableMap<String, ASTcreate_table_statement> tablesInCreationOrder();
+  public abstract ImmutableMap<String, ASTcreate_table_statement> tablesInCreationOrder();
 
-  abstract ImmutableMap<String, ASTcreate_search_index_statement> searchIndexes();
+  public abstract ImmutableMap<String, ASTcreate_search_index_statement> searchIndexes();
 
-  abstract ImmutableMap<String, ASTcreate_index_statement> indexes();
+  public abstract ImmutableMap<String, ASTcreate_index_statement> indexes();
 
   abstract ImmutableMap<String, ConstraintWrapper> constraints();
 

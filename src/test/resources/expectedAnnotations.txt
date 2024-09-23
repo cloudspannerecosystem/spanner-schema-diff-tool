@@ -1,0 +1,9 @@
+== Test 1 all column annotations
+
+DEPRECATED
+PII
+TAG.business(internal)
+TAG.business(key1,key2)
+TAG.business(key1=val1,key2=value)
+
+==

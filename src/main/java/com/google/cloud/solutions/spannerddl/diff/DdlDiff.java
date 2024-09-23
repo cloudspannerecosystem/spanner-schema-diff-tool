@@ -707,6 +707,11 @@ public class DdlDiff {
    * @throws DdlDiffException if there is an error in parsing the DDL
    */
   public static List<ASTddl_statement> parseDdl(String original) throws DdlDiffException {
+    // the annotations are prefixed with "--" so that SQL file remains valid.
+    // strip the comment prefix before so that annotations can be parsed.
+    // otherwise they will be ignored as comment lines
+    original = original.replaceAll("-- *@", "@");
+
     // Remove "--" comments and split by ";"
     List<String> statements = Splitter.on(';').splitToList(original.replaceAll("--.*(\n|$)", ""));
     ArrayList<ASTddl_statement> ddlStatements = new ArrayList<>(statements.size());

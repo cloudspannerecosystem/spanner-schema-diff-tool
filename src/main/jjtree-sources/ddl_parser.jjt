@@ -212,6 +212,7 @@ void table_element() #void :
     LOOKAHEAD(3) foreign_key()
   | LOOKAHEAD(3) check_constraint()
   | LOOKAHEAD(3) synonym_clause()
+  | column_annotation()
   | column_def()
 }
 

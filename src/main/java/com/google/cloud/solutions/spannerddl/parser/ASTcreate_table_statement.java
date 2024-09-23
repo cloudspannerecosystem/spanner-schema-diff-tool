@@ -140,7 +140,8 @@ public class ASTcreate_table_statement extends SimpleNode {
             ASTcheck_constraint.class,
             ASTprimary_key.class,
             ASTtable_interleave_clause.class,
-            ASTrow_deletion_policy_clause.class));
+            ASTrow_deletion_policy_clause.class,
+            ASTannotation.class));
   }
 
   @Override

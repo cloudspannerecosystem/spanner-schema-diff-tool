@@ -32,6 +32,16 @@ public abstract class ReadTestDatafile {
    * @return LinkedHashMap of segment name => contents
    */
   public static Map<String, String> readDdlSegmentsFromFile(String filename) throws IOException {
+    return readDdlSegmentsFromFile(filename, false);
+  }
+
+  /**
+   * Reads the test data file, parsing out the test titles and data from the file.
+   *
+   * @return LinkedHashMap of segment name => contents
+   */
+  public static Map<String, String> readDdlSegmentsFromFile(String filename, boolean preserveSpace)
+      throws IOException {
     File file = new File("src/test/resources/" + filename).getAbsoluteFile();
     LinkedHashMap<String, String> output = new LinkedHashMap<>();
 
@@ -39,9 +49,9 @@ public abstract class ReadTestDatafile {
 
       String sectionName = null;
       StringBuilder section = new StringBuilder();
-      String line;
-      while (null != (line = in.readLine())) {
-        line = line.replaceAll("#.*", "").trim();
+      String rawLine;
+      while (null != (rawLine = in.readLine())) {
+        String line = preserveSpace ? rawLine : rawLine.replaceAll("#.*", "").trim();
         if (line.isEmpty()) {
           continue;
         }

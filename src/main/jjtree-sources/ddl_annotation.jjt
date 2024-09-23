@@ -1,0 +1,24 @@
+TOKEN:
+{
+  <ANNOTATION: "@ANNOTATION">
+}
+
+void column_annotation() #void: {}
+{
+  <ANNOTATION> annotation()
+}
+
+void annotation(): {}
+{
+  qualified_identifier() #name [ annotation_params() ]
+}
+
+void annotation_params() #void: {}
+{
+  "(" annotation_param() ( "," annotation_param() )* ")"
+}
+
+void annotation_param(): {}
+{
+  identifier() #param_key [ "=" identifier() #param_val ]
+}

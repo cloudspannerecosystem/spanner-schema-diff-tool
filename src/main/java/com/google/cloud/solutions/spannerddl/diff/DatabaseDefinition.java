@@ -46,7 +46,13 @@ import java.util.Optional;
  */
 @AutoValue
 public abstract class DatabaseDefinition {
-  static DatabaseDefinition create(List<ASTddl_statement> statements) {
+  /**
+   * Create a database definition from the list of parsed DDL statements.
+   *
+   * @param statements List of parsed DDL statements
+   * @return DatabaseDefinition instance
+   */
+  public static DatabaseDefinition create(List<ASTddl_statement> statements) {
     // Use LinkedHashMap to preserve creation order in original DDL.
     LinkedHashMap<String, ASTcreate_table_statement> tablesInCreationOrder = new LinkedHashMap<>();
     LinkedHashMap<String, ASTcreate_index_statement> indexes = new LinkedHashMap<>();

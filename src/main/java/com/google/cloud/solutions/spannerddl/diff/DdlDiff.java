@@ -699,8 +699,14 @@ public class DdlDiff {
     }
   }
 
-  @VisibleForTesting
-  static List<ASTddl_statement> parseDdl(String original) throws DdlDiffException {
+  /**
+   * Parses the Cloud Spanner Schema (DDL) string to a list of AST DDL statements.
+   *
+   * @param original DDL to parse
+   * @return List of parsed DDL statements
+   * @throws DdlDiffException if there is an error in parsing the DDL
+   */
+  public static List<ASTddl_statement> parseDdl(String original) throws DdlDiffException {
     // Remove "--" comments and split by ";"
     List<String> statements = Splitter.on(';').splitToList(original.replaceAll("--.*(\n|$)", ""));
     ArrayList<ASTddl_statement> ddlStatements = new ArrayList<>(statements.size());

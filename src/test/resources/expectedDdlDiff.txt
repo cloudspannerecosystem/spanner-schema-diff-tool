@@ -331,4 +331,8 @@ ALTER SEARCH INDEX AlbumsIndex DROP STORED COLUMN scol1
 
 == TEST 63 Recorder annotations should not generate a diff
 
+== TEST 64 Adding annotation as well as column should only generate the column diff
+
+ALTER TABLE AlbumsIndex ADD COLUMN new_col STRING(255)
+
 ==

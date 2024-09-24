@@ -530,4 +530,10 @@ CREATE TABLE AlbumsIndex (
   id STRING(36),
 ) PRIMARY KEY (id)
 
+== TEST 64 Adding annotation as well as column should only generate the column diff
+
+CREATE TABLE AlbumsIndex (
+  id STRING(36),
+) PRIMARY KEY (id)
+
 ==

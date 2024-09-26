@@ -514,7 +514,7 @@ ON Albums (col1, col2)
 == TEST 61 Add annotations to columns should not generate a diff
 
 CREATE TABLE AlbumsIndex (
-  @ANNOTATION DEPRECATED,
+  -- @ANNOTATION DEPRECATED,
   id STRING(36),
 ) PRIMARY KEY (id)
 
@@ -527,15 +527,15 @@ CREATE TABLE AlbumsIndex (
 == TEST 63 Recorder annotations should not generate a diff
 
 CREATE TABLE AlbumsIndex (
-  @ANNOTATION PII,
-  @ANNOTATION DEPRECATED,
+  -- @ANNOTATION PII,
+  -- @ANNOTATION DEPRECATED,
   id STRING(36),
 ) PRIMARY KEY (id)
 
 == TEST 64 Adding annotation as well as column should only generate the column diff
 
 CREATE TABLE AlbumsIndex (
-  @ANNOTATION PII,
+  -- @ANNOTATION PII,
   id STRING(36),
   new_col STRING(255),
 ) PRIMARY KEY (id)

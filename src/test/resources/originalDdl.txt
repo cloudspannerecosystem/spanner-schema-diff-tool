@@ -518,15 +518,15 @@ CREATE TABLE AlbumsIndex (
 == TEST 62 Remove annotations from columns should not generate a diff
 
 CREATE TABLE AlbumsIndex (
-  @ANNOTATION DEPRECATED,
+  -- @ANNOTATION DEPRECATED,
   id STRING(36),
 ) PRIMARY KEY (id)
 
 == TEST 63 Recorder annotations should not generate a diff
 
 CREATE TABLE AlbumsIndex (
-  @ANNOTATION DEPRECATED,
-  @ANNOTATION PII,
+  -- @ANNOTATION DEPRECATED,
+  -- @ANNOTATION PII,
   id STRING(36),
 ) PRIMARY KEY (id)
 

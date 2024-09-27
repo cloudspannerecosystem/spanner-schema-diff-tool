@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,29 @@ import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Abstract Syntax Tree parser object for "annotation" token */
+/**
+ * Abstract Syntax Tree parser object for "annotation" token
+ *
+ * <p>Column Annotations are NOT a feature of Cloud Spanner.
+ *
+ * <p>This is an additional feature of the Cloud Spanner Schema parser exclusively in this tool so
+ * that users of this tool can add metadata to colums, and have that metadata represented in the
+ * parsed schema.
+ *
+ * <p>To use Annotations, they should be added to a CREATE TABLE statement as follows:
+ *
+ * <pre>
+ *  CREATE TABLE Albums (
+ *   -- @ANNOTATION SOMETEXT,
+ *    id STRING(36),
+ *  ) PRIMARY KEY (id)
+ * </pre>
+ *
+ * Annotations need to be on their own line, and terminate with a comma. (This is because the '-- '
+ * prefix is removed before using the JJT parser).
+ *
+ * <p>As they are comments, they are ignored by the diff generator and by Spanner itself.
+ */
 public class ASTannotation extends SimpleNode {
   public ASTannotation(int id) {
     super(id);

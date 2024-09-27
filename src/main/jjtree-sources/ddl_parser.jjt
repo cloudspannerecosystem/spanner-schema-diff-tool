@@ -212,6 +212,11 @@ void table_element() #void :
     LOOKAHEAD(3) foreign_key()
   | LOOKAHEAD(3) check_constraint()
   | LOOKAHEAD(3) synonym_clause()
+
+  // Column annotations are not a Spanner feature.
+  // See file ddl_annotation.jjt for more details.
+  | column_annotation()
+
   | column_def()
 }
 

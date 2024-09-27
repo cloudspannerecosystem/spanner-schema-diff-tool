@@ -1,0 +1,12 @@
+== Test 1 all column annotations
+
+CREATE TABLE test1 (
+  -- @ANNOTATION DEPRECATED,
+  -- @ANNOTATION PII,
+  -- @ANNOTATION TAG.business(internal),
+  -- @ANNOTATION TAG.business(key1,key2),
+  -- @ANNOTATION TAG.business(key1=val1,key2=value),
+  id STRING(36),
+) PRIMARY KEY (id)
+
+==

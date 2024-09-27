@@ -325,6 +325,14 @@ ALTER SEARCH INDEX AlbumsIndex ADD STORED COLUMN scol1
 
 ALTER SEARCH INDEX AlbumsIndex DROP STORED COLUMN scol1
 
+== TEST 61 Add annotations to columns should not generate a diff
+
+== TEST 62 Remove annotations from columns should not generate a diff
+
+== TEST 63 Recorder annotations should not generate a diff
+
+== TEST 64 Adding annotation as well as column should only generate the column diff
+
+ALTER TABLE AlbumsIndex ADD COLUMN new_col STRING(255)
+
 ==
-
-

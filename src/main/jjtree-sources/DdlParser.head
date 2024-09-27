@@ -25,6 +25,7 @@ cat src/main/jjtree-sources/DdlParser.head       \
       src/main/jjtree-sources/ddl_keywords.jjt   \
       src/main/jjtree-sources/ddl_string_bytes_tokens.jjt \
       src/main/jjtree-sources/ddl_expression.jjt \
+      src/main/jjtree-sources/ddl_annotation.jjt \
       src/main/jjtree-sources/ddl_parser.jjt     \
    > src/main/jjtree/DdlParser.jjt
 

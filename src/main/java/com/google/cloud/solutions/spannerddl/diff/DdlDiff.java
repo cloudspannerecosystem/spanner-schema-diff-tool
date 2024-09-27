@@ -716,7 +716,7 @@ public class DdlDiff {
    *
    * @param original DDL to parse
    * @param parseAnnotationInComments If true then the annotations that appear as comments
-   *     "-- @ANNOTATION <annotation>" will be parsed
+   *     "-- @ANNOTATION annotation" will be parsed
    * @return List of parsed DDL statements
    */
   public static List<ASTddl_statement> parseDdl(String original, boolean parseAnnotationInComments)

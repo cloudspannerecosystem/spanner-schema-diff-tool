@@ -1,11 +1,13 @@
 package com.google.cloud.solutions.spannerddl.parser;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.fail;
 
+import com.google.cloud.solutions.spannerddl.diff.DdlDiff;
+import com.google.cloud.solutions.spannerddl.diff.DdlDiffException;
 import com.google.cloud.solutions.spannerddl.testUtils.ReadTestDatafile;
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,18 +34,14 @@ public class DDLAnnotationTest {
       String segmentName = test.getKey();
 
       try {
-        DdlParser parser = new DdlParser(new StringReader(test.getValue()));
-        parser.ddl_statement();
-        Node tableStatement = parser.jjtree.rootNode().jjtGetChild(0);
+        // first get all the annotations without removing the comment prefix
+        List<String> annotations = getTableAnnotations(test.getValue(), false);
 
-        // get all annotations
-        List<String> annotations = new ArrayList<>();
-        for (int i = 0, count = tableStatement.jjtGetNumChildren(); i < count; i++) {
-          Node child = tableStatement.jjtGetChild(i);
-          if (child instanceof ASTannotation) {
-            annotations.add(((ASTannotation) child).getAnnotation());
-          }
-        }
+        // annotations should be empty
+        assertThat(annotations).isEmpty();
+
+        // now get all the annotations after removing the comment prefix
+        annotations = getTableAnnotations(test.getValue(), true);
 
         List<String> expectedList =
             expected != null ? Arrays.asList(expected.split("\n")) : Collections.emptyList();
@@ -51,9 +49,28 @@ public class DDLAnnotationTest {
         assertWithMessage("Mismatch for section " + segmentName)
             .that(annotations)
             .isEqualTo(expectedList);
-      } catch (ParseException e) {
+      } catch (DdlDiffException e) {
         fail("Failed to parse section: '" + segmentName + "': " + e);
       }
     }
+  }
+
+  private List<String> getTableAnnotations(String ddl, boolean parseAnnotations)
+      throws DdlDiffException {
+    List<String> annotations = new ArrayList<>();
+
+    List<ASTddl_statement> statements = DdlDiff.parseDdl(ddl, parseAnnotations);
+    for (ASTddl_statement statement : statements) {
+      if (statement.jjtGetChild(0).getId() == DdlParserTreeConstants.JJTCREATE_TABLE_STATEMENT) {
+        Node tableStatement = statement.jjtGetChild(0);
+        for (int i = 0, count = tableStatement.jjtGetNumChildren(); i < count; i++) {
+          Node child = tableStatement.jjtGetChild(i);
+          if (child instanceof ASTannotation) {
+            annotations.add(((ASTannotation) child).getAnnotation());
+          }
+        }
+      }
+    }
+    return annotations;
   }
 }

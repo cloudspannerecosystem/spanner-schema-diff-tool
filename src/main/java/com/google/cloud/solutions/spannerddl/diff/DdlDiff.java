@@ -55,6 +55,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -707,10 +708,26 @@ public class DdlDiff {
    * @throws DdlDiffException if there is an error in parsing the DDL
    */
   public static List<ASTddl_statement> parseDdl(String original) throws DdlDiffException {
+    return parseDdl(original, false);
+  }
+
+  /**
+   * Parses the Cloud Spanner Schema (DDL) string to a list of AST DDL statements.
+   *
+   * @param original DDL to parse
+   * @param parseAnnotationInComments If true then the annotations that appear as comments
+   *     "-- @ANNOTATION <annotation>" will be parsed
+   * @return List of parsed DDL statements
+   */
+  public static List<ASTddl_statement> parseDdl(String original, boolean parseAnnotationInComments)
+      throws DdlDiffException {
     // the annotations are prefixed with "--" so that SQL file remains valid.
     // strip the comment prefix before so that annotations can be parsed.
     // otherwise they will be ignored as comment lines
-    original = original.replaceAll("-- *@", "@");
+    if (parseAnnotationInComments) {
+      original =
+          Pattern.compile("^\\s*--\\s+@", Pattern.MULTILINE).matcher(original).replaceAll("@");
+    }
 
     // Remove "--" comments and split by ";"
     List<String> statements = Splitter.on(';').splitToList(original.replaceAll("--.*(\n|$)", ""));

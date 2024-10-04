@@ -266,7 +266,7 @@ public class ASTcreate_search_index_statement extends SimpleNode
           "Adding token colum {} for search index: {}", newToken.getKeyPath(), original.getName());
 
       createStatements.add(
-          "ALTER SEARCH INDEX " + original.getName() + " ADD COLUMN " + newToken.toString());
+          "ALTER SEARCH INDEX " + original.getName() + " ADD COLUMN " + newToken.getKeyPath());
     }
 
     for (ASTstored_column newStoredCol : storedColDiff.entriesOnlyOnRight().values()) {

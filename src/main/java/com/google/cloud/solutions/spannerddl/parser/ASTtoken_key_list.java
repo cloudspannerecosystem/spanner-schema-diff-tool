@@ -20,6 +20,7 @@ import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ASTtoken_key_list extends SimpleNode {
   public ASTtoken_key_list(int id) {
@@ -37,7 +38,9 @@ public class ASTtoken_key_list extends SimpleNode {
   @Override
   public String toString() {
     validateChildren();
-    return "( " + Joiner.on(", ").join(getKeyParts()) + " )";
+    List<String> keyPaths =
+        getKeyParts().stream().map(ASTkey_part::getKeyPath).collect(Collectors.toList());
+    return "( " + Joiner.on(", ").join(keyPaths) + " )";
   }
 
   public List<ASTkey_part> getKeyParts() {

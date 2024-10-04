@@ -297,7 +297,7 @@ ALTER INDEX test4 ADD STORED COLUMN col5
 
 CREATE TABLE test2 ( col1 INT64 ) PRIMARY KEY (col1 ASC)
 
-CREATE SEARCH INDEX AlbumsIndex ON Albums ( AlbumTitle_Tokens ASC )
+CREATE SEARCH INDEX AlbumsIndex ON Albums ( AlbumTitle_Tokens )
 
 == TEST 56 Dropping search index - before table dropping
 
@@ -310,12 +310,12 @@ ALTER SEARCH INDEX AlbumsIndex DROP COLUMN col2
 ALTER SEARCH INDEX AlbumsIndex DROP STORED COLUMN scol2
 ALTER TABLE test1 DROP COLUMN col2
 ALTER TABLE test1 ADD COLUMN col3 INT64
-ALTER SEARCH INDEX AlbumsIndex ADD COLUMN col3 ASC
+ALTER SEARCH INDEX AlbumsIndex ADD COLUMN col3
 ALTER SEARCH INDEX AlbumsIndex ADD STORED COLUMN scol3
 
 == TEST 58 Add col to search index - no stored columns
 
-ALTER SEARCH INDEX AlbumsIndex ADD COLUMN col3 ASC
+ALTER SEARCH INDEX AlbumsIndex ADD COLUMN col3
 
 == TEST 59 Add stored col to search index
 

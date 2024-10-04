@@ -482,7 +482,7 @@ create table test1 ( col1 int64 ) primary key (col1);
 
 create table test2 ( col1 int64 ) primary key (col1);
 
-CREATE SEARCH INDEX AlbumsIndex ON Albums ( AlbumTitle_Tokens ASC, Rating_Tokens ASC )
+CREATE SEARCH INDEX AlbumsIndex ON Albums ( AlbumTitle_Tokens, Rating_Tokens )
 
 == TEST 57 Changing search index - before and after table changes
 

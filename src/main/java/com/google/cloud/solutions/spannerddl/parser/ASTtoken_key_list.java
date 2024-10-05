@@ -20,7 +20,6 @@ import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ASTtoken_key_list extends SimpleNode {
   public ASTtoken_key_list(int id) {
@@ -32,19 +31,17 @@ public class ASTtoken_key_list extends SimpleNode {
   }
 
   private void validateChildren() {
-    AstTreeUtils.validateChildrenClasses(children, ImmutableSet.of(ASTkey_part.class));
+    AstTreeUtils.validateChildrenClasses(children, ImmutableSet.of(ASTpath.class));
   }
 
   @Override
   public String toString() {
     validateChildren();
-    List<String> keyPaths =
-        getKeyParts().stream().map(ASTkey_part::getKeyPath).collect(Collectors.toList());
-    return "( " + Joiner.on(", ").join(keyPaths) + " )";
+    return "( " + Joiner.on(", ").join(getPaths()) + " )";
   }
 
-  public List<ASTkey_part> getKeyParts() {
-    return AstTreeUtils.getChildrenAssertType(children, ASTkey_part.class);
+  public List<ASTpath> getPaths() {
+    return AstTreeUtils.getChildrenAssertType(children, ASTpath.class);
   }
 
   @Override

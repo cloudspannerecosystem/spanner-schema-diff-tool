@@ -175,8 +175,8 @@ void alter_search_index_statement() :
   <SEARCH><INDEX> (qualified_identifier() #name)
   (   LOOKAHEAD(2) <ADD> <STORED> <COLUMN> stored_column() #add_stored_column
     | LOOKAHEAD(2) <DROP> <STORED> <COLUMN> identifier() #drop_stored_column_name
-    | LOOKAHEAD(2) <ADD> <COLUMN> key_part() #add_token_column
-    | LOOKAHEAD(2) <DROP> <COLUMN> key_part() #drop_token_column
+    | LOOKAHEAD(2) <ADD> <COLUMN> path() #add_token_column
+    | LOOKAHEAD(2) <DROP> <COLUMN> path() #drop_token_column
   )
 }
 
@@ -410,8 +410,8 @@ void token_key_list() :
 {}
 {
   "("
-    [ key_part()
-      ("," key_part() )*
+    [ path()
+      ("," path() )*
     ]
   ")"
 }

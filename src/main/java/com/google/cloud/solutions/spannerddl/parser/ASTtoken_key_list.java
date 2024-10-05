@@ -31,17 +31,17 @@ public class ASTtoken_key_list extends SimpleNode {
   }
 
   private void validateChildren() {
-    AstTreeUtils.validateChildrenClasses(children, ImmutableSet.of(ASTkey_part.class));
+    AstTreeUtils.validateChildrenClasses(children, ImmutableSet.of(ASTpath.class));
   }
 
   @Override
   public String toString() {
     validateChildren();
-    return "( " + Joiner.on(", ").join(getKeyParts()) + " )";
+    return "( " + Joiner.on(", ").join(getPaths()) + " )";
   }
 
-  public List<ASTkey_part> getKeyParts() {
-    return AstTreeUtils.getChildrenAssertType(children, ASTkey_part.class);
+  public List<ASTpath> getPaths() {
+    return AstTreeUtils.getChildrenAssertType(children, ASTpath.class);
   }
 
   @Override

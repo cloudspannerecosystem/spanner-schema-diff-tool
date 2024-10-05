@@ -137,7 +137,7 @@ CREATE CHANGE STREAM change_stream_name FOR table1, table2 ( ), table3 ( col1, c
 == Test 13a create search index full
 
 CREATE SEARCH INDEX AlbumsIndex
-ON Albums ( AlbumTitle_Tokens ASC, Rating_Tokens ASC )
+ON Albums ( AlbumTitle_Tokens, Rating_Tokens )
 STORING ( Genre, albumName )
 PARTITION BY SingerId ASC
 ORDER BY ReleaseTimestamp DESC
@@ -148,7 +148,7 @@ OPTIONS (sort_order_sharding=TRUE)
 == Test 13b create search index Simple
 
 CREATE SEARCH INDEX AlbumsIndex
-ON Albums ( AlbumTitle_Tokens ASC )
+ON Albums ( AlbumTitle_Tokens )
 OPTIONS (sort_order_sharding=TRUE)
 
 ==

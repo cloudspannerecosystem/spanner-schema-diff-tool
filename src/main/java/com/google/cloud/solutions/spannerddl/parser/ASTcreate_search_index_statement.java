@@ -189,18 +189,17 @@ public class ASTcreate_search_index_statement extends SimpleNode
     // Look for differences in tokenKeyList
     // Easiest is to use Maps.difference, but first we need some maps, and we need to preserve order
     // so convert the keyParts to String, and then add to a LinkedHashMap.
-    Map<String, ASTkey_part> originalKeyParts =
-        getChildByType(original.children, ASTtoken_key_list.class).getKeyParts().stream()
+    Map<String, ASTpath> originalKeyParts =
+        getChildByType(original.children, ASTtoken_key_list.class).getPaths().stream()
             .collect(
                 Collectors.toMap(
-                    ASTkey_part::toString, Function.identity(), (x, y) -> y, LinkedHashMap::new));
-    Map<String, ASTkey_part> newKeyParts =
-        getChildByType(other.children, ASTtoken_key_list.class).getKeyParts().stream()
+                    ASTpath::toString, Function.identity(), (x, y) -> y, LinkedHashMap::new));
+    Map<String, ASTpath> newKeyParts =
+        getChildByType(other.children, ASTtoken_key_list.class).getPaths().stream()
             .collect(
                 Collectors.toMap(
-                    ASTkey_part::toString, Function.identity(), (x, y) -> y, LinkedHashMap::new));
-    MapDifference<String, ASTkey_part> keyPartsDiff =
-        Maps.difference(originalKeyParts, newKeyParts);
+                    ASTpath::toString, Function.identity(), (x, y) -> y, LinkedHashMap::new));
+    MapDifference<String, ASTpath> keyPartsDiff = Maps.difference(originalKeyParts, newKeyParts);
 
     // Look for differences in storedColumnList
     // Easiest is to use Maps.difference, but first we need some maps, and we need to preserve order
@@ -234,17 +233,17 @@ public class ASTcreate_search_index_statement extends SimpleNode
         Maps.difference(originalStoredColumns, newStoredColumns);
 
     if (allowDropColumnStatements) {
-      for (ASTkey_part droppedToken : keyPartsDiff.entriesOnlyOnLeft().values()) {
+      for (ASTpath droppedTokenCol : keyPartsDiff.entriesOnlyOnLeft().values()) {
         LOG.info(
             "Dropping token colum {} for search index: {}",
-            droppedToken.getKeyPath(),
+            droppedTokenCol.toString(),
             original.getName());
 
         dropStatements.add(
             "ALTER SEARCH INDEX "
                 + original.getName()
                 + " DROP COLUMN "
-                + droppedToken.getKeyPath());
+                + droppedTokenCol.toString());
       }
     }
 
@@ -261,9 +260,9 @@ public class ASTcreate_search_index_statement extends SimpleNode
               + droppedStoredCol.toString());
     }
 
-    for (ASTkey_part newToken : keyPartsDiff.entriesOnlyOnRight().values()) {
+    for (ASTpath newToken : keyPartsDiff.entriesOnlyOnRight().values()) {
       LOG.info(
-          "Adding token colum {} for search index: {}", newToken.getKeyPath(), original.getName());
+          "Adding token colum {} for search index: {}", newToken.toString(), original.getName());
 
       createStatements.add(
           "ALTER SEARCH INDEX " + original.getName() + " ADD COLUMN " + newToken.toString());

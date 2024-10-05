@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.23.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.22.3...v1.23.0) (2024-10-05)
+
+
+### Features
+
+* made some methods of DdlDiff and DatabaseDefinition public so that it can be invoked within a Java application. ([#158](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/158)) ([af1db7d](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/af1db7dd4ee2ba962604c5cea1b0e8f73dc04d1f))
+* make Spanner SQL DDL parsing public ([#169](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/169)) ([b1b237b](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/b1b237b32661a269f43d211baf5252c8362aa9d4))
+* support annotations in SQL file ([#171](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/171)) ([63efbd6](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/63efbd654ebeccecf15ec9f9ed6c9b041f296803))
+
+
+### Bug Fixes
+
+* delta generation for SEARCH INDEX as the ASC keyword is not supported ([#174](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/174)) ([897d4b0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/897d4b05030ccd41ae51c8cff377e9d70696b0e4))
+* **deps:** bump com.google.errorprone:error_prone_core ([#147](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/147)) ([170ac33](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/170ac3375a94c09a6a8788ec7f24eeacbb89d78b))
+* **deps:** bump com.google.guava:guava from 33.3.0-jre to 33.3.1-jre ([#172](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/172)) ([c367a81](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/c367a81502caffd893c05763945e61e984d24349))
+* **deps:** bump slf4j.version from 2.0.13 to 2.0.16 ([#151](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/151)) ([07a1bcf](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/07a1bcf15519ebfce0eb9a2fd3147874cff44d50))
+* **deps:** update dependency com.google.guava:guava to v33.3.0-jre ([#160](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/160)) ([3afddc1](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/3afddc10e5fd14f6a88dc805a7877dba8ab9e892))
+* **deps:** update dependency com.google.guava:guava to v33.3.1-jre ([#170](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/170)) ([b35161a](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/b35161a35fa6c7983c596067cb5ac7eb4472efcb))
+* **deps:** update dependency commons-cli:commons-cli to v1.9.0 ([#159](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/159)) ([ada63bb](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/ada63bbfd0e17d810de12cc207d2d8b790a81be6))
+* null options for equivalent change streams ([#163](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/163)) ([331b0fe](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/331b0fe79a315acf5ddfd52faf9c11a6920d5b0f))
+
 ## [1.22.3](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.22.2...v1.22.3) (2024-06-19)
 
 

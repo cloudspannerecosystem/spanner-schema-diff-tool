@@ -25,11 +25,14 @@ public class ASTgeneration_clause extends SimpleNode {
     super(p, id);
   }
 
+  public boolean isStored() {
+    return children.length > 1 && children[1].getClass() == ASTstored.class;
+  }
+
   @Override
   public String toString() {
     final ASTexpression exp = (ASTexpression) children[0];
-    final String storedOpt =
-        children.length > 1 && children[1].getClass() == ASTstored.class ? " STORED" : "";
+    final String storedOpt = isStored() ? " STORED" : "";
     return "AS ( " + exp.toString() + " )" + storedOpt;
   }
 

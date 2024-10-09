@@ -62,6 +62,10 @@ public class ASTcolumn_def extends SimpleNode {
     return AstTreeUtils.getOptionalChildByType(children, ASThidden.class) != null;
   }
 
+  public boolean isStored() {
+    return getGenerationClause() != null && getGenerationClause().isStored();
+  }
+
   @Override
   public String toString() {
     // check for unknown/unsupported children

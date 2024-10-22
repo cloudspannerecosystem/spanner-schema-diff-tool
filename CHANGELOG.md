@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.24.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.23.0...v1.24.0) (2024-10-22)
+
+
+### Features
+
+* expose isStored on column ([#177](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/177)) ([fe7fc2a](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/fe7fc2a1ffa526c9f587270b5ef85784be3d7b57))
+
+
+### Bug Fixes
+
+* equals ASTcheck_constraint ([#181](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/181)) ([fec08aa](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/fec08aa929524a0f5b70672cd317b17bc7dcf646))
+
 ## [1.23.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.22.3...v1.23.0) (2024-10-05)
 
 

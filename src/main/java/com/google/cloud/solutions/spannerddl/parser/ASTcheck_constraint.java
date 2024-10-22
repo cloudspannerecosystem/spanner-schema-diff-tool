@@ -51,7 +51,7 @@ public class ASTcheck_constraint extends SimpleNode {
 
   @Override
   public boolean equals(Object other) {
-    if (other instanceof ASTcolumn_def) {
+    if (other instanceof ASTcheck_constraint) {
       return this.toString().equals(other.toString());
     }
     return false;

@@ -38,7 +38,7 @@ public class ASTcreate_index_statement extends SimpleNode
   }
 
   public String getIndexName() {
-    return AstTreeUtils.getChildByType(children, ASTname.class).toString();
+    return AstTreeUtils.tokensToString(AstTreeUtils.getChildByType(children, ASTname.class), false);
   }
 
   @Override

@@ -44,7 +44,7 @@ public class ASTcreate_table_statement extends SimpleNode {
   }
 
   public String getTableName() {
-    return AstTreeUtils.tokensToString(AstTreeUtils.getChildByType(children, ASTname.class));
+    return AstTreeUtils.tokensToString(AstTreeUtils.getChildByType(children, ASTname.class), false);
   }
 
   public Map<String, ASTcolumn_def> getColumns() {

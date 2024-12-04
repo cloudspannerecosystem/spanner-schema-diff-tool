@@ -28,7 +28,7 @@ public class ASTcreate_change_stream_statement extends SimpleNode {
   }
 
   public String getName() {
-    return AstTreeUtils.getChildByType(children, ASTname.class).toString();
+    return AstTreeUtils.tokensToString(AstTreeUtils.getChildByType(children, ASTname.class), false);
   }
 
   public ASTchange_stream_for_clause getForClause() {

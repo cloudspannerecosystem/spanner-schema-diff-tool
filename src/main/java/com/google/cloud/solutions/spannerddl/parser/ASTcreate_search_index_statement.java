@@ -50,7 +50,7 @@ public class ASTcreate_search_index_statement extends SimpleNode
   }
 
   public String getName() {
-    return AstTreeUtils.tokensToString(getChildByType(children, ASTname.class));
+    return AstTreeUtils.tokensToString(AstTreeUtils.getChildByType(children, ASTname.class), false);
   }
 
   private void validateChildren() {

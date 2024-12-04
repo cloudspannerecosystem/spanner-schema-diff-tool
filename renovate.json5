@@ -1,0 +1,17 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(fix)",
+    ":enableVulnerabilityAlertsWithLabel(SECURITY)",
+  ],
+  packageRules: [
+    {
+      description: "Group updates for all maven packages",
+      matchDatasources: ["maven"],
+      groupName: "mvn-packages",
+    },
+  ],
+  rangeStrategy: "bump",
+}

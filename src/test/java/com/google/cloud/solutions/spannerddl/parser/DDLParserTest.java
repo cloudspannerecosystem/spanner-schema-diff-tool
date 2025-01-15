@@ -178,6 +178,14 @@ public class DDLParserTest {
     assertThat(statement).isEqualTo(statement2);
   }
 
+  @Test
+  public void ignoreCreateOrReplace() throws ParseException {
+    ASTcreate_or_replace_statement statement =
+        (ASTcreate_or_replace_statement)
+            parse("CREATE OR REPLACE SCHEMA schema_name").jjtGetChild(0);
+    assertThat(statement.toString()).isEqualTo("CREATE SCHEMA schema_name");
+  }
+
   private static void parseCheckingParseException(String ddlStatement, String exceptionContains) {
     ParseException e =
         assertThrows(ParseException.class, () -> parseAndVerifyToString(ddlStatement));

@@ -15,15 +15,56 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
-// TODO
+import static com.google.cloud.solutions.spannerddl.diff.AstTreeUtils.getChildByType;
+import static com.google.cloud.solutions.spannerddl.diff.AstTreeUtils.getOptionalChildByType;
+
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
+
 public class ASTcreate_schema_statement extends SimpleNode {
   public ASTcreate_schema_statement(int id) {
     super(id);
-    throw new UnsupportedOperationException("Not Implemented");
   }
 
   public ASTcreate_schema_statement(DdlParser p, int id) {
     super(p, id);
-    throw new UnsupportedOperationException("Not Implemented");
+  }
+
+  private void validateChildren() {
+    AstTreeUtils.validateChildrenClasses(
+        children, ImmutableSet.of(ASTif_not_exists.class, ASTname.class, ASToptions_clause.class));
+  }
+
+  @Override
+  public String toString() {
+    return toStringOptionalExistClause(true);
+  }
+
+  public String getName() {
+    return getChildByType(children, ASTname.class).toString();
+  }
+
+  /** Create string version, optionally including the IF NOT EXISTS clause */
+  public String toStringOptionalExistClause(boolean includeExists) {
+    validateChildren();
+    return Joiner.on(" ")
+        .skipNulls()
+        .join(
+            "CREATE",
+            "SCHEMA",
+            (includeExists ? getOptionalChildByType(children, ASTif_not_exists.class) : null),
+            getName(),
+            AstTreeUtils.getOptionalChildByType(children, ASToptions_clause.class));
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return (obj instanceof ASTcreate_schema_statement) && toString().equals(obj.toString());
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
   }
 }

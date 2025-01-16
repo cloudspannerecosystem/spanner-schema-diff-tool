@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.25.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.24.0...v1.25.0) (2025-01-16)
+
+
+### Features
+
+* Support for CREATE SCHEMA statements ([#197](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/197)) ([e19264c](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/e19264c2b66d92295cbea044e7772084b969d3d7))
+
+
+### Bug Fixes
+
+* **deps:** update mvn-packages ([#193](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/193)) ([1c9cc6f](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/1c9cc6f2bd887837da47cc1676e7dfa6b5e07d7d))
+
 ## [1.24.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.23.0...v1.24.0) (2024-12-04)
 
 

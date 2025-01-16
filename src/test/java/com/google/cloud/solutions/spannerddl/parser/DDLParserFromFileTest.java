@@ -35,9 +35,10 @@ public class DDLParserFromFileTest {
         assertWithMessage("Mismatch for section " + segmentName + ":")
             .that(parsedStatement.toString())
             .isEqualTo(ddlStatement);
-      } catch (ParseException e) {
+      } catch (Throwable e) {
+        e.printStackTrace(System.err);
         fail(
-            "Failed to parse section: '"
+            "Exception when parsing section: '"
                 + segmentName
                 + "': "
                 + e

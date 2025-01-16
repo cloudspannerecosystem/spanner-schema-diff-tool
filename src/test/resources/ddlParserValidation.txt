@@ -173,4 +173,16 @@ OPTIONS (sort_order_sharding=TRUE)
 
 CREATE CHANGE STREAM usage FOR table1
 
+== Test 17 create schema
+
+CREATE SCHEMA schema_name
+
+== Test 18 create schema if not exists
+
+CREATE SCHEMA IF NOT EXISTS schema_name
+
+== Test 18 create schema with options
+
+CREATE SCHEMA IF NOT EXISTS schema_name OPTIONS (opt1=TRUE)
+
 ==

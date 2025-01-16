@@ -335,4 +335,19 @@ ALTER SEARCH INDEX AlbumsIndex DROP STORED COLUMN scol1
 
 ALTER TABLE AlbumsIndex ADD COLUMN new_col STRING(255)
 
+== TEST 65 Adding new schema
+
+CREATE SCHEMA schema2
+
+== TEST 66 Dropping schema
+
+DROP SCHEMA schema2
+
+== TEST 67 Creating and dropping schema with tables in correct order
+
+DROP TABLE schema2.table1
+DROP SCHEMA schema2
+CREATE SCHEMA schema3
+CREATE TABLE schema3.table1 ( col1 INT64 ) PRIMARY KEY (col1 ASC)
+
 ==

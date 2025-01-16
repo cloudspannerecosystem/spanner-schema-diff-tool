@@ -15,6 +15,11 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
+import static com.google.cloud.solutions.spannerddl.diff.AstTreeUtils.getOptionalChildByType;
+
+import java.util.Objects;
+import java.util.stream.Stream;
+
 public class ASTcreate_or_replace_statement extends SimpleNode {
   public ASTcreate_or_replace_statement(int id) {
     super(id);
@@ -22,5 +27,31 @@ public class ASTcreate_or_replace_statement extends SimpleNode {
 
   public ASTcreate_or_replace_statement(DdlParser p, int id) {
     super(p, id);
+  }
+
+  public SimpleNode getSchemaObject() {
+    return Stream.of(
+            getOptionalChildByType(children, ASTcreate_view_statement.class),
+            getOptionalChildByType(children, ASTcreate_model_statement.class),
+            getOptionalChildByType(children, ASTcreate_schema_statement.class))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .get();
+  }
+
+  @Override
+  public String toString() {
+    return getSchemaObject().toString();
+  }
+
+  @Override
+  public int hashCode() {
+    return getSchemaObject().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof ASTcreate_or_replace_statement
+        && getSchemaObject().equals(((ASTcreate_or_replace_statement) obj).getSchemaObject());
   }
 }

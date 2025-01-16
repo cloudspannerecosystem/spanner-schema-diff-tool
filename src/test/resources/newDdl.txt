@@ -540,4 +540,27 @@ CREATE TABLE AlbumsIndex (
   new_col STRING(255),
 ) PRIMARY KEY (id)
 
+== TEST 65 Adding new schema
+
+CREATE SCHEMA schema1;
+CREATE SCHEMA schema2;
+
+== TEST 66 Dropping schema
+
+CREATE SCHEMA schema1;
+
+== TEST 67 Creating and dropping schema with tables in correct order
+
+CREATE SCHEMA schema1;
+
+CREATE TABLE schema1.table1 (
+  col1 INT64,
+)PRIMARY KEY (col1);
+
+CREATE SCHEMA schema3;
+
+CREATE TABLE schema3.table1 (
+  col1 INT64,
+)PRIMARY KEY (col1);
+
 ==

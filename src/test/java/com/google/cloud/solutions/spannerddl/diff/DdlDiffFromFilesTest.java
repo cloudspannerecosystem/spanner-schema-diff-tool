@@ -84,7 +84,7 @@ public class DdlDiffFromFilesTest {
                 .filter(
                     statement ->
                         !statement.matches(
-                            ".*DROP (SCHEMA|TABLE|COLUMN|CHANGE STREAM|SEARCH INDEX).*"))
+                            ".*DROP (SCHEMA|TABLE|COLUMN|CHANGE STREAM|SEARCH INDEX|VIEW).*"))
                 .collect(Collectors.toList());
 
         // remove any drop indexes from the expectedResults if they do not have an equivalent

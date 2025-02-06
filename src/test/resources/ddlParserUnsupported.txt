@@ -24,14 +24,6 @@ ALTER TABLE Albums DROP ROW DELETION POLICY
 ALTER TABLE Albums
 REPLACE ROW DELETION POLICY (OLDER_THAN(timestamp_column, INTERVAL 1 DAY))
 
-== Test 3
-
-CREATE OR REPLACE VIEW test1 SQL SECURITY INVOKER AS SELECT * from test2
-
-== Test 4
-
-CREATE  VIEW test1 SQL SECURITY INVOKER AS SELECT * from test2
-
 == Test 6
 
 drop change stream test1
@@ -67,18 +59,6 @@ GRANT SELECT ON TABLE table_list TO ROLE role_list
 == Test 11b revoke grant not supported
 
 REVOKE SELECT ON TABLE table_list TO ROLE role_list
-
-== Test 12a // TODO views
-
-CREATE VIEW view_name AS query
-
-== Test 12b drop view not supported
-
-DROP VIEW view_name
-
-== Test 13 // TODO views
-
-CREATE OR REPLACE VIEW view_name AS query
 
 == Test 14a // TODO sequences
 

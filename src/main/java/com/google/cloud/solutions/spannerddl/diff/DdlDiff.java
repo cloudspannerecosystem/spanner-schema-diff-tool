@@ -200,10 +200,13 @@ public class DdlDiff {
       }
     }
 
-    // Drop deleted views.
-    if (options.get(ALLOW_DROP_STATEMENTS_OPT)) {
-      for (String viewName : viewDifferences.entriesOnlyOnLeft().keySet()) {
-        LOG.info("Dropping deleted view: {}", viewName);
+    // Drop views in original order
+    for (String viewName : originalDb.views().keySet().asList().reverse()) {
+      if (viewDifferences.entriesDiffering().containsKey(viewName)) {
+        LOG.info( "Dropping changed view for re-creation: {}", viewName);
+        output.add("DROP VIEW " + viewName);
+      } else if (options.get(ALLOW_DROP_STATEMENTS_OPT) && viewDifferences.entriesOnlyOnLeft().containsKey(viewName)){
+        LOG.info( "Dropping deleted view: {}", viewName);
         output.add("DROP VIEW " + viewName);
       }
     }
@@ -435,19 +438,15 @@ public class DdlDiff {
     // For each changed search index, apply the add column statements
     output.addAll(searchIndexUpdateStatements.createStatements());
 
-    // Add all new search indexes
-
-    // Create new views.
-    for (ASTcreate_view_statement view : viewDifferences.entriesOnlyOnRight().values()) {
-      LOG.info("Creating new view: {}", view.getName());
-      output.add("CREATE OR REPLACE " + view.toStringBase());
-    }
-
-    // Alter existing views.
-    for (ValueDifference<ASTcreate_view_statement> difference :
-            viewDifferences.entriesDiffering().values()) {
-      LOG.info("Altering modified view: {}", difference.leftValue().getName());
-      output.add("CREATE OR REPLACE " + difference.leftValue().toStringBase());
+    // Create or alter views in new order.
+    for (ASTcreate_view_statement view : newDb.views().values()) {
+      if (viewDifferences.entriesOnlyOnRight().containsKey(view.getName())) {
+        LOG.info("Creating new view: {}", view.getName());
+        output.add("CREATE OR REPLACE " + view.toStringBase());
+      } else if (viewDifferences.entriesDiffering().containsKey(view.getName())) {
+        LOG.info("Re-creating new view: {}", view.getName());
+        output.add("CREATE OR REPLACE " + view.toStringBase());
+      }
     }
 
     return output.build();

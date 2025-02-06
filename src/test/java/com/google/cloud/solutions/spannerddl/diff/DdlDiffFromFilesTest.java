@@ -84,8 +84,22 @@ public class DdlDiffFromFilesTest {
                 .filter(
                     statement ->
                         !statement.matches(
-                            ".*DROP (SCHEMA|TABLE|COLUMN|CHANGE STREAM|SEARCH INDEX|VIEW).*"))
+                            ".*DROP (SCHEMA|TABLE|COLUMN|CHANGE STREAM|SEARCH INDEX).*"))
                 .collect(Collectors.toList());
+
+        // remove any drop views from the expectedResults if they do not have an equivalent
+        // CREATE statement. This is because we are allowing recreation of views, but not allowing
+        // dropping of removed views.
+        for (String statement : expectedDiff) {
+          if (statement.startsWith("DROP VIEW ")) {
+            String viewName = Iterables.get(Splitter.on(' ').split(statement), 2);
+            // see if there is a matching create statement
+            Pattern p = Pattern.compile("CREATE .*VIEW " + viewName + " ");
+            if (expectedDiffNoDrops.stream().noneMatch(s -> p.matcher(s).find())) {
+              expectedDiffNoDrops.remove(statement);
+            }
+          }
+        }
 
         // remove any drop indexes from the expectedResults if they do not have an equivalent
         // CREATE statement. This is because we are allowing recreation of indexes, but not allowing

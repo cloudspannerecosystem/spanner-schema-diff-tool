@@ -31,6 +31,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_stateme
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_schema_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_view_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTforeign_key;
 import com.google.cloud.solutions.spannerddl.parser.ASToptions_clause;
@@ -103,6 +104,7 @@ public class DdlDiff {
   private final MapDifference<String, ASTcreate_search_index_statement> searchIndexDifferences;
   private final String databaseName; // for alter Database
   private final MapDifference<String, ASTcreate_schema_statement> schemaDifferences;
+  private final MapDifference<String, ASTcreate_view_statement> viewDifferences;
 
   private DdlDiff(DatabaseDefinition originalDb, DatabaseDefinition newDb, String databaseName)
       throws DdlDiffException {
@@ -122,6 +124,7 @@ public class DdlDiff {
     this.searchIndexDifferences =
         Maps.difference(originalDb.searchIndexes(), newDb.searchIndexes());
     this.schemaDifferences = Maps.difference(originalDb.schemas(), newDb.schemas());
+    this.viewDifferences = Maps.difference(originalDb.views(), newDb.views());
 
     if (!alterDatabaseOptionsDifferences.areEqual() && Strings.isNullOrEmpty(databaseName)) {
       // should never happen, but...
@@ -194,6 +197,17 @@ public class DdlDiff {
       for (String changeStreamName : changeStreamDifferences.entriesOnlyOnLeft().keySet()) {
         LOG.info("Dropping deleted change stream: {}", changeStreamName);
         output.add("DROP CHANGE STREAM " + changeStreamName);
+      }
+    }
+
+    // Drop views in original order
+    for (String viewName : originalDb.views().keySet().asList().reverse()) {
+      if (viewDifferences.entriesDiffering().containsKey(viewName)) {
+        LOG.info( "Dropping changed view for re-creation: {}", viewName);
+        output.add("DROP VIEW " + viewName);
+      } else if (options.get(ALLOW_DROP_STATEMENTS_OPT) && viewDifferences.entriesOnlyOnLeft().containsKey(viewName)){
+        LOG.info( "Dropping deleted view: {}", viewName);
+        output.add("DROP VIEW " + viewName);
       }
     }
 
@@ -424,7 +438,16 @@ public class DdlDiff {
     // For each changed search index, apply the add column statements
     output.addAll(searchIndexUpdateStatements.createStatements());
 
-    // Add all new search indexes
+    // Create or alter views in new order.
+    for (ASTcreate_view_statement view : newDb.views().values()) {
+      if (viewDifferences.entriesOnlyOnRight().containsKey(view.getName())) {
+        LOG.info("Creating new view: {}", view.getName());
+        output.add("CREATE OR REPLACE " + view.toStringBase());
+      } else if (viewDifferences.entriesDiffering().containsKey(view.getName())) {
+        LOG.info("Re-creating new view: {}", view.getName());
+        output.add("CREATE OR REPLACE " + view.toStringBase());
+      }
+    }
 
     return output.build();
   }
@@ -813,6 +836,7 @@ public class DdlDiff {
             break;
           case DdlParserTreeConstants.JJTCREATE_INDEX_STATEMENT:
           case DdlParserTreeConstants.JJTALTER_DATABASE_STATEMENT:
+          case DdlParserTreeConstants.JJTCREATE_VIEW_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_CHANGE_STREAM_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_SEARCH_INDEX_STATEMENT:
             // no-op - allowed
@@ -823,6 +847,7 @@ public class DdlDiff {
                 .getSchemaObject()
                 .getId()) {
               case DdlParserTreeConstants.JJTCREATE_SCHEMA_STATEMENT:
+              case DdlParserTreeConstants.JJTCREATE_VIEW_STATEMENT:
                 // no-op - allowed
                 break;
               default:

@@ -25,7 +25,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>8</maven.compiler.source>
     <maven.compiler.target>8</maven.compiler.target>
-    <guava.version>33.4.0-jre</guava.version>
+    <guava.version>33.4.7-jre</guava.version>
     <slf4j.version>2.0.16</slf4j.version>
     <commons-cli.version>1.9.0</commons-cli.version>
     <maven-clean-plugin.version>3.4.0</maven-clean-plugin.version>

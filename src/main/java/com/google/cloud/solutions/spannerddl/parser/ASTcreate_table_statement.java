@@ -135,7 +135,12 @@ public class ASTcreate_table_statement extends SimpleNode {
                     getOptionalChildByType(children, ASTtable_interleave_clause.class),
                     (withConstraints
                         ? getOptionalChildByType(children, ASTrow_deletion_policy_clause.class)
-                        : null)));
+                        : null),
+                    getOptions()));
+  }
+
+  public ASToptions_clause getOptions() {
+    return getOptionalChildByType(children, ASToptions_clause.class);
   }
 
   private void validateChildren() {
@@ -151,9 +156,8 @@ public class ASTcreate_table_statement extends SimpleNode {
             // ASTsynonym_clause.class,
             ASTannotation.class,
             ASTtable_interleave_clause.class,
-            ASTrow_deletion_policy_clause.class
-            // ASToptions_clause.class
-            ));
+            ASTrow_deletion_policy_clause.class,
+            ASToptions_clause.class));
   }
 
   @Override

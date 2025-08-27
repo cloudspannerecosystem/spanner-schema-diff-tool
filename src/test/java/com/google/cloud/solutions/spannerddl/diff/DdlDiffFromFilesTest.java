@@ -126,7 +126,8 @@ public class DdlDiffFromFilesTest {
         expectedDiff.stream()
             .filter(
                 statement ->
-                    !statement.matches(".*DROP (SCHEMA|TABLE|COLUMN|CHANGE STREAM|SEARCH INDEX).*"))
+                    !statement.matches(
+                        ".*DROP (SCHEMA|TABLE|COLUMN|CHANGE STREAM|SEARCH INDEX|LOCALITY GROUP).*"))
             .collect(Collectors.toList());
 
     // remove any drop indexes from the expectedResults if they do not have an equivalent

@@ -350,4 +350,34 @@ DROP SCHEMA schema2
 CREATE SCHEMA schema3
 CREATE TABLE schema3.table1 ( col1 INT64 ) PRIMARY KEY (col1)
 
+== test 68 Add locality_group
+
+CREATE LOCALITY GROUP lg2 OPTIONS (storage='hdd')
+
+== test 69 drop locality group
+
+DROP LOCALITY GROUP lg2
+
+== test 70 change locality_group
+
+ALTER LOCALITY GROUP lg1 SET OPTIONS (ssd_to_hdd_spill_timespan='10d',storage='ssd')
+
+== test 71 add locality_group to table
+
+ALTER TABLE mytable SET OPTIONS (locality_group='lg1')
+
+== test 72 remove locality_group from table and drop
+
+ALTER TABLE mytable SET OPTIONS (locality_group=NULL)
+DROP LOCALITY GROUP lg1
+
+== test 73 change locality_group in table
+
+ALTER TABLE mytable SET OPTIONS (locality_group='lg2')
+
+== test 74 table with options
+
+ALTER TABLE mytable SET OPTIONS (droppedKey=NULL,newKey='value2')
+
 ==
+

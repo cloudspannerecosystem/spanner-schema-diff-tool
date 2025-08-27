@@ -563,4 +563,33 @@ CREATE TABLE schema3.table1 (
   col1 INT64,
 )PRIMARY KEY (col1);
 
+== test 68 Add locality_group
+
+CREATE LOCALITY GROUP lg1 OPTIONS (storage='ssd');
+CREATE LOCALITY GROUP lg2 OPTIONS (storage='hdd');
+
+== test 69 drop locality group
+
+CREATE LOCALITY GROUP lg1 OPTIONS (storage='ssd');
+
+== test 70 change locality_group
+
+CREATE LOCALITY GROUP lg1 OPTIONS (storage = 'ssd', ssd_to_hdd_spill_timespan = '10d');
+
+== test 71 add locality_group to table
+
+create table mytable (keycol int64) primary key(keycol), OPTIONS(locality_group = 'lg1');
+
+== test 72 remove locality_group from table and drop
+
+create table mytable (keycol int64) primary key(keycol);
+
+== test 73 change locality_group in table
+
+create table mytable (keycol int64) primary key(keycol), OPTIONS(locality_group = 'lg2')
+
+== test 74 table with options
+
+create table mytable (keycol int64) primary key(keycol), OPTIONS(existingKey='value', newKey='value2')
+
 ==

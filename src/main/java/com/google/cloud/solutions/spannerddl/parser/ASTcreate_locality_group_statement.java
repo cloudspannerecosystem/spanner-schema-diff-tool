@@ -15,15 +15,51 @@
  */
 package com.google.cloud.solutions.spannerddl.parser;
 
+import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
+import java.util.Objects;
+
 public class ASTcreate_locality_group_statement extends SimpleNode {
   public ASTcreate_locality_group_statement(int id) {
     super(id);
-    throw new UnsupportedOperationException("Not Implemented");
   }
 
   public ASTcreate_locality_group_statement(DdlParser p, int id) {
     super(p, id);
-    throw new UnsupportedOperationException("Not Implemented");
+  }
+
+  public String getNameOrDefault() {
+    ASTname name = AstTreeUtils.getOptionalChildByType(children, ASTname.class);
+    if (name == null) {
+      throw new IllegalArgumentException("Cannot create DEFAULT locality group");
+    }
+    return name.toString();
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
+
+  @Override
+  public String toString() {
+    AstTreeUtils.validateChildrenClasses(
+        children,
+        ImmutableSet.of(
+            ASTname.class, ASTdefaultt.class, ASTif_not_exists.class, ASToptions_clause.class));
+
+    return Joiner.on(" ")
+        .skipNulls()
+        .join(
+            "CREATE LOCALITY GROUP",
+            Objects.toString(
+                AstTreeUtils.getOptionalChildByType(children, ASTif_not_exists.class), null),
+            getNameOrDefault(),
+            getOptionsClause());
+  }
+
+  public ASToptions_clause getOptionsClause() {
+    return AstTreeUtils.getOptionalChildByType(children, ASToptions_clause.class);
   }
 }
-/* ParserGeneratorCC - OriginalChecksum=71ef8285a44bd93d58a5f657d4fd3b78 (do not edit this line) */

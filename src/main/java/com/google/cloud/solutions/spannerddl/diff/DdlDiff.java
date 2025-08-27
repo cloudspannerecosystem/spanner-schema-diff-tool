@@ -28,6 +28,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_type;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumns;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_change_stream_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_locality_group_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_schema_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
@@ -107,6 +108,7 @@ public class DdlDiff {
   private final MapDifference<String, ASTcreate_search_index_statement> searchIndexDifferences;
   private final String databaseName; // for alter Database
   private final MapDifference<String, ASTcreate_schema_statement> schemaDifferences;
+  private final MapDifference<String, ASTcreate_locality_group_statement> localityGroupDifferences;
 
   private DdlDiff(DatabaseDefinition originalDb, DatabaseDefinition newDb, String databaseName)
       throws DdlDiffException {
@@ -126,6 +128,8 @@ public class DdlDiff {
     this.searchIndexDifferences =
         Maps.difference(originalDb.searchIndexes(), newDb.searchIndexes());
     this.schemaDifferences = Maps.difference(originalDb.schemas(), newDb.schemas());
+    this.localityGroupDifferences =
+        Maps.difference(originalDb.localityGroups(), newDb.localityGroups());
 
     if (!alterDatabaseOptionsDifferences.areEqual() && Strings.isNullOrEmpty(databaseName)) {
       // should never happen, but...
@@ -269,12 +273,47 @@ public class DdlDiff {
       }
     }
 
+    // Create new locality groups
+    for (ASTcreate_locality_group_statement lg :
+        localityGroupDifferences.entriesOnlyOnRight().values()) {
+      LOG.info("Creating new locality group: {}", lg.getNameOrDefault());
+      output.add(lg.toString());
+    }
+
     // Alter existing tables, or error if not possible.
     for (ValueDifference<ASTcreate_table_statement> difference :
         tableDifferences.entriesDiffering().values()) {
       LOG.info("Altering modified table: {}", difference.leftValue().getTableName());
       output.addAll(
           generateAlterTableStatements(difference.leftValue(), difference.rightValue(), options));
+    }
+
+    // Drop deleted locality groups.
+    if (options.get(ALLOW_DROP_STATEMENTS_OPT)) {
+      for (ASTcreate_locality_group_statement lg :
+          localityGroupDifferences.entriesOnlyOnLeft().values()) {
+        LOG.info("Dropping deleted locality group: {}", lg.getNameOrDefault());
+        output.add("DROP LOCALITY GROUP " + lg.getNameOrDefault());
+      }
+    }
+
+    // update existing locality groups (options only)
+    for (ValueDifference<ASTcreate_locality_group_statement> lgDiff :
+        localityGroupDifferences.entriesDiffering().values()) {
+      ASTcreate_locality_group_statement left = lgDiff.leftValue();
+      ASTcreate_locality_group_statement right = lgDiff.rightValue();
+
+      // Only OPTIONS diffs are supported
+      String updateText =
+          generateOptionsClauseUpdates(left.getOptionsClause(), right.getOptionsClause());
+      if (!Strings.isNullOrEmpty(updateText)) {
+        output.add(
+            "ALTER LOCALITY GROUP "
+                + right.getNameOrDefault()
+                + " SET OPTIONS ("
+                + updateText
+                + ")");
+      }
     }
 
     // create schemas
@@ -395,19 +434,10 @@ public class DdlDiff {
       if (!oldOptions.equals(newOptions)) {
 
         // need to look at old and new options values individually
-
-        Map<String, String> oldOptionsKv =
-            changedChangeStream.leftValue().getOptionsClause() == null
-                ? Map.of()
-                : changedChangeStream.leftValue().getOptionsClause().getKeyValueMap();
-
-        Map<String, String> newOptionsKv =
-            changedChangeStream.rightValue().getOptionsClause() == null
-                ? Map.of()
-                : changedChangeStream.rightValue().getOptionsClause().getKeyValueMap();
-
-        String optionsDiff = generateOptionsUpdates(Maps.difference(oldOptionsKv, newOptionsKv));
-
+        String optionsDiff =
+            generateOptionsClauseUpdates(
+                changedChangeStream.leftValue().getOptionsClause(),
+                changedChangeStream.rightValue().getOptionsClause());
         if (optionsDiff != null) {
           output.add(
               "ALTER CHANGE STREAM "
@@ -455,6 +485,7 @@ public class DdlDiff {
     //   - Add cols
     //   - drop cols (if enabled)
     //   - change on-delete action for interleaved
+    //   - update options
     // ALTER TABLE ALTER COLUMN can:
     //   - change options on column
     //   - change not null on column.
@@ -510,6 +541,13 @@ public class DdlDiff {
     for (ValueDifference<ASTcolumn_def> columnDiff :
         columnDifferences.entriesDiffering().values()) {
       addColumnDiffs(left.getTableName(), alterStatements, columnDiff);
+    }
+
+    // Table Options clause changes
+    String updateText = generateOptionsClauseUpdates(left.getOptions(), right.getOptions());
+    if (!Strings.isNullOrEmpty(updateText)) {
+      alterStatements.add(
+          "ALTER TABLE " + left.getTableName() + " SET OPTIONS (" + updateText + ")");
     }
 
     return alterStatements;
@@ -591,16 +629,9 @@ public class DdlDiff {
     }
 
     // Update options.
-    ASToptions_clause leftOptionsClause = columnDiff.leftValue().getOptionsClause();
-    ASToptions_clause rightOptionsClause = columnDiff.rightValue().getOptionsClause();
-    Map<String, String> leftOptions =
-        leftOptionsClause == null ? Collections.emptyMap() : leftOptionsClause.getKeyValueMap();
-    Map<String, String> rightOptions =
-        rightOptionsClause == null ? Collections.emptyMap() : rightOptionsClause.getKeyValueMap();
-    MapDifference<String, String> optionsDiff = Maps.difference(leftOptions, rightOptions);
-
-    String updateText = generateOptionsUpdates(optionsDiff);
-
+    String updateText =
+        generateOptionsClauseUpdates(
+            columnDiff.leftValue().getOptionsClause(), columnDiff.rightValue().getOptionsClause());
     if (!Strings.isNullOrEmpty(updateText)) {
       alterStatements.add(
           "ALTER TABLE "
@@ -637,6 +668,16 @@ public class DdlDiff {
                 + newDefaultValue);
       }
     }
+  }
+
+  private static String generateOptionsClauseUpdates(
+      ASToptions_clause leftOptionsClause, ASToptions_clause rightOptionsClause) {
+    Map<String, String> leftOptions =
+        leftOptionsClause == null ? Collections.emptyMap() : leftOptionsClause.getKeyValueMap();
+    Map<String, String> rightOptions =
+        rightOptionsClause == null ? Collections.emptyMap() : rightOptionsClause.getKeyValueMap();
+    MapDifference<String, String> optionsDiff = Maps.difference(leftOptions, rightOptions);
+    return generateOptionsUpdates(optionsDiff);
   }
 
   private static String generateOptionsUpdates(MapDifference<String, String> optionsDiff) {
@@ -820,6 +861,7 @@ public class DdlDiff {
           case DdlParserTreeConstants.JJTALTER_DATABASE_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_CHANGE_STREAM_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_SEARCH_INDEX_STATEMENT:
+          case DdlParserTreeConstants.JJTCREATE_LOCALITY_GROUP_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_PROTO_BUNDLE_STATEMENT:
           case DdlParserTreeConstants.JJTALTER_PROTO_BUNDLE_STATEMENT:
             // no-op - allowed

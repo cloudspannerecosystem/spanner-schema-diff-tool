@@ -183,11 +183,11 @@ ALTER PLACEMENT p1 SET OPTIONS (instance_partition = 'us-central1')
 
 CREATE FUNCTION udf_simple_add(a INT64, b INT64) RETURNS INT64 AS (a + b)
 
-== Test 22a create locality_group
+== Test 22a create default locality_group
 
-create LOCALITY GROUP lg OPTIONS (storage = 'hdd', ssd_to_hdd_spill_timespan = '1h')
+create LOCALITY GROUP DEFAULT OPTIONS (storage = 'hdd', ssd_to_hdd_spill_timespan = '1h')
 
-== Test 22b alter locality_group
+== Test 22c alter locality_group
 
 ALTER LOCALITY GROUP lg SET OPTIONS (storage = 'hdd', ssd_to_hdd_spill_timespan = '1h')
 
@@ -235,13 +235,6 @@ CREATE TABLE test1 (
   keycol INT64,
   value INT64 DEFAULT (keycol * 100 + PI ( ))
 )
-
-== Test 29 create table options clause
-
-CREATE TABLE test1 (
-  keycol INT64,
-  value INT64 DEFAULT (keycol * 100 + PI ( ))
-) PRIMARY KEY (keycol ASC), OPTIONS ( key = 'value')
 
 == Test 30 create table column on update clause
 

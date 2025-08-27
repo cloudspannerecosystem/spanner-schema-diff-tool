@@ -185,4 +185,15 @@ CREATE SCHEMA IF NOT EXISTS schema_name
 
 CREATE SCHEMA IF NOT EXISTS schema_name OPTIONS (opt1=TRUE)
 
+== Test 19 create locality_group
+
+CREATE LOCALITY GROUP lg OPTIONS (storage='hdd',ssd_to_hdd_spill_timespan='1h')
+
+== Test 20 create table with options clause
+
+CREATE TABLE test1 (
+  keycol INT64,
+  value INT64
+) PRIMARY KEY (keycol ASC), OPTIONS (key='value')
+
 ==

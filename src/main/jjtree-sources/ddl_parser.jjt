@@ -350,7 +350,7 @@ void synonym_clause() :
 void table_interleave_clause() :
 {}
 {
-  <INTERLEAVE> <IN> <PARENT> qualified_identifier() #interleave_in
+  <INTERLEAVE> <IN> [ ( <PARENT> #parent ) ] qualified_identifier() #interleave_in
     [ on_delete_clause() ]
 }
 

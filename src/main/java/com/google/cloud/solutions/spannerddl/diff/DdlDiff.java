@@ -36,6 +36,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTforeign_key;
 import com.google.cloud.solutions.spannerddl.parser.ASToptions_clause;
 import com.google.cloud.solutions.spannerddl.parser.ASTrow_deletion_policy_clause;
+import com.google.cloud.solutions.spannerddl.parser.ASTtable_interleave_clause;
 import com.google.cloud.solutions.spannerddl.parser.DdlParser;
 import com.google.cloud.solutions.spannerddl.parser.DdlParserTreeConstants;
 import com.google.cloud.solutions.spannerddl.parser.ParseException;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -500,36 +502,51 @@ public class DdlDiff {
     //   - change not null on column.
     // note that constraints need to be dropped before columns, and created after columns.
 
-    // Check interleaving has not changed.
-    if (left.getInterleaveClause().isPresent() != right.getInterleaveClause().isPresent()) {
-      throw new DdlDiffException("Cannot change interleaving on table " + left.getTableName());
-    }
-
-    if (left.getInterleaveClause().isPresent()
-        && !left.getInterleaveClause()
-            .get()
-            .getParentTableName()
-            .equals(right.getInterleaveClause().get().getParentTableName())) {
-      throw new DdlDiffException(
-          "Cannot change interleaved parent of table " + left.getTableName());
-    }
-
     // Check Key is same
     if (!left.getPrimaryKey().toString().equals(right.getPrimaryKey().toString())) {
       throw new DdlDiffException("Cannot change primary key of table " + left.getTableName());
     }
 
-    // On delete changed
-    if (left.getInterleaveClause().isPresent()
-        && !left.getInterleaveClause()
-            .get()
-            .getOnDelete()
-            .equals(right.getInterleaveClause().get().getOnDelete())) {
-      alterStatements.add(
-          "ALTER TABLE "
-              + left.getTableName()
-              + " SET "
-              + right.getInterleaveClause().get().getOnDelete());
+    // Interleaving changed (added, parent changed, or ON DELETE changed)
+    final Optional<ASTtable_interleave_clause> leftInterleave = left.getInterleaveClause();
+    final Optional<ASTtable_interleave_clause> rightInterleave = right.getInterleaveClause();
+
+    if (leftInterleave.isPresent() != rightInterleave.isPresent()) {
+      if (rightInterleave.isPresent()) {
+        // Added interleave
+        ASTtable_interleave_clause ri = rightInterleave.get();
+        alterStatements.add(
+            Joiner.on(" ")
+                .skipNulls()
+                .join(
+                    "ALTER TABLE",
+                    left.getTableName(),
+                    "SET INTERLEAVE IN",
+                    (ri.hasParentKeyword() ? "PARENT" : null),
+                    ri.getParentTableName(),
+                    ri.getOnDelete()));
+      } else {
+        // Removal not supported
+        throw new DdlDiffException(
+            "Cannot change interleaving on table " + left.getTableName());
+      }
+    } else if (leftInterleave.isPresent()) {
+      ASTtable_interleave_clause li = leftInterleave.get();
+      ASTtable_interleave_clause ri = rightInterleave.get();
+      if (!li.getParentTableName().equals(ri.getParentTableName())
+          || !li.getOnDelete().equals(ri.getOnDelete())
+          || li.hasParentKeyword() != ri.hasParentKeyword()) {
+        alterStatements.add(
+            Joiner.on(" ")
+                .skipNulls()
+                .join(
+                    "ALTER TABLE",
+                    left.getTableName(),
+                    "SET INTERLEAVE IN",
+                    (ri.hasParentKeyword() ? "PARENT" : null),
+                    ri.getParentTableName(),
+                    ri.getOnDelete()));
+      }
     }
 
     // compare columns.

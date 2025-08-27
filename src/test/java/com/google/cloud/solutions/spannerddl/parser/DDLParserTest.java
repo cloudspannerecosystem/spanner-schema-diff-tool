@@ -179,6 +179,21 @@ public class DDLParserTest {
   }
 
   @Test
+  public void parseCreateTable_interleaveWithoutParent_parsesAndNormalizes() throws ParseException {
+    // Input omits PARENT, parser should accept and normalize to include PARENT in toString
+    ASTcreate_table_statement stmt =
+        (ASTcreate_table_statement)
+            parse(
+                    "CREATE TABLE t (k INT64) PRIMARY KEY (k), INTERLEAVE IN parent_table")
+                .jjtGetChild(0);
+
+    // Output preserves omission of PARENT when not provided
+    assertThat(stmt.toString())
+        .isEqualTo(
+            "CREATE TABLE t ( k INT64 ) PRIMARY KEY (k ASC), INTERLEAVE IN parent_table ON DELETE NO ACTION");
+  }
+
+  @Test
   public void ignoreCreateOrReplace() throws ParseException {
     ASTcreate_or_replace_statement statement =
         (ASTcreate_or_replace_statement)

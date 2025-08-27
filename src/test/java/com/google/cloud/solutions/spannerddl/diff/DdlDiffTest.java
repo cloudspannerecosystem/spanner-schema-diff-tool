@@ -300,14 +300,15 @@ public class DdlDiffTest {
         true,
         "Cannot change interleaving on table test1");
 
-    // remove different parent
-    getDiffCheckDdlDiffException(
-        "create table test1 (col1 int64, col2 int64) "
-            + "primary key (col1), interleave in parent testparent;",
-        "create table test1 (col1 int64, col2 int64) "
-            + "primary key (col1), interleave in parent otherparent",
-        true,
-        "Cannot change interleaved parent of table test1");
+    // change parent should generate ALTER
+    assertThat(
+            getDiff(
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in parent testparent;",
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in parent otherparent",
+                true))
+        .containsExactly("ALTER TABLE test1 SET INTERLEAVE IN PARENT otherparent ON DELETE NO ACTION");
 
     // change on delete
     assertThat(
@@ -317,7 +318,7 @@ public class DdlDiffTest {
                 "create table test1 (col1 int64, col2 int64) "
                     + "primary key (col1), interleave in parent testparent",
                 true))
-        .containsExactly("ALTER TABLE test1 SET ON DELETE NO ACTION");
+        .containsExactly("ALTER TABLE test1 SET INTERLEAVE IN PARENT testparent ON DELETE NO ACTION");
     // change on delete
     assertThat(
             getDiff(
@@ -326,7 +327,7 @@ public class DdlDiffTest {
                 "create table test1 (col1 int64, col2 int64) "
                     + "primary key (col1), interleave in parent testparent on delete cascade",
                 true))
-        .containsExactly("ALTER TABLE test1 SET ON DELETE CASCADE");
+        .containsExactly("ALTER TABLE test1 SET INTERLEAVE IN PARENT testparent ON DELETE CASCADE");
   }
 
   @Test
@@ -384,7 +385,7 @@ public class DdlDiffTest {
                 true)) // allow drop
         .containsExactly(
             // change table options.
-            "ALTER TABLE test1 SET ON DELETE CASCADE",
+            "ALTER TABLE test1 SET INTERLEAVE IN PARENT testparent ON DELETE CASCADE",
             // then drop cols
             "ALTER TABLE test1 DROP COLUMN col2",
             // then add cols
@@ -562,6 +563,35 @@ public class DdlDiffTest {
             "CREATE LOCALITY GROUP lg OPTIONS (x=NULL,y=TRUE,z=123)");
     assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true)))
         .containsExactly("ALTER LOCALITY GROUP lg SET OPTIONS (x=NULL,y=TRUE,z=123)");
+  }
+
+  @Test
+  public void alterTable_interleaveOnDeleteChange_generatesAlter() throws DdlDiffException {
+    String original =
+        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN PARENT p ON DELETE NO ACTION;";
+    String updated =
+        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN p ON DELETE CASCADE;";
+    assertThat(getDiff(original, updated, true))
+        .containsExactly("ALTER TABLE c SET INTERLEAVE IN p ON DELETE CASCADE");
+  }
+
+  @Test
+  public void alterTable_interleaveParentChange_generatesAlter() throws DdlDiffException {
+    String original =
+        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN PARENT p1 ON DELETE CASCADE;";
+    String updated =
+        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN p2 ON DELETE CASCADE;";
+    assertThat(getDiff(original, updated, true))
+        .containsExactly("ALTER TABLE c SET INTERLEAVE IN p2 ON DELETE CASCADE");
+  }
+
+  @Test
+  public void alterTable_interleaveAdded_generatesAlter() throws DdlDiffException {
+    String original = "CREATE TABLE c (k INT64) PRIMARY KEY (k);";
+    String updated =
+        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN p ON DELETE NO ACTION;";
+    assertThat(getDiff(original, updated, true))
+        .containsExactly("ALTER TABLE c SET INTERLEAVE IN p ON DELETE NO ACTION");
   }
 
   @Test

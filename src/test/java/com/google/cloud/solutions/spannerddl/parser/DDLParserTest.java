@@ -186,6 +186,33 @@ public class DDLParserTest {
     assertThat(statement.toString()).isEqualTo("CREATE SCHEMA schema_name");
   }
 
+  @Test
+  public void parseCreateLocalityGroupNamed() throws ParseException {
+    ASTcreate_locality_group_statement statement =
+        (ASTcreate_locality_group_statement)
+            parse("CREATE LOCALITY GROUP lg OPTIONS (opt1=TRUE,opt2=123)").jjtGetChild(0);
+    assertThat(statement.toString())
+        .isEqualTo("CREATE LOCALITY GROUP lg OPTIONS (opt1=TRUE,opt2=123)");
+
+    ASTcreate_locality_group_statement statement2 =
+        (ASTcreate_locality_group_statement)
+            parseAndVerifyToString(statement.toString()).jjtGetChild(0);
+    assertThat(statement).isEqualTo(statement2);
+  }
+
+  @Test
+  public void parseCreateLocalityGroupDefault() throws ParseException {
+    ASTcreate_locality_group_statement statement =
+        (ASTcreate_locality_group_statement)
+            parse("CREATE LOCALITY GROUP DEFAULT").jjtGetChild(0);
+    assertThat(statement.toString()).isEqualTo("CREATE LOCALITY GROUP DEFAULT");
+
+    ASTcreate_locality_group_statement statement2 =
+        (ASTcreate_locality_group_statement)
+            parseAndVerifyToString(statement.toString()).jjtGetChild(0);
+    assertThat(statement).isEqualTo(statement2);
+  }
+
   private static void parseCheckingParseException(String ddlStatement, String exceptionContains) {
     ParseException e =
         assertThrows(ParseException.class, () -> parseAndVerifyToString(ddlStatement));

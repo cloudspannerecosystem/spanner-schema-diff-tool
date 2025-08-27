@@ -28,6 +28,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_type;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_change_stream_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_locality_group_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_schema_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
@@ -103,6 +104,8 @@ public class DdlDiff {
   private final MapDifference<String, ASTcreate_search_index_statement> searchIndexDifferences;
   private final String databaseName; // for alter Database
   private final MapDifference<String, ASTcreate_schema_statement> schemaDifferences;
+  private final MapDifference<String, ASTcreate_locality_group_statement>
+      localityGroupDifferences;
 
   private DdlDiff(DatabaseDefinition originalDb, DatabaseDefinition newDb, String databaseName)
       throws DdlDiffException {
@@ -122,6 +125,8 @@ public class DdlDiff {
     this.searchIndexDifferences =
         Maps.difference(originalDb.searchIndexes(), newDb.searchIndexes());
     this.schemaDifferences = Maps.difference(originalDb.schemas(), newDb.schemas());
+    this.localityGroupDifferences =
+        Maps.difference(originalDb.localityGroups(), newDb.localityGroups());
 
     if (!alterDatabaseOptionsDifferences.areEqual() && Strings.isNullOrEmpty(databaseName)) {
       // should never happen, but...
@@ -194,6 +199,15 @@ public class DdlDiff {
       for (String changeStreamName : changeStreamDifferences.entriesOnlyOnLeft().keySet()) {
         LOG.info("Dropping deleted change stream: {}", changeStreamName);
         output.add("DROP CHANGE STREAM " + changeStreamName);
+      }
+    }
+
+    // Drop deleted locality groups.
+    if (options.get(ALLOW_DROP_STATEMENTS_OPT)) {
+      for (ASTcreate_locality_group_statement lg :
+          localityGroupDifferences.entriesOnlyOnLeft().values()) {
+        LOG.info("Dropping deleted locality group: {}", lg.getNameOrDefault());
+        output.add("DROP LOCALITY GROUP " + lg.getNameOrDefault());
       }
     }
 
@@ -271,6 +285,36 @@ public class DdlDiff {
       LOG.info("Altering modified table: {}", difference.leftValue().getTableName());
       output.addAll(
           generateAlterTableStatements(difference.leftValue(), difference.rightValue(), options));
+    }
+
+    // update existing locality groups (options only)
+    for (ValueDifference<ASTcreate_locality_group_statement> lgDiff :
+        localityGroupDifferences.entriesDiffering().values()) {
+      ASTcreate_locality_group_statement left = lgDiff.leftValue();
+      ASTcreate_locality_group_statement right = lgDiff.rightValue();
+
+      // Only OPTIONS diffs are supported
+      ASToptions_clause leftOptionsClause = left.getOptionsClause();
+      ASToptions_clause rightOptionsClause = right.getOptionsClause();
+
+      Map<String, String> leftOptions =
+          leftOptionsClause == null ? Collections.emptyMap() : leftOptionsClause.getKeyValueMap();
+      Map<String, String> rightOptions =
+          rightOptionsClause == null ? Collections.emptyMap() : rightOptionsClause.getKeyValueMap();
+      MapDifference<String, String> optionsDiff = Maps.difference(leftOptions, rightOptions);
+
+      String updateText = generateOptionsUpdates(optionsDiff);
+      if (!Strings.isNullOrEmpty(updateText)) {
+        output.add(
+            "ALTER LOCALITY GROUP " + right.getNameOrDefault() + " SET OPTIONS (" + updateText + ")");
+      }
+    }
+
+    // Create new locality groups
+    for (ASTcreate_locality_group_statement lg :
+        localityGroupDifferences.entriesOnlyOnRight().values()) {
+      LOG.info("Creating new locality group: {}", lg.getNameOrDefault());
+      output.add(lg.toStringOptionalExistClause(false));
     }
 
     // create schemas
@@ -815,6 +859,7 @@ public class DdlDiff {
           case DdlParserTreeConstants.JJTALTER_DATABASE_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_CHANGE_STREAM_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_SEARCH_INDEX_STATEMENT:
+          case DdlParserTreeConstants.JJTCREATE_LOCALITY_GROUP_STATEMENT:
             // no-op - allowed
             break;
           case DdlParserTreeConstants.JJTCREATE_OR_REPLACE_STATEMENT:

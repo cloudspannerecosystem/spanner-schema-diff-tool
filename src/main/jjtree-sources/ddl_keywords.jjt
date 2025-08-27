@@ -149,6 +149,7 @@ TOKEN:
   | <INTERLEAVE:               "interleave">
   | <INVOKER:                  "invoker">
   | <JSON:                     "json">
+  | <LOCALITY:                 "locality">
   | <KEY:                      "key">
   | <LAST:                     "last">
   | <MAX:                      "max">
@@ -225,6 +226,7 @@ void pseudoReservedWord() #void :
   | <INTERLEAVE>
   | <INVOKER>
   | <JSON>
+  | <LOCALITY>
   | <KEY>
   | <LAST>
   | <MAX>

@@ -539,6 +539,32 @@ public class DdlDiffTest {
   }
 
   @Test
+  public void generateDifferences_createLocalityGroup() throws DdlDiffException {
+    DdlDiff diff = DdlDiff.build("", "CREATE LOCALITY GROUP lg OPTIONS (x=TRUE)");
+    assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true)))
+        .containsExactly("CREATE LOCALITY GROUP lg OPTIONS (x=TRUE)");
+  }
+
+  @Test
+  public void generateDifferences_dropLocalityGroup() throws DdlDiffException {
+    DdlDiff diff = DdlDiff.build("CREATE LOCALITY GROUP lg", "");
+    assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true)))
+        .containsExactly("DROP LOCALITY GROUP lg");
+    assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, false)))
+        .isEmpty();
+  }
+
+  @Test
+  public void generateDifferences_alterLocalityGroupOptions() throws DdlDiffException {
+    DdlDiff diff =
+        DdlDiff.build(
+            "CREATE LOCALITY GROUP lg OPTIONS (x=TRUE,y=FALSE)",
+            "CREATE LOCALITY GROUP lg OPTIONS (x=NULL,y=TRUE,z=123)");
+    assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true)))
+        .containsExactly("ALTER LOCALITY GROUP lg SET OPTIONS (x=NULL,y=TRUE,z=123)");
+  }
+
+  @Test
   public void differentIndexesWithNoRecreate() {
     Map<String, Boolean> options =
         ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, false, ALLOW_RECREATE_INDEXES_OPT, false);

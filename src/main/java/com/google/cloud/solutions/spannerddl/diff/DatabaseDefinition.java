@@ -24,6 +24,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcheck_constraint;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_change_stream_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_locality_group_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_schema_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
@@ -64,6 +65,7 @@ public abstract class DatabaseDefinition {
     LinkedHashMap<String, ASTcreate_change_stream_statement> changeStreams = new LinkedHashMap<>();
     LinkedHashMap<String, String> alterDatabaseOptions = new LinkedHashMap<>();
     LinkedHashMap<String, ASTcreate_schema_statement> schemas = new LinkedHashMap<>();
+    LinkedHashMap<String, ASTcreate_locality_group_statement> localityGroups = new LinkedHashMap<>();
 
     for (ASTddl_statement ddlStatement : statements) {
       final SimpleNode statement = (SimpleNode) ddlStatement.jjtGetChild(0);
@@ -91,6 +93,10 @@ public abstract class DatabaseDefinition {
           searchIndexes.put(
               ((ASTcreate_search_index_statement) statement).getName(),
               (ASTcreate_search_index_statement) statement);
+          break;
+        case DdlParserTreeConstants.JJTCREATE_LOCALITY_GROUP_STATEMENT:
+          ASTcreate_locality_group_statement lg = (ASTcreate_locality_group_statement) statement;
+          localityGroups.put(lg.getNameOrDefault(), lg);
           break;
         case DdlParserTreeConstants.JJTCREATE_INDEX_STATEMENT:
           indexes.put(
@@ -157,7 +163,8 @@ public abstract class DatabaseDefinition {
         ImmutableMap.copyOf(ttls),
         ImmutableMap.copyOf(changeStreams),
         ImmutableMap.copyOf(alterDatabaseOptions),
-        ImmutableMap.copyOf(schemas));
+        ImmutableMap.copyOf(schemas),
+        ImmutableMap.copyOf(localityGroups));
   }
 
   public abstract ImmutableMap<String, ASTcreate_table_statement> tablesInCreationOrder();
@@ -175,4 +182,6 @@ public abstract class DatabaseDefinition {
   abstract ImmutableMap<String, String> alterDatabaseOptions();
 
   abstract ImmutableMap<String, ASTcreate_schema_statement> schemas();
+
+  abstract ImmutableMap<String, ASTcreate_locality_group_statement> localityGroups();
 }

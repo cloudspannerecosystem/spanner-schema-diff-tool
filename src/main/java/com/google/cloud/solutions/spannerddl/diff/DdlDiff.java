@@ -28,6 +28,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_type;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_change_stream_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_locality_group_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_schema_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
@@ -35,6 +36,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTforeign_key;
 import com.google.cloud.solutions.spannerddl.parser.ASToptions_clause;
 import com.google.cloud.solutions.spannerddl.parser.ASTrow_deletion_policy_clause;
+import com.google.cloud.solutions.spannerddl.parser.ASTtable_interleave_clause;
 import com.google.cloud.solutions.spannerddl.parser.DdlParser;
 import com.google.cloud.solutions.spannerddl.parser.DdlParserTreeConstants;
 import com.google.cloud.solutions.spannerddl.parser.ParseException;
@@ -54,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -103,6 +106,8 @@ public class DdlDiff {
   private final MapDifference<String, ASTcreate_search_index_statement> searchIndexDifferences;
   private final String databaseName; // for alter Database
   private final MapDifference<String, ASTcreate_schema_statement> schemaDifferences;
+  private final MapDifference<String, ASTcreate_locality_group_statement>
+      localityGroupDifferences;
 
   private DdlDiff(DatabaseDefinition originalDb, DatabaseDefinition newDb, String databaseName)
       throws DdlDiffException {
@@ -122,6 +127,8 @@ public class DdlDiff {
     this.searchIndexDifferences =
         Maps.difference(originalDb.searchIndexes(), newDb.searchIndexes());
     this.schemaDifferences = Maps.difference(originalDb.schemas(), newDb.schemas());
+    this.localityGroupDifferences =
+        Maps.difference(originalDb.localityGroups(), newDb.localityGroups());
 
     if (!alterDatabaseOptionsDifferences.areEqual() && Strings.isNullOrEmpty(databaseName)) {
       // should never happen, but...
@@ -194,6 +201,15 @@ public class DdlDiff {
       for (String changeStreamName : changeStreamDifferences.entriesOnlyOnLeft().keySet()) {
         LOG.info("Dropping deleted change stream: {}", changeStreamName);
         output.add("DROP CHANGE STREAM " + changeStreamName);
+      }
+    }
+
+    // Drop deleted locality groups.
+    if (options.get(ALLOW_DROP_STATEMENTS_OPT)) {
+      for (ASTcreate_locality_group_statement lg :
+          localityGroupDifferences.entriesOnlyOnLeft().values()) {
+        LOG.info("Dropping deleted locality group: {}", lg.getNameOrDefault());
+        output.add("DROP LOCALITY GROUP " + lg.getNameOrDefault());
       }
     }
 
@@ -271,6 +287,36 @@ public class DdlDiff {
       LOG.info("Altering modified table: {}", difference.leftValue().getTableName());
       output.addAll(
           generateAlterTableStatements(difference.leftValue(), difference.rightValue(), options));
+    }
+
+    // update existing locality groups (options only)
+    for (ValueDifference<ASTcreate_locality_group_statement> lgDiff :
+        localityGroupDifferences.entriesDiffering().values()) {
+      ASTcreate_locality_group_statement left = lgDiff.leftValue();
+      ASTcreate_locality_group_statement right = lgDiff.rightValue();
+
+      // Only OPTIONS diffs are supported
+      ASToptions_clause leftOptionsClause = left.getOptionsClause();
+      ASToptions_clause rightOptionsClause = right.getOptionsClause();
+
+      Map<String, String> leftOptions =
+          leftOptionsClause == null ? Collections.emptyMap() : leftOptionsClause.getKeyValueMap();
+      Map<String, String> rightOptions =
+          rightOptionsClause == null ? Collections.emptyMap() : rightOptionsClause.getKeyValueMap();
+      MapDifference<String, String> optionsDiff = Maps.difference(leftOptions, rightOptions);
+
+      String updateText = generateOptionsUpdates(optionsDiff);
+      if (!Strings.isNullOrEmpty(updateText)) {
+        output.add(
+            "ALTER LOCALITY GROUP " + right.getNameOrDefault() + " SET OPTIONS (" + updateText + ")");
+      }
+    }
+
+    // Create new locality groups
+    for (ASTcreate_locality_group_statement lg :
+        localityGroupDifferences.entriesOnlyOnRight().values()) {
+      LOG.info("Creating new locality group: {}", lg.getNameOrDefault());
+      output.add(lg.toStringOptionalExistClause(false));
     }
 
     // create schemas
@@ -456,36 +502,51 @@ public class DdlDiff {
     //   - change not null on column.
     // note that constraints need to be dropped before columns, and created after columns.
 
-    // Check interleaving has not changed.
-    if (left.getInterleaveClause().isPresent() != right.getInterleaveClause().isPresent()) {
-      throw new DdlDiffException("Cannot change interleaving on table " + left.getTableName());
-    }
-
-    if (left.getInterleaveClause().isPresent()
-        && !left.getInterleaveClause()
-            .get()
-            .getParentTableName()
-            .equals(right.getInterleaveClause().get().getParentTableName())) {
-      throw new DdlDiffException(
-          "Cannot change interleaved parent of table " + left.getTableName());
-    }
-
     // Check Key is same
     if (!left.getPrimaryKey().toString().equals(right.getPrimaryKey().toString())) {
       throw new DdlDiffException("Cannot change primary key of table " + left.getTableName());
     }
 
-    // On delete changed
-    if (left.getInterleaveClause().isPresent()
-        && !left.getInterleaveClause()
-            .get()
-            .getOnDelete()
-            .equals(right.getInterleaveClause().get().getOnDelete())) {
-      alterStatements.add(
-          "ALTER TABLE "
-              + left.getTableName()
-              + " SET "
-              + right.getInterleaveClause().get().getOnDelete());
+    // Interleaving changed (added, parent changed, or ON DELETE changed)
+    final Optional<ASTtable_interleave_clause> leftInterleave = left.getInterleaveClause();
+    final Optional<ASTtable_interleave_clause> rightInterleave = right.getInterleaveClause();
+
+    if (leftInterleave.isPresent() != rightInterleave.isPresent()) {
+      if (rightInterleave.isPresent()) {
+        // Added interleave
+        ASTtable_interleave_clause ri = rightInterleave.get();
+        alterStatements.add(
+            Joiner.on(" ")
+                .skipNulls()
+                .join(
+                    "ALTER TABLE",
+                    left.getTableName(),
+                    "SET INTERLEAVE IN",
+                    (ri.hasParentKeyword() ? "PARENT" : null),
+                    ri.getParentTableName(),
+                    ri.getOnDelete()));
+      } else {
+        // Removal not supported
+        throw new DdlDiffException(
+            "Cannot change interleaving on table " + left.getTableName());
+      }
+    } else if (leftInterleave.isPresent()) {
+      ASTtable_interleave_clause li = leftInterleave.get();
+      ASTtable_interleave_clause ri = rightInterleave.get();
+      if (!li.getParentTableName().equals(ri.getParentTableName())
+          || !li.getOnDelete().equals(ri.getOnDelete())
+          || li.hasParentKeyword() != ri.hasParentKeyword()) {
+        alterStatements.add(
+            Joiner.on(" ")
+                .skipNulls()
+                .join(
+                    "ALTER TABLE",
+                    left.getTableName(),
+                    "SET INTERLEAVE IN",
+                    (ri.hasParentKeyword() ? "PARENT" : null),
+                    ri.getParentTableName(),
+                    ri.getOnDelete()));
+      }
     }
 
     // compare columns.
@@ -815,6 +876,7 @@ public class DdlDiff {
           case DdlParserTreeConstants.JJTALTER_DATABASE_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_CHANGE_STREAM_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_SEARCH_INDEX_STATEMENT:
+          case DdlParserTreeConstants.JJTCREATE_LOCALITY_GROUP_STATEMENT:
             // no-op - allowed
             break;
           case DdlParserTreeConstants.JJTCREATE_OR_REPLACE_STATEMENT:

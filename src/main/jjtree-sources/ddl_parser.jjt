@@ -205,6 +205,7 @@ void create_table_statement() :
   primary_key()
   [ LOOKAHEAD(2) "," table_interleave_clause() ]
   [ LOOKAHEAD(2) "," row_deletion_policy_clause() ]
+  [ LOOKAHEAD(2) "," options_clause() ]
 }
 
 void table_element() #void :

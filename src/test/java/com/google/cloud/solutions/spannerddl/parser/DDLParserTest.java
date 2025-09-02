@@ -228,6 +228,55 @@ public class DDLParserTest {
     assertThat(statement).isEqualTo(statement2);
   }
 
+  @Test
+  public void parseCreateTable_withTableOptions_onlyPrimaryKey() throws ParseException {
+    ASTcreate_table_statement stmt =
+        (ASTcreate_table_statement)
+            parse(
+                    "CREATE TABLE t (\n"
+                        + "  k INT64,\n"
+                        + ") PRIMARY KEY(k), OPTIONS (opt1=TRUE,opt2='abc',opt3=123)")
+                .jjtGetChild(0);
+
+    assertThat(stmt.toString())
+        .isEqualTo(
+            "CREATE TABLE t ( k INT64 ) PRIMARY KEY (k ASC), OPTIONS (opt1=TRUE,opt2='abc',opt3=123)");
+
+    ASTcreate_table_statement stmt2 =
+        (ASTcreate_table_statement) parseAndVerifyToString(stmt.toString()).jjtGetChild(0);
+    assertThat(stmt).isEqualTo(stmt2);
+  }
+
+  @Test
+  public void parseCreateTable_withInterleaveRowDeletion_andTableOptions() throws ParseException {
+    ASTcreate_table_statement stmt =
+        (ASTcreate_table_statement)
+            parse(
+                    "CREATE TABLE child_table (\n"
+                        + "  k1 STRING(MAX) NOT NULL,\n"
+                        + "  k2 STRING(MAX) NOT NULL,\n"
+                        + "  col1 STRING(MAX),\n"
+                        + "  col2 INT64,\n"
+                        + "  ts TIMESTAMP,\n"
+                        + ") PRIMARY KEY(k1, k2),\n"
+                        + "  INTERLEAVE IN parent_table, ROW DELETION POLICY (OLDER_THAN(ts, INTERVAL 1 DAY)), OPTIONS (\n"
+                        + "  opt1 = TRUE\n"
+                        + ")")
+                .jjtGetChild(0);
+
+    assertThat(stmt.toString())
+        .isEqualTo(
+            ("CREATE TABLE child_table ( k1 STRING(MAX) NOT NULL, k2 STRING(MAX) NOT NULL, col1"
+                    + " STRING(MAX), col2 INT64, ts TIMESTAMP ) PRIMARY KEY (k1 ASC, k2 ASC),"
+                    + " INTERLEAVE IN parent_table ON DELETE NO ACTION, ROW DELETION POLICY (OLDER_THAN ("
+                    + " ts, INTERVAL 1 DAY )), OPTIONS (opt1=TRUE)")
+                .replaceAll("\\s+", " "));
+
+    ASTcreate_table_statement stmt2 =
+        (ASTcreate_table_statement) parseAndVerifyToString(stmt.toString()).jjtGetChild(0);
+    assertThat(stmt).isEqualTo(stmt2);
+  }
+
   private static void parseCheckingParseException(String ddlStatement, String exceptionContains) {
     ParseException e =
         assertThrows(ParseException.class, () -> parseAndVerifyToString(ddlStatement));

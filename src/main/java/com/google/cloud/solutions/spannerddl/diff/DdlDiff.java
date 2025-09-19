@@ -25,14 +25,17 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcheck_constraint;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_def;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_default_clause;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_type;
+import com.google.cloud.solutions.spannerddl.parser.ASTcolumns;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_change_stream_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTforeign_key;
+import com.google.cloud.solutions.spannerddl.parser.ASTkey_part;
 import com.google.cloud.solutions.spannerddl.parser.ASToptions_clause;
 import com.google.cloud.solutions.spannerddl.parser.ASTrow_deletion_policy_clause;
+import com.google.cloud.solutions.spannerddl.parser.ASTtable;
 import com.google.cloud.solutions.spannerddl.parser.DdlParser;
 import com.google.cloud.solutions.spannerddl.parser.DdlParserTreeConstants;
 import com.google.cloud.solutions.spannerddl.parser.ParseException;
@@ -820,10 +823,12 @@ public class DdlDiff {
     DdlDiffOptions options = DdlDiffOptions.parseCommandLine(args);
 
     try {
-      DdlDiff ddlDiff =
-          DdlDiff.build(
-              new String(Files.readAllBytes(options.originalDdlPath()), UTF_8),
-              new String(Files.readAllBytes(options.newDdlPath()), UTF_8));
+      String originalDdl = new String(Files.readAllBytes(options.originalDdlPath()), UTF_8);
+      String newDdl = new String(Files.readAllBytes(options.newDdlPath()), UTF_8);
+
+      validateDdl(newDdl);
+
+      DdlDiff ddlDiff = DdlDiff.build(originalDdl, newDdl);
 
       List<String> alterStatements = ddlDiff.generateDifferenceStatements(options.args());
 
@@ -842,6 +847,101 @@ public class DdlDiff {
     } catch (DdlDiffException e) {
       System.err.println("Failed to generate a diff: " + e.getMessage());
       System.exit(1);
+    }
+  }
+
+  /**
+   * Parses and validates the new DDL for missing references.
+   *
+   * @param ddl new DDL to parse
+   * @throws DdlDiffException if there is an error in parsing the DDL
+   */
+  public static void validateDdl(String ddl) throws DdlDiffException {
+    List<ASTddl_statement> statements;
+    try {
+      statements = parseDdl(Strings.nullToEmpty(ddl));
+    } catch (DdlDiffException e) {
+      throw new DdlDiffException("Failed parsing DDL: " + e.getMessage(), e);
+    }
+    DatabaseDefinition db = DatabaseDefinition.create(statements);
+    validateReferences(db);
+  }
+
+  private static void validateReferences(DatabaseDefinition db) throws DdlDiffException {
+    // Validate foreign keys
+    for (ConstraintWrapper constraint : db.constraints().values()) {
+      if (constraint.constraint() instanceof ASTforeign_key) {
+        ASTforeign_key fk = (ASTforeign_key) constraint.constraint();
+        String tableName = constraint.tableName();
+        String referencedTable = fk.getReferencedTableName();
+
+        if (!db.tablesInCreationOrder().containsKey(referencedTable)) {
+          throw new DdlDiffException(
+              String.format(
+                  "Table '%s' contains foreign key '%s' which references "
+                      + "table '%s' which does not exist.",
+                  tableName, constraint.getName(), referencedTable));
+        }
+
+        List<String> referencedColumns = fk.getReferencedColumnNames();
+        ASTcreate_table_statement referencedTableDef =
+            db.tablesInCreationOrder().get(referencedTable);
+        for (String col : referencedColumns) {
+          if (!referencedTableDef.getColumns().containsKey(col)) {
+            throw new DdlDiffException(
+                String.format(
+                    "Table '%s' contains foreign key '%s' which references "
+                        + "column '%s' which does not exist in table '%s'.",
+                    tableName, constraint.getName(), col, referencedTable));
+          }
+        }
+
+        List<String> referencingColumns = fk.getConstrainedColumnNames();
+        ASTcreate_table_statement referencingTableDef = db.tablesInCreationOrder().get(tableName);
+        for (String col : referencingColumns) {
+          if (!referencingTableDef.getColumns().containsKey(col)) {
+            throw new DdlDiffException(
+                String.format(
+                    "Table '%s' contains foreign key '%s' with column '%s' "
+                        + "which does not exist in table '%s'.",
+                    tableName, constraint.getName(), col, tableName));
+          }
+        }
+      }
+    }
+
+    // Validate Indexes
+    for (ASTcreate_index_statement index : db.indexes().values()) {
+      String tableName = AstTreeUtils.getChildByType(index, ASTtable.class).toString();
+      if (!db.tablesInCreationOrder().containsKey(tableName)) {
+        throw new DdlDiffException(
+            String.format(
+                "Index '%s' is on table '%s' which does not exist.",
+                index.getIndexName(), tableName));
+      }
+
+      ASTcreate_table_statement tableDef = db.tablesInCreationOrder().get(tableName);
+      ASTcolumns columns = AstTreeUtils.getChildByType(index, ASTcolumns.class);
+      for (int i = 0; i < columns.jjtGetNumChildren(); i++) {
+        ASTkey_part keyPart = (ASTkey_part) columns.jjtGetChild(i);
+        String colName = keyPart.getKeyPath();
+        if (!tableDef.getColumns().containsKey(colName)) {
+          throw new DdlDiffException(
+              String.format(
+                  "Index '%s' on table '%s' includes column '%s' which does "
+                      + "not exist in the table.",
+                  index.getIndexName(), tableName, colName));
+        }
+      }
+      // also check stored columns
+      for (String colName : index.getStoredColumnNames()) {
+        if (!tableDef.getColumns().containsKey(colName)) {
+          throw new DdlDiffException(
+              String.format(
+                  "Index '%s' on table '%s' stores column '%s' which does not exist in the table.",
+                  index.getIndexName(), tableName, colName));
+        }
+      }
     }
   }
 }

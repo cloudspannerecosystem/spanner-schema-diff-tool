@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.25.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.24.0...v1.25.0) (2025-01-16)
+
+
+### Features
+
+* Support for CREATE SCHEMA statements ([#197](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/197)) ([e19264c](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/e19264c2b66d92295cbea044e7772084b969d3d7))
+
+
+### Bug Fixes
+
+* **deps:** update mvn-packages ([#193](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/193)) ([1c9cc6f](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/1c9cc6f2bd887837da47cc1676e7dfa6b5e07d7d))
+
+## [1.24.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.23.0...v1.24.0) (2024-12-04)
+
+
+### Features
+
+* expose isStored on column ([#177](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/177)) ([fe7fc2a](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/fe7fc2a1ffa526c9f587270b5ef85784be3d7b57))
+
+
+### Bug Fixes
+
+* **deps:** update error-prone to 2.36 ([de62eea](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/de62eeabd5be80082dabcbe9685b92a41c5268da))
+* **deps:** update mvn-packages ([#192](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/192)) ([3ee6d2d](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/3ee6d2dec7e3264519a34c50a7383d46bb46f8b1))
+* do not capitalize reserved words for object names ([#191](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/191)) ([da7da8e](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/da7da8e9f79ebaf9801e216548b6add4383eeb4c))
+* equals ASTcheck_constraint ([#181](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/181)) ([fec08aa](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/fec08aa929524a0f5b70672cd317b17bc7dcf646))
+
 ## [1.23.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.22.3...v1.23.0) (2024-10-05)
 
 

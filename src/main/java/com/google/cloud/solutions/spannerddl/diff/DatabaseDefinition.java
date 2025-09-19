@@ -23,6 +23,8 @@ import com.google.cloud.solutions.spannerddl.parser.ASTalter_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcheck_constraint;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_change_stream_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_schema_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
@@ -61,6 +63,7 @@ public abstract class DatabaseDefinition {
     LinkedHashMap<String, ASTrow_deletion_policy_clause> ttls = new LinkedHashMap<>();
     LinkedHashMap<String, ASTcreate_change_stream_statement> changeStreams = new LinkedHashMap<>();
     LinkedHashMap<String, String> alterDatabaseOptions = new LinkedHashMap<>();
+    LinkedHashMap<String, ASTcreate_schema_statement> schemas = new LinkedHashMap<>();
 
     for (ASTddl_statement ddlStatement : statements) {
       final SimpleNode statement = (SimpleNode) ddlStatement.jjtGetChild(0);
@@ -124,6 +127,23 @@ public abstract class DatabaseDefinition {
               ((ASTcreate_change_stream_statement) statement).getName(),
               (ASTcreate_change_stream_statement) statement);
           break;
+
+        case DdlParserTreeConstants.JJTCREATE_OR_REPLACE_STATEMENT:
+          // can be one of several types.
+          switch (((ASTcreate_or_replace_statement) statement).getSchemaObject().getId()) {
+            case DdlParserTreeConstants.JJTCREATE_SCHEMA_STATEMENT:
+              schemas.put(
+                  ((ASTcreate_schema_statement)
+                          ((ASTcreate_or_replace_statement) statement).getSchemaObject())
+                      .getName(),
+                  (ASTcreate_schema_statement)
+                      ((ASTcreate_or_replace_statement) statement).getSchemaObject());
+              break;
+            default:
+              throw new IllegalArgumentException(
+                  "Unsupported statement: " + AstTreeUtils.tokensToString(ddlStatement));
+          }
+          break;
         default:
           throw new IllegalArgumentException(
               "Unsupported statement: " + AstTreeUtils.tokensToString(ddlStatement));
@@ -136,7 +156,8 @@ public abstract class DatabaseDefinition {
         ImmutableMap.copyOf(constraints),
         ImmutableMap.copyOf(ttls),
         ImmutableMap.copyOf(changeStreams),
-        ImmutableMap.copyOf(alterDatabaseOptions));
+        ImmutableMap.copyOf(alterDatabaseOptions),
+        ImmutableMap.copyOf(schemas));
   }
 
   public abstract ImmutableMap<String, ASTcreate_table_statement> tablesInCreationOrder();
@@ -152,4 +173,6 @@ public abstract class DatabaseDefinition {
   abstract ImmutableMap<String, ASTcreate_change_stream_statement> changeStreams();
 
   abstract ImmutableMap<String, String> alterDatabaseOptions();
+
+  abstract ImmutableMap<String, ASTcreate_schema_statement> schemas();
 }

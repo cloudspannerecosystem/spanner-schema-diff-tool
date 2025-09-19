@@ -151,4 +151,38 @@ CREATE SEARCH INDEX AlbumsIndex
 ON Albums ( AlbumTitle_Tokens )
 OPTIONS (sort_order_sharding=TRUE)
 
+== Test 14 create table with reserved word word name
+
+CREATE TABLE usage (
+  intcol INT64,
+  structcol1 STRUCT < col1 INT64, col2 INT64 >,
+  structcol2 STRUCT <>
+) PRIMARY KEY (intcol ASC)
+
+== Test 15 create index with reserved word word name
+
+CREATE INDEX IF NOT EXISTS usage ON usage_table ( mycol ASC )
+
+== Test 16 create search index with reserved word name
+
+CREATE SEARCH INDEX usage
+ON usage_table ( some_token )
+OPTIONS (sort_order_sharding=TRUE)
+
+== Test 16 change stream with reserved word name
+
+CREATE CHANGE STREAM usage FOR table1
+
+== Test 17 create schema
+
+CREATE SCHEMA schema_name
+
+== Test 18 create schema if not exists
+
+CREATE SCHEMA IF NOT EXISTS schema_name
+
+== Test 18 create schema with options
+
+CREATE SCHEMA IF NOT EXISTS schema_name OPTIONS (opt1=TRUE)
+
 ==

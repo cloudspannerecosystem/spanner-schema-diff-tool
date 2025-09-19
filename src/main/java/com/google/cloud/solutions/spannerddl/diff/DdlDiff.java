@@ -28,6 +28,8 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_type;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumns;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_change_stream_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_schema_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
@@ -103,6 +105,7 @@ public class DdlDiff {
   private final MapDifference<String, ASTcreate_change_stream_statement> changeStreamDifferences;
   private final MapDifference<String, ASTcreate_search_index_statement> searchIndexDifferences;
   private final String databaseName; // for alter Database
+  private final MapDifference<String, ASTcreate_schema_statement> schemaDifferences;
 
   private DdlDiff(DatabaseDefinition originalDb, DatabaseDefinition newDb, String databaseName)
       throws DdlDiffException {
@@ -121,6 +124,7 @@ public class DdlDiff {
         Maps.difference(originalDb.changeStreams(), newDb.changeStreams());
     this.searchIndexDifferences =
         Maps.difference(originalDb.searchIndexes(), newDb.searchIndexes());
+    this.schemaDifferences = Maps.difference(originalDb.schemas(), newDb.schemas());
 
     if (!alterDatabaseOptionsDifferences.areEqual() && Strings.isNullOrEmpty(databaseName)) {
       // should never happen, but...
@@ -161,6 +165,12 @@ public class DdlDiff {
               + ALLOW_RECREATE_CONSTRAINTS_OPT
               + " is not set.\n"
               + Joiner.on(", ").join(constraintDifferences.entriesDiffering().keySet()));
+    }
+
+    if (!schemaDifferences.entriesDiffering().isEmpty()) {
+      throw new DdlDiffException(
+          "At least one schema differs but ALTER SCHEMA is not supported"
+              + Joiner.on(", ").join(schemaDifferences.entriesDiffering().keySet()));
     }
 
     // check for modified Alter Database statements
@@ -250,12 +260,26 @@ public class DdlDiff {
       }
     }
 
+    // Drop schemas
+    if (options.get(ALLOW_DROP_STATEMENTS_OPT)) {
+      for (ASTcreate_schema_statement schema : schemaDifferences.entriesOnlyOnLeft().values()) {
+        LOG.info("Dropping schema: {}", schema.getName());
+        output.add("DROP SCHEMA " + schema.getName());
+      }
+    }
+
     // Alter existing tables, or error if not possible.
     for (ValueDifference<ASTcreate_table_statement> difference :
         tableDifferences.entriesDiffering().values()) {
       LOG.info("Altering modified table: {}", difference.leftValue().getTableName());
       output.addAll(
           generateAlterTableStatements(difference.leftValue(), difference.rightValue(), options));
+    }
+
+    // create schemas
+    for (ASTcreate_schema_statement schema : schemaDifferences.entriesOnlyOnRight().values()) {
+      LOG.info("creating schema: {}", schema.getName());
+      output.add(schema.toString());
     }
 
     // Create new tables. Must be done in the order of creation in the new DDL.
@@ -758,8 +782,8 @@ public class DdlDiff {
                   "Unsupported statement:\n"
                       + statement
                       + "\n"
-                      + "Can only create diffs from 'CREATE TABLE, CREATE INDEX and 'ALTER TABLE"
-                      + " table_name ADD [constraint|row deletion policy]' DDL statements");
+                      + "ALTER TABLE statements only support 'ADD [constraint|row deletion"
+                      + " policy]'");
             }
             if (alterTableStatement.jjtGetChild(1) instanceof ASTforeign_key
                 && ((ASTforeign_key) alterTableStatement.jjtGetChild(1))
@@ -794,14 +818,24 @@ public class DdlDiff {
           case DdlParserTreeConstants.JJTALTER_DATABASE_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_CHANGE_STREAM_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_SEARCH_INDEX_STATEMENT:
-            // no-op
+            // no-op - allowed
+            break;
+          case DdlParserTreeConstants.JJTCREATE_OR_REPLACE_STATEMENT:
+            // can be one of several types.
+            switch (((ASTcreate_or_replace_statement) ddlStatement.jjtGetChild(0))
+                .getSchemaObject()
+                .getId()) {
+              case DdlParserTreeConstants.JJTCREATE_SCHEMA_STATEMENT:
+                // no-op - allowed
+                break;
+              default:
+                throw new IllegalArgumentException(
+                    "Unsupported statement for creating diffs:\n" + statement);
+            }
             break;
           default:
             throw new IllegalArgumentException(
-                "Unsupported statement:\n"
-                    + statement
-                    + "\nCan only create diffs from 'CREATE TABLE, CREATE INDEX, and "
-                    + "'ALTER TABLE table_name ADD CONSTRAINT' DDL statements");
+                "Unsupported statement for creating diffs:\n" + statement);
         }
         ddlStatements.add(ddlStatement);
       } catch (ParseException e) {

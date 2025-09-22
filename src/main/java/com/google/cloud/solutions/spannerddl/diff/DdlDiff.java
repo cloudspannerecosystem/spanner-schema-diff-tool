@@ -27,8 +27,8 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_default_clause;
 import com.google.cloud.solutions.spannerddl.parser.ASTcolumn_type;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_change_stream_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
-import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_locality_group_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_schema_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
@@ -106,8 +106,7 @@ public class DdlDiff {
   private final MapDifference<String, ASTcreate_search_index_statement> searchIndexDifferences;
   private final String databaseName; // for alter Database
   private final MapDifference<String, ASTcreate_schema_statement> schemaDifferences;
-  private final MapDifference<String, ASTcreate_locality_group_statement>
-      localityGroupDifferences;
+  private final MapDifference<String, ASTcreate_locality_group_statement> localityGroupDifferences;
 
   private DdlDiff(DatabaseDefinition originalDb, DatabaseDefinition newDb, String databaseName)
       throws DdlDiffException {
@@ -308,7 +307,8 @@ public class DdlDiff {
       String updateText = generateOptionsUpdates(optionsDiff);
       if (!Strings.isNullOrEmpty(updateText)) {
         output.add(
-            "ALTER LOCALITY GROUP " + right.getNameOrDefault() + " SET OPTIONS (" + updateText + ")");
+            String.format(
+                "ALTER LOCALITY GROUP %s SET OPTIONS (%s)", right.getNameOrDefault(), updateText));
       }
     }
 
@@ -527,8 +527,7 @@ public class DdlDiff {
                     ri.getOnDelete()));
       } else {
         // Removal not supported
-        throw new DdlDiffException(
-            "Cannot change interleaving on table " + left.getTableName());
+        throw new DdlDiffException("Cannot change interleaving on table " + left.getTableName());
       }
     } else if (leftInterleave.isPresent()) {
       ASTtable_interleave_clause li = leftInterleave.get();

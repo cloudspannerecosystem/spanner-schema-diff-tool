@@ -183,8 +183,7 @@ public class DDLParserTest {
     // Input omits PARENT, parser should accept and normalize to include PARENT in toString
     ASTcreate_table_statement stmt =
         (ASTcreate_table_statement)
-            parse(
-                    "CREATE TABLE t (k INT64) PRIMARY KEY (k), INTERLEAVE IN parent_table")
+            parse("CREATE TABLE t (k INT64) PRIMARY KEY (k), INTERLEAVE IN parent_table")
                 .jjtGetChild(0);
 
     // Output preserves omission of PARENT when not provided
@@ -218,8 +217,7 @@ public class DDLParserTest {
   @Test
   public void parseCreateLocalityGroupDefault() throws ParseException {
     ASTcreate_locality_group_statement statement =
-        (ASTcreate_locality_group_statement)
-            parse("CREATE LOCALITY GROUP DEFAULT").jjtGetChild(0);
+        (ASTcreate_locality_group_statement) parse("CREATE LOCALITY GROUP DEFAULT").jjtGetChild(0);
     assertThat(statement.toString()).isEqualTo("CREATE LOCALITY GROUP DEFAULT");
 
     ASTcreate_locality_group_statement statement2 =

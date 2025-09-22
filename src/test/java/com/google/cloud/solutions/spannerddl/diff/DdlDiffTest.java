@@ -308,7 +308,8 @@ public class DdlDiffTest {
                 "create table test1 (col1 int64, col2 int64) "
                     + "primary key (col1), interleave in parent otherparent",
                 true))
-        .containsExactly("ALTER TABLE test1 SET INTERLEAVE IN PARENT otherparent ON DELETE NO ACTION");
+        .containsExactly(
+            "ALTER TABLE test1 SET INTERLEAVE IN PARENT otherparent ON DELETE NO ACTION");
 
     // change on delete
     assertThat(
@@ -318,7 +319,8 @@ public class DdlDiffTest {
                 "create table test1 (col1 int64, col2 int64) "
                     + "primary key (col1), interleave in parent testparent",
                 true))
-        .containsExactly("ALTER TABLE test1 SET INTERLEAVE IN PARENT testparent ON DELETE NO ACTION");
+        .containsExactly(
+            "ALTER TABLE test1 SET INTERLEAVE IN PARENT testparent ON DELETE NO ACTION");
     // change on delete
     assertThat(
             getDiff(
@@ -569,8 +571,7 @@ public class DdlDiffTest {
   public void alterTable_interleaveOnDeleteChange_generatesAlter() throws DdlDiffException {
     String original =
         "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN PARENT p ON DELETE NO ACTION;";
-    String updated =
-        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN p ON DELETE CASCADE;";
+    String updated = "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN p ON DELETE CASCADE;";
     assertThat(getDiff(original, updated, true))
         .containsExactly("ALTER TABLE c SET INTERLEAVE IN p ON DELETE CASCADE");
   }

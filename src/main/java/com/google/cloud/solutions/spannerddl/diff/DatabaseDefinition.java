@@ -23,8 +23,8 @@ import com.google.cloud.solutions.spannerddl.parser.ASTalter_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcheck_constraint;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_change_stream_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_index_statement;
-import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_locality_group_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_schema_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
@@ -65,7 +65,8 @@ public abstract class DatabaseDefinition {
     LinkedHashMap<String, ASTcreate_change_stream_statement> changeStreams = new LinkedHashMap<>();
     LinkedHashMap<String, String> alterDatabaseOptions = new LinkedHashMap<>();
     LinkedHashMap<String, ASTcreate_schema_statement> schemas = new LinkedHashMap<>();
-    LinkedHashMap<String, ASTcreate_locality_group_statement> localityGroups = new LinkedHashMap<>();
+    LinkedHashMap<String, ASTcreate_locality_group_statement> localityGroups =
+        new LinkedHashMap<>();
 
     for (ASTddl_statement ddlStatement : statements) {
       final SimpleNode statement = (SimpleNode) ddlStatement.jjtGetChild(0);

@@ -192,11 +192,11 @@
               <checkstyleRules>
                 <module name="Checker">
                   <module name="Header">
-                    <property name="headerFile" value="licence_header.java"></property>
-                    <property name="ignoreLines" value="2"></property>
-                    <property name="fileExtensions" value="java"></property>
-                    <message key="header.mismatch" value="File must start with the Apache2 licence header (see licence_header.java)."></message>
-                    <message key="header.missing" value="File must start with the Apache2 licence header (see licence_header.java)."></message>
+                    <property name="headerFile" value="licence_header.java"/>
+                    <property name="ignoreLines" value="2"/>
+                    <property name="fileExtensions" value="java"/>
+                    <message key="header.mismatch" value="File must start with the Apache2 licence header (see licence_header.java)."/>
+                    <message key="header.missing" value="File must start with the Apache2 licence header (see licence_header.java)."/>
                   </module>
                 </module>
               </checkstyleRules>
@@ -293,13 +293,13 @@
             <excludes>
               <exclude>CHANGELOG.md</exclude>
             </excludes>
-            <flexmark></flexmark>
+            <flexmark/>
           </markdown>
           <pom>
             <includes>
               <include>pom.xml</include>
             </includes>
-            <sortPom></sortPom>
+            <sortPom/>
           </pom>
           <java>
             <googleJavaFormat>
@@ -330,7 +330,7 @@
               <sources>
                 <source>${project.build.directory}/generated-sources/jjtree</source>
               </sources>
-              <skipAddSourceIfMissing></skipAddSourceIfMissing>
+              <skipAddSourceIfMissing/>
             </configuration>
           </execution>
         </executions>

@@ -34,7 +34,7 @@
     <ph-javacc-maven-plugin.version>5.0.0</ph-javacc-maven-plugin.version>
     <truth.version>1.4.5</truth.version>
     <junit.version>4.13.2</junit.version>
-    <spotless.version>2.46.1</spotless.version>
+    <spotless.version>3.0.0</spotless.version>
     <exec-maven.version>3.5.1</exec-maven.version>
     <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
     <auto-value.version>1.11.0</auto-value.version>

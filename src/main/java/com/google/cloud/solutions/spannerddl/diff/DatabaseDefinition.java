@@ -27,6 +27,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcreate_or_replace_stateme
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_schema_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
+import com.google.cloud.solutions.spannerddl.parser.ASTcreate_view_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTforeign_key;
 import com.google.cloud.solutions.spannerddl.parser.ASTrow_deletion_policy_clause;
@@ -64,6 +65,7 @@ public abstract class DatabaseDefinition {
     LinkedHashMap<String, ASTcreate_change_stream_statement> changeStreams = new LinkedHashMap<>();
     LinkedHashMap<String, String> alterDatabaseOptions = new LinkedHashMap<>();
     LinkedHashMap<String, ASTcreate_schema_statement> schemas = new LinkedHashMap<>();
+    LinkedHashMap<String, ASTcreate_view_statement> views = new LinkedHashMap<>();
 
     for (ASTddl_statement ddlStatement : statements) {
       final SimpleNode statement = (SimpleNode) ddlStatement.jjtGetChild(0);
@@ -139,6 +141,14 @@ public abstract class DatabaseDefinition {
                   (ASTcreate_schema_statement)
                       ((ASTcreate_or_replace_statement) statement).getSchemaObject());
               break;
+            case DdlParserTreeConstants.JJTCREATE_VIEW_STATEMENT:
+              views.put(
+                      ((ASTcreate_view_statement)
+                              ((ASTcreate_or_replace_statement) statement).getSchemaObject())
+                              .getName(),
+                      (ASTcreate_view_statement)
+                              ((ASTcreate_or_replace_statement) statement).getSchemaObject());
+              break;
             default:
               throw new IllegalArgumentException(
                   "Unsupported statement: " + AstTreeUtils.tokensToString(ddlStatement));
@@ -157,7 +167,8 @@ public abstract class DatabaseDefinition {
         ImmutableMap.copyOf(ttls),
         ImmutableMap.copyOf(changeStreams),
         ImmutableMap.copyOf(alterDatabaseOptions),
-        ImmutableMap.copyOf(schemas));
+        ImmutableMap.copyOf(schemas),
+        ImmutableMap.copyOf(views));
   }
 
   public abstract ImmutableMap<String, ASTcreate_table_statement> tablesInCreationOrder();
@@ -175,4 +186,6 @@ public abstract class DatabaseDefinition {
   abstract ImmutableMap<String, String> alterDatabaseOptions();
 
   abstract ImmutableMap<String, ASTcreate_schema_statement> schemas();
+
+  abstract ImmutableMap<String, ASTcreate_view_statement> views();
 }

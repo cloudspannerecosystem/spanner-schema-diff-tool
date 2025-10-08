@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -106,6 +107,8 @@ public class DdlDiff {
   private final MapDifference<String, ASTcreate_search_index_statement> searchIndexDifferences;
   private final String databaseName; // for alter Database
   private final MapDifference<String, ASTcreate_schema_statement> schemaDifferences;
+  private final Map<String, ASTcreate_table_statement> tablesToDrop;
+  private final Map<String, ASTcreate_table_statement> tablesToCreate;
 
   private DdlDiff(DatabaseDefinition originalDb, DatabaseDefinition newDb, String databaseName)
       throws DdlDiffException {
@@ -126,10 +129,116 @@ public class DdlDiff {
         Maps.difference(originalDb.searchIndexes(), newDb.searchIndexes());
     this.schemaDifferences = Maps.difference(originalDb.schemas(), newDb.schemas());
 
+    // Detect tables that need to be dropped and recreated (e.g., primary key changes)
+    this.tablesToDrop = new HashMap<>();
+    this.tablesToCreate = new HashMap<>();
+    detectDropAndRecreateTables();
+
     if (!alterDatabaseOptionsDifferences.areEqual() && Strings.isNullOrEmpty(databaseName)) {
       // should never happen, but...
       throw new DdlDiffException("No database ID defined - required for Alter Database statements");
     }
+  }
+
+  /**
+   * Detects tables that need to be dropped and recreated instead of altered. This includes tables
+   * where:
+   * - Primary key has changed
+   * - Column ordering has changed (new columns inserted before existing ones)
+   * - Interleave parent has changed
+   *
+   * These tables are moved from tableDifferences.entriesDiffering() to tablesToDrop and
+   * tablesToCreate.
+   */
+  private void detectDropAndRecreateTables() {
+    for (ValueDifference<ASTcreate_table_statement> difference :
+        tableDifferences.entriesDiffering().values()) {
+      ASTcreate_table_statement oldTable = difference.leftValue();
+      ASTcreate_table_statement newTable = difference.rightValue();
+      String tableName = oldTable.getTableName();
+
+      boolean needsDropAndRecreate = false;
+      String reason = "";
+
+      // Check if primary key changed
+      if (!oldTable.getPrimaryKey().toString().equals(newTable.getPrimaryKey().toString())) {
+        needsDropAndRecreate = true;
+        reason = "primary key changed";
+      }
+
+      // Check if interleave parent changed
+      if (!needsDropAndRecreate) {
+        if (oldTable.getInterleaveClause().isPresent()
+            != newTable.getInterleaveClause().isPresent()) {
+          needsDropAndRecreate = true;
+          reason = "interleaving changed";
+        } else if (oldTable.getInterleaveClause().isPresent()
+            && !oldTable
+                .getInterleaveClause()
+                .get()
+                .getParentTableName()
+                .equals(newTable.getInterleaveClause().get().getParentTableName())) {
+          needsDropAndRecreate = true;
+          reason = "interleave parent changed";
+        }
+      }
+
+      // Check if column ordering changed (existing columns moved positions)
+      if (!needsDropAndRecreate) {
+        needsDropAndRecreate = hasColumnOrderingChanged(oldTable, newTable);
+        if (needsDropAndRecreate) {
+          reason = "column ordering changed";
+        }
+      }
+
+      if (needsDropAndRecreate) {
+        LOG.info(
+            "Table {} requires DROP and CREATE because {}", tableName, reason);
+        tablesToDrop.put(tableName, oldTable);
+        tablesToCreate.put(tableName, newTable);
+      }
+    }
+  }
+
+  /**
+   * Checks if column ordering has changed between two table definitions. Column ordering changes
+   * when existing columns appear in different positions, which is impossible with ALTER TABLE
+   * (ALTER TABLE can only add columns at the end).
+   *
+   * @param oldTable Original table definition
+   * @param newTable New table definition
+   * @return true if column ordering has changed
+   */
+  private boolean hasColumnOrderingChanged(
+      ASTcreate_table_statement oldTable, ASTcreate_table_statement newTable) {
+    List<String> oldColumnNames = new ArrayList<>(oldTable.getColumns().keySet());
+    List<String> newColumnNames = new ArrayList<>(newTable.getColumns().keySet());
+
+    // Find common columns (columns that exist in both versions)
+    List<String> commonColumns = new ArrayList<>();
+    for (String colName : oldColumnNames) {
+      if (newTable.getColumns().containsKey(colName)) {
+        commonColumns.add(colName);
+      }
+    }
+
+    // Check if the relative ordering of common columns has changed
+    List<String> oldCommonOrder = new ArrayList<>();
+    for (String colName : oldColumnNames) {
+      if (commonColumns.contains(colName)) {
+        oldCommonOrder.add(colName);
+      }
+    }
+
+    List<String> newCommonOrder = new ArrayList<>();
+    for (String colName : newColumnNames) {
+      if (commonColumns.contains(colName)) {
+        newCommonOrder.add(colName);
+      }
+    }
+
+    // If the relative order of common columns changed, we need drop+create
+    return !oldCommonOrder.equals(newCommonOrder);
   }
 
   /** Generate statements to convert the original to the new DB DDL. */
@@ -248,13 +357,16 @@ public class DdlDiff {
     output.addAll(searchIndexUpdateStatements.dropStatements());
 
     if (options.get(ALLOW_DROP_STATEMENTS_OPT)) {
-      // Drop tables that have been deleted -- need to do it in reverse creation order.
+      // Drop tables that have been deleted or need to be recreated -- need to do it in reverse creation order.
       List<String> reverseOrderedTableNames =
           new ArrayList<>(originalDb.tablesInCreationOrder().keySet());
       Collections.reverse(reverseOrderedTableNames);
       for (String tableName : reverseOrderedTableNames) {
         if (tableDifferences.entriesOnlyOnLeft().containsKey(tableName)) {
           LOG.info("Dropping deleted table: {}", tableName);
+          output.add("DROP TABLE " + tableName);
+        } else if (tablesToDrop.containsKey(tableName)) {
+          LOG.info("Dropping table {} for recreation", tableName);
           output.add("DROP TABLE " + tableName);
         }
       }
@@ -271,7 +383,14 @@ public class DdlDiff {
     // Alter existing tables, or error if not possible.
     for (ValueDifference<ASTcreate_table_statement> difference :
         tableDifferences.entriesDiffering().values()) {
-      LOG.info("Altering modified table: {}", difference.leftValue().getTableName());
+      String tableName = difference.leftValue().getTableName();
+
+      // Skip tables that are marked for DROP + CREATE
+      if (tablesToDrop.containsKey(tableName)) {
+        continue;
+      }
+
+      LOG.info("Altering modified table: {}", tableName);
       output.addAll(
           generateAlterTableStatements(difference.leftValue(), difference.rightValue(), options));
     }
@@ -285,8 +404,12 @@ public class DdlDiff {
     // Create new tables. Must be done in the order of creation in the new DDL.
     for (Map.Entry<String, ASTcreate_table_statement> newTableEntry :
         newDb.tablesInCreationOrder().entrySet()) {
-      if (tableDifferences.entriesOnlyOnRight().containsKey(newTableEntry.getKey())) {
-        LOG.info("Creating new table: {}", newTableEntry.getKey());
+      String tableName = newTableEntry.getKey();
+      if (tableDifferences.entriesOnlyOnRight().containsKey(tableName)) {
+        LOG.info("Creating new table: {}", tableName);
+        output.add(newTableEntry.getValue().toStringOptionalExistClause(false));
+      } else if (tablesToCreate.containsKey(tableName)) {
+        LOG.info("Recreating table: {}", tableName);
         output.add(newTableEntry.getValue().toStringOptionalExistClause(false));
       }
     }

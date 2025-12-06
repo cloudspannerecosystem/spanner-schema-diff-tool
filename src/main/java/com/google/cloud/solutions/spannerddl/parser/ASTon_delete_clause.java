@@ -19,8 +19,8 @@ package com.google.cloud.solutions.spannerddl.parser;
 /** Abstract Syntax Tree parser object for "on_delete_clause" token */
 public class ASTon_delete_clause extends SimpleNode {
 
-  static final String ON_DELETE_CASCADE = "ON DELETE CASCADE";
-  static final String ON_DELETE_NO_ACTION = "ON DELETE NO ACTION";
+  public static final String ON_DELETE_CASCADE = "ON DELETE CASCADE";
+  public static final String ON_DELETE_NO_ACTION = "ON DELETE NO ACTION";
 
   public ASTon_delete_clause(int id) {
     super(id);

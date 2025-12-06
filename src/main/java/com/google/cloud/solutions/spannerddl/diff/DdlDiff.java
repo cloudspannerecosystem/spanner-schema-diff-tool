@@ -34,6 +34,7 @@ import com.google.cloud.solutions.spannerddl.parser.ASTcreate_search_index_state
 import com.google.cloud.solutions.spannerddl.parser.ASTcreate_table_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
 import com.google.cloud.solutions.spannerddl.parser.ASTforeign_key;
+import com.google.cloud.solutions.spannerddl.parser.ASTon_delete_clause;
 import com.google.cloud.solutions.spannerddl.parser.ASToptions_clause;
 import com.google.cloud.solutions.spannerddl.parser.ASTrow_deletion_policy_clause;
 import com.google.cloud.solutions.spannerddl.parser.ASTtable_interleave_clause;
@@ -516,15 +517,11 @@ public class DdlDiff {
         // Added interleave
         ASTtable_interleave_clause ri = rightInterleave.get();
         alterStatements.add(
-            Joiner.on(" ")
-                .skipNulls()
-                .join(
-                    "ALTER TABLE",
-                    left.getTableName(),
-                    "SET INTERLEAVE IN",
-                    (ri.hasParentKeyword() ? "PARENT" : null),
-                    ri.getParentTableName(),
-                    ri.getOnDelete()));
+            buildSetInterleaveStatement(
+                left.getTableName(),
+                ri.getParentTableName(),
+                ri.hasParentKeyword(),
+                ri.getOnDelete()));
       } else {
         // Removal not supported
         throw new DdlDiffException("Cannot change interleaving on table " + left.getTableName());
@@ -533,18 +530,34 @@ public class DdlDiff {
       ASTtable_interleave_clause li = leftInterleave.get();
       ASTtable_interleave_clause ri = rightInterleave.get();
       if (!li.getParentTableName().equals(ri.getParentTableName())
-          || !li.getOnDelete().equals(ri.getOnDelete())
+          || !Objects.equals(li.getOnDelete(), ri.getOnDelete())
           || li.hasParentKeyword() != ri.hasParentKeyword()) {
-        alterStatements.add(
-            Joiner.on(" ")
-                .skipNulls()
-                .join(
-                    "ALTER TABLE",
-                    left.getTableName(),
-                    "SET INTERLEAVE IN",
-                    (ri.hasParentKeyword() ? "PARENT" : null),
-                    ri.getParentTableName(),
-                    ri.getOnDelete()));
+        if (!li.hasParentKeyword()
+            && ri.hasParentKeyword()
+            && Objects.equals(ri.getParentTableName(), li.getParentTableName())
+            && Objects.equals(ri.getOnDelete(), ASTon_delete_clause.ON_DELETE_CASCADE)) {
+          // Migration from INTERLEAVE IN -> INTERLEAVE IN PARENT ... ON DELETE CASCADE must
+          // be performed in two statements.
+          alterStatements.add(
+              buildSetInterleaveStatement(
+                  left.getTableName(),
+                  ri.getParentTableName(),
+                  true,
+                  ASTon_delete_clause.ON_DELETE_NO_ACTION));
+          alterStatements.add(
+              buildSetInterleaveStatement(
+                  left.getTableName(),
+                  ri.getParentTableName(),
+                  true,
+                  ASTon_delete_clause.ON_DELETE_CASCADE));
+        } else {
+          alterStatements.add(
+              buildSetInterleaveStatement(
+                  left.getTableName(),
+                  ri.getParentTableName(),
+                  ri.hasParentKeyword(),
+                  ri.getOnDelete()));
+        }
       }
     }
 
@@ -569,6 +582,19 @@ public class DdlDiff {
     }
 
     return alterStatements;
+  }
+
+  private static String buildSetInterleaveStatement(
+      String tableName, String parentTableName, boolean includeParentKeyword, String onDeleteClause) {
+    return Joiner.on(" ")
+        .skipNulls()
+        .join(
+            "ALTER TABLE",
+            tableName,
+            "SET INTERLEAVE IN",
+            (includeParentKeyword ? "PARENT" : null),
+            parentTableName,
+            onDeleteClause);
   }
 
   private static void addColumnDiffs(

@@ -180,16 +180,15 @@ public class DDLParserTest {
 
   @Test
   public void parseCreateTable_interleaveWithoutParent_parsesAndNormalizes() throws ParseException {
-    // Input omits PARENT, parser should accept and normalize to include PARENT in toString
+    // Input omits PARENT, parser should accept and preserve omission in toString
     ASTcreate_table_statement stmt =
         (ASTcreate_table_statement)
             parse("CREATE TABLE t (k INT64) PRIMARY KEY (k), INTERLEAVE IN parent_table")
                 .jjtGetChild(0);
 
-    // Output preserves omission of PARENT when not provided
+    // Output preserves omission of PARENT and does not append an ON DELETE clause
     assertThat(stmt.toString())
-        .isEqualTo(
-            "CREATE TABLE t ( k INT64 ) PRIMARY KEY (k ASC), INTERLEAVE IN parent_table ON DELETE NO ACTION");
+        .isEqualTo("CREATE TABLE t ( k INT64 ) PRIMARY KEY (k ASC), INTERLEAVE IN parent_table");
   }
 
   @Test
@@ -266,13 +265,26 @@ public class DDLParserTest {
         .isEqualTo(
             ("CREATE TABLE child_table ( k1 STRING(MAX) NOT NULL, k2 STRING(MAX) NOT NULL, col1"
                     + " STRING(MAX), col2 INT64, ts TIMESTAMP ) PRIMARY KEY (k1 ASC, k2 ASC),"
-                    + " INTERLEAVE IN parent_table ON DELETE NO ACTION, ROW DELETION POLICY (OLDER_THAN ("
+                    + " INTERLEAVE IN parent_table, ROW DELETION POLICY (OLDER_THAN ("
                     + " ts, INTERVAL 1 DAY )), OPTIONS (opt1=TRUE)")
                 .replaceAll("\\s+", " "));
 
     ASTcreate_table_statement stmt2 =
         (ASTcreate_table_statement) parseAndVerifyToString(stmt.toString()).jjtGetChild(0);
     assertThat(stmt).isEqualTo(stmt2);
+  }
+
+  @Test
+  public void interleaveOnDeleteWithoutParent_throws() throws ParseException {
+    ASTcreate_table_statement stmt =
+        (ASTcreate_table_statement)
+            parse(
+                    "CREATE TABLE child_table (k INT64) PRIMARY KEY (k), INTERLEAVE IN parent_table"
+                        + " ON DELETE CASCADE")
+                .jjtGetChild(0);
+
+    ASTtable_interleave_clause clause = stmt.getInterleaveClause().get();
+    assertThrows(IllegalArgumentException.class, clause::toString);
   }
 
   private static void parseCheckingParseException(String ddlStatement, String exceptionContains) {

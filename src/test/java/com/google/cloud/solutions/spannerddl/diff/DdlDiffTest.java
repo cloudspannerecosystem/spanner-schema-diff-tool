@@ -571,9 +571,21 @@ public class DdlDiffTest {
   public void alterTable_interleaveOnDeleteChange_generatesAlter() throws DdlDiffException {
     String original =
         "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN PARENT p ON DELETE NO ACTION;";
-    String updated = "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN p ON DELETE CASCADE;";
+    String updated =
+        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN PARENT p ON DELETE CASCADE;";
     assertThat(getDiff(original, updated, true))
-        .containsExactly("ALTER TABLE c SET INTERLEAVE IN p ON DELETE CASCADE");
+        .containsExactly("ALTER TABLE c SET INTERLEAVE IN PARENT p ON DELETE CASCADE");
+  }
+
+  @Test
+  public void alterTable_interleaveLegacyToCascade_generatesTwoStatements() throws DdlDiffException {
+    String original = "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN p;";
+    String updated =
+        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN PARENT p ON DELETE CASCADE;";
+    assertThat(getDiff(original, updated, true))
+        .containsExactly(
+            "ALTER TABLE c SET INTERLEAVE IN PARENT p ON DELETE NO ACTION",
+            "ALTER TABLE c SET INTERLEAVE IN PARENT p ON DELETE CASCADE");
   }
 
   @Test
@@ -581,18 +593,18 @@ public class DdlDiffTest {
     String original =
         "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN PARENT p1 ON DELETE CASCADE;";
     String updated =
-        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN p2 ON DELETE CASCADE;";
+        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN PARENT p2 ON DELETE CASCADE;";
     assertThat(getDiff(original, updated, true))
-        .containsExactly("ALTER TABLE c SET INTERLEAVE IN p2 ON DELETE CASCADE");
+        .containsExactly("ALTER TABLE c SET INTERLEAVE IN PARENT p2 ON DELETE CASCADE");
   }
 
   @Test
   public void alterTable_interleaveAdded_generatesAlter() throws DdlDiffException {
     String original = "CREATE TABLE c (k INT64) PRIMARY KEY (k);";
     String updated =
-        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN p ON DELETE NO ACTION;";
+        "CREATE TABLE c (k INT64) PRIMARY KEY (k), INTERLEAVE IN p;";
     assertThat(getDiff(original, updated, true))
-        .containsExactly("ALTER TABLE c SET INTERLEAVE IN p ON DELETE NO ACTION");
+        .containsExactly("ALTER TABLE c SET INTERLEAVE IN p");
   }
 
   @Test

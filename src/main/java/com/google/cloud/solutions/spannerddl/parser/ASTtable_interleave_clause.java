@@ -47,13 +47,29 @@ public class ASTtable_interleave_clause extends SimpleNode {
     return false;
   }
 
+  public boolean hasOnDeleteClause() {
+    for (Node child : children) {
+      if (child instanceof ASTon_delete_clause) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public String getOnDelete() {
     for (Node child : children) {
       if (child instanceof ASTon_delete_clause) {
+        if (!hasParentKeyword()) {
+          throw new IllegalArgumentException(
+              "ON DELETE clause requires INTERLEAVE IN PARENT syntax");
+        }
         return child.toString();
       }
     }
-    return ASTon_delete_clause.ON_DELETE_NO_ACTION;
+    if (hasParentKeyword()) {
+      return ASTon_delete_clause.ON_DELETE_NO_ACTION;
+    }
+    return null;
   }
 
   @Override
@@ -62,7 +78,7 @@ public class ASTtable_interleave_clause extends SimpleNode {
         .skipNulls()
         .join(
             "INTERLEAVE IN",
-            (hasParentKeyword() ? "PARENT" : null),
+            ((hasParentKeyword() || hasOnDeleteClause()) ? "PARENT" : null),
             getParentTableName(),
             getOnDelete());
   }

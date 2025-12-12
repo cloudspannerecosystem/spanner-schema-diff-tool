@@ -18,7 +18,7 @@ package com.google.cloud.solutions.spannerddl.parser;
 
 import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class ASTcolumn_def extends SimpleNode {
 

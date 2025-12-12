@@ -62,7 +62,11 @@ public class DdlDiffFromFilesTest {
                 : Collections.emptyList();
 
         LOG.info("Processing segment (with drops): " + segmentName);
-        DdlDiff ddlDiff = DdlDiff.build(originalSegment.getValue(), newSegment.getValue());
+        DdlDiff ddlDiff =
+            DdlDiff.build(
+                originalSegment.getValue(),
+                newSegment.getValue(),
+                ImmutableMap.of(DdlDiff.IGNORE_PROTO_BUNDLES_OPT, false));
         // Run diff with allowRecreateIndexes and allowDropStatements
         List<String> diff =
             ddlDiff.generateDifferenceStatements(

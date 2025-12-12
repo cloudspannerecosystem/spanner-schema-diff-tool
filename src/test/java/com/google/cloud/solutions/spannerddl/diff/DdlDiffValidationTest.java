@@ -19,6 +19,7 @@ package com.google.cloud.solutions.spannerddl.diff;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public class DdlDiffValidationTest {
@@ -28,7 +29,7 @@ public class DdlDiffValidationTest {
     String ddl =
         "CREATE TABLE test1 ( col1 INT64, col2 STRING(100), CONSTRAINT fk_in_table FOREIGN KEY (col2) REFERENCES othertable (othercol) ) PRIMARY KEY (col1);";
     try {
-      DdlDiff.validateDdl(ddl);
+      DdlDiff.validateDdl(ddl, ImmutableMap.of(DdlDiff.IGNORE_PROTO_BUNDLES_OPT, false));
       fail("Expected DdlDiffException");
     } catch (DdlDiffException e) {
       assertThat(e.getMessage())
@@ -43,7 +44,7 @@ public class DdlDiffValidationTest {
         "CREATE TABLE test1 ( col1 INT64, col2 STRING(100), CONSTRAINT fk_in_table FOREIGN KEY (col2) REFERENCES othertable (othercol) ) PRIMARY KEY (col1);"
             + "CREATE table othertable ( othercol INT64, col4 STRING(100) ) PRIMARY KEY (othercol);";
     try {
-      DdlDiff.validateDdl(ddl);
+      DdlDiff.validateDdl(ddl, ImmutableMap.of(DdlDiff.IGNORE_PROTO_BUNDLES_OPT, false));
     } catch (DdlDiffException e) {
       throw new RuntimeException(e);
     }
@@ -55,7 +56,7 @@ public class DdlDiffValidationTest {
         "CREATE TABLE othertable (othercol STRING(100)) PRIMARY KEY (othercol); "
             + "CREATE TABLE test1 ( col1 INT64, col2 STRING(100), CONSTRAINT fk_in_table FOREIGN KEY (col2) REFERENCES othertable (missing_col) ) PRIMARY KEY (col1);";
     try {
-      DdlDiff.validateDdl(ddl);
+      DdlDiff.validateDdl(ddl, ImmutableMap.of(DdlDiff.IGNORE_PROTO_BUNDLES_OPT, false));
       fail("Expected DdlDiffException");
     } catch (DdlDiffException e) {
       assertThat(e.getMessage())
@@ -70,7 +71,7 @@ public class DdlDiffValidationTest {
         "CREATE TABLE othertable ( othercol STRING(100), existing_col INT64 ) PRIMARY KEY (othercol); "
             + "CREATE TABLE test1 ( col1 INT64, col2 STRING(100), CONSTRAINT fk_in_table FOREIGN KEY (col2) REFERENCES othertable (existing_col) ) PRIMARY KEY (col1);";
     try {
-      DdlDiff.validateDdl(ddl);
+      DdlDiff.validateDdl(ddl, ImmutableMap.of(DdlDiff.IGNORE_PROTO_BUNDLES_OPT, false));
     } catch (DdlDiffException e) {
       throw new RuntimeException(e);
     }
@@ -80,7 +81,7 @@ public class DdlDiffValidationTest {
   public void validateIndex_missingTable() {
     String ddl = "CREATE INDEX myindex ON mytable (col1);";
     try {
-      DdlDiff.validateDdl(ddl);
+      DdlDiff.validateDdl(ddl, ImmutableMap.of(DdlDiff.IGNORE_PROTO_BUNDLES_OPT, false));
       fail("Expected DdlDiffException");
     } catch (DdlDiffException e) {
       assertThat(e.getMessage())
@@ -94,7 +95,7 @@ public class DdlDiffValidationTest {
         "CREATE TABLE mytable ( col1 INT64, col2 STRING(100) ) PRIMARY KEY (col1); "
             + "CREATE INDEX myindex ON mytable (col1);";
     try {
-      DdlDiff.validateDdl(ddl);
+      DdlDiff.validateDdl(ddl, ImmutableMap.of(DdlDiff.IGNORE_PROTO_BUNDLES_OPT, false));
     } catch (DdlDiffException e) {
       throw new RuntimeException(e);
     }
@@ -105,7 +106,7 @@ public class DdlDiffValidationTest {
     String ddl =
         "CREATE TABLE mytable (col1 INT64) PRIMARY KEY (col1); CREATE INDEX myindex ON mytable (missing_col);";
     try {
-      DdlDiff.validateDdl(ddl);
+      DdlDiff.validateDdl(ddl, ImmutableMap.of(DdlDiff.IGNORE_PROTO_BUNDLES_OPT, false));
       fail("Expected DdlDiffException");
     } catch (DdlDiffException e) {
       assertThat(e.getMessage())
@@ -119,7 +120,7 @@ public class DdlDiffValidationTest {
     String ddl =
         "CREATE TABLE mytable (col1 INT64, existing_col INT64 ) PRIMARY KEY (col1); CREATE INDEX myindex ON mytable (existing_col);";
     try {
-      DdlDiff.validateDdl(ddl);
+      DdlDiff.validateDdl(ddl, ImmutableMap.of(DdlDiff.IGNORE_PROTO_BUNDLES_OPT, false));
     } catch (DdlDiffException e) {
       throw new RuntimeException(e);
     }

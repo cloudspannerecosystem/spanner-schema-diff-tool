@@ -135,6 +135,13 @@ foreign key relationship is
 which would also be dropped and recreated. Therefore this option is disabled by
 default, and FOREIGN KEY differences will cause the tool to fail.
 
+## Note on Proto Bundles
+
+This tool does not support diffing of `PROTO BUNDLE` statements. By default, the tool will fail if it encounters a `PROTO BUNDLE` statement in the DDL.
+If you are confident that you do not need to diff `PROTO BUNDLE` statements, you can use the `--ignoreProtoBundles` flag. When this flag is set, the tool will ignore any `PROTO BUNDLE` statements in the DDL and will not generate any `ALTER` statements for them.
+
+**Warning:** This is a feature for a specific use case. Only use this flag if you are confident in your knowledge of how it will work.
+
 ## Unsupported Spanner DDL features
 
 This tool by neccessity will lag behind the implementation of new DDL features
@@ -172,6 +179,7 @@ mvn generate-resources compile exec:java \
   -Dexec.args="\
       --allowRecreateIndexes
       --allowRecreateForeignKeys
+      --ignoreProtoBundles
       --originalDdlFile original.ddl
       --newDdlFile new.ddl
       --outputDdlFile alter.ddl
@@ -185,6 +193,7 @@ mvn clean generate-resources compile package
 
 java -jar target/spanner-ddl-diff-*-jar-with-dependencies.jar \
       --allowRecreateIndexes \
+      --ignoreProtoBundles \
       --originalDdlFile original.ddl \
       --newDdlFile new.ddl \
       --outputDdlFile alter.ddl
@@ -334,6 +343,7 @@ generating statements to drop and recreate the constraint.
     --allowRecreateIndexes        Allows dropping and recreating secondary
                                   Indexes to apply changes.
     --help                        Show help.
+    --ignoreProtoBundles          Ignores proto bundle definitions.
     --newDdlFile <FILE>           File path to the new DDL definition.
     --originalDdlFile <FILE>      File path to the original DDL definition.
     --outputDdlFile <FILE>        File path to the output DDL to write.

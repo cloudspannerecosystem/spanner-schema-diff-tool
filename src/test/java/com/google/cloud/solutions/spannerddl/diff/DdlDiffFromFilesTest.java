@@ -74,7 +74,9 @@ public class DdlDiffFromFilesTest {
                     ALLOW_RECREATE_CONSTRAINTS_OPT,
                     true));
         // check expected results.
-        assertWithMessage("Mismatch for section " + segmentName).that(diff).isEqualTo(expectedDiff);
+        assertWithMessage("Mismatch for section %s", segmentName)
+            .that(diff)
+            .isEqualTo(expectedDiff);
 
         // TEST PART 2: with allowDropStatements=false
 
@@ -112,7 +114,7 @@ public class DdlDiffFromFilesTest {
                     ALLOW_RECREATE_CONSTRAINTS_OPT,
                     true));
         // check expected results.
-        assertWithMessage("Mismatch for section (noDrops)" + segmentName)
+        assertWithMessage("Mismatch for section (noDrops)%s", segmentName)
             .that(diff)
             .isEqualTo(expectedDiffNoDrops);
       }

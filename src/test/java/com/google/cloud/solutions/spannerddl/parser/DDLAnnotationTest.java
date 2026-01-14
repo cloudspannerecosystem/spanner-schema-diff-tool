@@ -46,7 +46,7 @@ public class DDLAnnotationTest {
         List<String> expectedList =
             expected != null ? Arrays.asList(expected.split("\n")) : Collections.emptyList();
 
-        assertWithMessage("Mismatch for section " + segmentName)
+        assertWithMessage("Mismatch for section %s", segmentName)
             .that(annotations)
             .isEqualTo(expectedList);
       } catch (DdlDiffException e) {

@@ -92,6 +92,11 @@ public abstract class DdlDiffOptions {
             .longOpt(DdlDiff.ALLOW_DROP_STATEMENTS_OPT)
             .desc("Enables output of DROP commands to delete objects not used in the new DDL file.")
             .build());
+    options.addOption(
+        Option.builder()
+            .longOpt(DdlDiff.IGNORE_PROTO_BUNDLES_OPT)
+            .desc("Ignores proto bundle definitions when parsing DDLs and generating diffs.")
+            .build());
     options.addOption(Option.builder().longOpt(DdlDiff.HELP_OPT).desc("Show help").build());
     return options;
   }
@@ -155,7 +160,9 @@ public abstract class DdlDiffOptions {
               DdlDiff.ALLOW_DROP_STATEMENTS_OPT,
                   commandLine.hasOption(DdlDiff.ALLOW_DROP_STATEMENTS_OPT),
               DdlDiff.ALLOW_RECREATE_CONSTRAINTS_OPT,
-                  commandLine.hasOption(DdlDiff.ALLOW_RECREATE_CONSTRAINTS_OPT));
+                  commandLine.hasOption(DdlDiff.ALLOW_RECREATE_CONSTRAINTS_OPT),
+              DdlDiff.IGNORE_PROTO_BUNDLES_OPT,
+                  commandLine.hasOption(DdlDiff.IGNORE_PROTO_BUNDLES_OPT));
 
       return new AutoValue_DdlDiffOptions(originalDdlPath, newDdlPath, outputDdlPath, argsMap);
     } catch (InvalidPathException e) {

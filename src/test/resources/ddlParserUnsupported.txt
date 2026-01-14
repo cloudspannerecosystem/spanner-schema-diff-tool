@@ -139,21 +139,21 @@ ALTER TABLE table_name DROP SYNONYM table_name
 
 ALTER TABLE table_name ADD SYNONYM table_name
 
-== Test 17a // TODO Create proto bundle
-
-CREATE PROTO BUNDLE (proto.path.name, other.proto.path)
-
-== Test 17b Alter proto bundle INSERT
-
-ALTER PROTO BUNDLE INSERT (proto.path.name, other.proto.path)
-
-== Test 17c Alter proto bundle UPDATE
-
-ALTER PROTO BUNDLE UPDATE (proto.path.name, other.proto.path)
-
-== Test 17d Alter proto bundle DELETE
-
-ALTER PROTO BUNDLE DELETE (proto.path.name, other.proto.path)
+# == Test 17a // TODO Create proto bundle. Commented out to allow user to ignore proto bundles when parsing
+#
+# CREATE PROTO BUNDLE (proto.path.name, other.proto.path)
+#
+# == Test 17b Alter proto bundle INSERT
+#
+# ALTER PROTO BUNDLE INSERT (proto.path.name, other.proto.path)
+#
+# == Test 17c Alter proto bundle UPDATE
+#
+# ALTER PROTO BUNDLE UPDATE (proto.path.name, other.proto.path)
+#
+# == Test 17d Alter proto bundle DELETE
+#
+# ALTER PROTO BUNDLE DELETE (proto.path.name, other.proto.path)
 
 == Test 18a alter search index
 

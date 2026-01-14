@@ -71,14 +71,14 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Example usage:
  *
- * <p>Pass the original and new DDL text to the {@link #build(String, String)} function, and call
- * {@link #generateDifferenceStatements(Map)} to generate the list of {@code ALTER} statements.
+ * <p>Pass the original and new DDL text to the {@link #build(String, String, Map)} function, and
+ * call {@link #generateDifferenceStatements(Map)} to generate the list of {@code ALTER} statements.
  *
  * <p>eg:
  *
  * <pre>
- * List&lt;String&gt; statements = DdlDiff.build(originalDDL, newDDL)
- *    .generateDifferenceStatements(true, true);
+ * List&lt;String&gt; statements = DdlDiff.build(originalDDL, newDDL,
+ * java.util.Collections.emptyMap()).generateDifferenceStatements(java.util.Collections.emptyMap());
  * </pre>
  *
  * <p>or execute the {@link #main(String[]) main()} function with the {@link
@@ -93,6 +93,7 @@ public class DdlDiff {
   public static final String ALLOW_RECREATE_INDEXES_OPT = "allowRecreateIndexes";
   public static final String ALLOW_RECREATE_CONSTRAINTS_OPT = "allowRecreateConstraints";
   public static final String ALLOW_DROP_STATEMENTS_OPT = "allowDropStatements";
+  public static final String IGNORE_PROTO_BUNDLES_OPT = "ignoreProtoBundles";
   public static final String HELP_OPT = "help";
 
   private final DatabaseDefinition originalDb;
@@ -670,7 +671,8 @@ public class DdlDiff {
    * @return DdlDiff instance
    * @throws DdlDiffException if there is an error in paring the DDL
    */
-  public static DdlDiff build(String originalDdl, String newDdl) throws DdlDiffException {
+  public static DdlDiff build(String originalDdl, String newDdl, Map<String, Boolean> options)
+      throws DdlDiffException {
     List<ASTddl_statement> originalStatements;
     List<ASTddl_statement> newStatements;
     try {
@@ -684,8 +686,8 @@ public class DdlDiff {
       throw new DdlDiffException("Failed parsing NEW DDL: " + e.getMessage(), e);
     }
 
-    DatabaseDefinition originalDb = DatabaseDefinition.create(originalStatements);
-    DatabaseDefinition newDb = DatabaseDefinition.create(newStatements);
+    DatabaseDefinition originalDb = DatabaseDefinition.create(originalStatements, options);
+    DatabaseDefinition newDb = DatabaseDefinition.create(newStatements, options);
 
     return new DdlDiff(
         originalDb, newDb, getDatabaseNameFromAlterDatabase(originalStatements, newStatements));
@@ -818,6 +820,8 @@ public class DdlDiff {
           case DdlParserTreeConstants.JJTALTER_DATABASE_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_CHANGE_STREAM_STATEMENT:
           case DdlParserTreeConstants.JJTCREATE_SEARCH_INDEX_STATEMENT:
+          case DdlParserTreeConstants.JJTCREATE_PROTO_BUNDLE_STATEMENT:
+          case DdlParserTreeConstants.JJTALTER_PROTO_BUNDLE_STATEMENT:
             // no-op - allowed
             break;
           case DdlParserTreeConstants.JJTCREATE_OR_REPLACE_STATEMENT:
@@ -860,9 +864,9 @@ public class DdlDiff {
       String originalDdl = new String(Files.readAllBytes(options.originalDdlPath()), UTF_8);
       String newDdl = new String(Files.readAllBytes(options.newDdlPath()), UTF_8);
 
-      validateDdl(newDdl);
+      validateDdl(newDdl, options.args());
 
-      DdlDiff ddlDiff = DdlDiff.build(originalDdl, newDdl);
+      DdlDiff ddlDiff = DdlDiff.build(originalDdl, newDdl, options.args());
 
       List<String> alterStatements = ddlDiff.generateDifferenceStatements(options.args());
 
@@ -890,14 +894,14 @@ public class DdlDiff {
    * @param ddl new DDL to parse
    * @throws DdlDiffException if there is an error in parsing the DDL
    */
-  public static void validateDdl(String ddl) throws DdlDiffException {
+  public static void validateDdl(String ddl, Map<String, Boolean> options) throws DdlDiffException {
     List<ASTddl_statement> statements;
     try {
       statements = parseDdl(Strings.nullToEmpty(ddl));
     } catch (DdlDiffException e) {
       throw new DdlDiffException("Failed parsing DDL: " + e.getMessage(), e);
     }
-    DatabaseDefinition db = DatabaseDefinition.create(statements);
+    DatabaseDefinition db = DatabaseDefinition.create(statements, options);
     validateReferences(db);
   }
 

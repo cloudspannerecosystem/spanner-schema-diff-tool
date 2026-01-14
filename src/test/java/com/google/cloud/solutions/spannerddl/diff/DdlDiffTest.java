@@ -23,7 +23,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
-import com.google.cloud.solutions.spannerddl.parser.ParseException;
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +30,17 @@ import java.util.Map;
 import org.junit.Test;
 
 public class DdlDiffTest {
+
+  private static final Map<String, Boolean> DEFAULT_OPTIONS =
+      ImmutableMap.of(
+          ALLOW_RECREATE_CONSTRAINTS_OPT,
+          true,
+          ALLOW_DROP_STATEMENTS_OPT,
+          true,
+          ALLOW_RECREATE_INDEXES_OPT,
+          true,
+          DdlDiff.IGNORE_PROTO_BUNDLES_OPT,
+          false);
 
   @Test
   public void parseMultiDdlStatements() throws DdlDiffException {
@@ -61,7 +71,7 @@ public class DdlDiffTest {
   }
 
   @Test
-  public void parseCreateTable_anonForeignKey() throws DdlDiffException {
+  public void parseCreateTable_anonForeignKey() {
     try {
       DdlDiff.parseDdl(
           "create table test ("
@@ -70,14 +80,14 @@ public class DdlDiffTest {
               + ")"
               + "primary key (intcol ASC)");
       fail("Expected exception not thrown");
-    } catch (IllegalArgumentException e) {
+    } catch (DdlDiffException | IllegalArgumentException e) {
       assertThat(e.getMessage())
           .containsMatch("Can not create diffs when anonymous constraints are used.");
     }
   }
 
   @Test
-  public void parseCreateTable_anonCheckConstraint() throws DdlDiffException {
+  public void parseCreateTable_anonCheckConstraint() {
     try {
       DdlDiff.parseDdl(
           "create table test ("
@@ -86,7 +96,7 @@ public class DdlDiffTest {
               + ")"
               + "primary key (intcol ASC)");
       fail("Expected exception not thrown");
-    } catch (IllegalArgumentException e) {
+    } catch (DdlDiffException | IllegalArgumentException e) {
       assertThat(e.getMessage())
           .containsMatch("Can not create diffs when anonymous constraints are used.");
     }
@@ -398,7 +408,7 @@ public class DdlDiffTest {
   }
 
   @Test
-  public void parseAlterDatabaseDifferentDbNames() throws ParseException {
+  public void parseAlterDatabaseDifferentDbNames() {
     getDiffCheckDdlDiffException(
         "ALTER DATABASE dbname SET OPTIONS(hello='world');",
         "ALTER DATABASE otherdbname SET OPTIONS(hello='world');",
@@ -445,7 +455,8 @@ public class DdlDiffTest {
     assertThat(
             DdlDiff.build(
                     "CREATE INDEX myindex ON mytable ( col1 ) STORING (col2, col3);",
-                    "CREATE INDEX myindex ON mytable ( col1 ) STORING (col3, col4);")
+                    "CREATE INDEX myindex ON mytable ( col1 ) STORING (col3, col4);",
+                    DEFAULT_OPTIONS)
                 .generateDifferenceStatements(
                     ImmutableMap.of(
                         ALLOW_RECREATE_INDEXES_OPT,
@@ -453,6 +464,8 @@ public class DdlDiffTest {
                         ALLOW_DROP_STATEMENTS_OPT,
                         false,
                         ALLOW_RECREATE_CONSTRAINTS_OPT,
+                        false,
+                        DdlDiff.IGNORE_PROTO_BUNDLES_OPT,
                         false)))
         .containsExactly(
             "ALTER INDEX myindex DROP STORED COLUMN col2",
@@ -464,7 +477,8 @@ public class DdlDiffTest {
     assertThat(
             DdlDiff.build(
                     "CREATE UNIQUE INDEX myindex ON mytable ( col1 ) STORING (col2, col3);",
-                    "CREATE INDEX myindex ON mytable ( col1 ) STORING (col3, col4);")
+                    "CREATE INDEX myindex ON mytable ( col1 ) STORING (col3, col4);",
+                    DEFAULT_OPTIONS)
                 .generateDifferenceStatements(
                     ImmutableMap.of(
                         ALLOW_RECREATE_INDEXES_OPT,
@@ -472,6 +486,8 @@ public class DdlDiffTest {
                         ALLOW_DROP_STATEMENTS_OPT,
                         false,
                         ALLOW_RECREATE_CONSTRAINTS_OPT,
+                        false,
+                        DdlDiff.IGNORE_PROTO_BUNDLES_OPT,
                         false)))
         .containsExactly(
             "DROP INDEX myindex",
@@ -479,7 +495,7 @@ public class DdlDiffTest {
   }
 
   @Test
-  public void diffCreateIndexNotOnlyStoringThrows() throws DdlDiffException {
+  public void diffCreateIndexNotOnlyStoringThrows() {
     getDiffCheckDdlDiffException(
         "CREATE UNIQUE INDEX myindex ON mytable ( col1 ) STORING (col2, col3);",
         "CREATE INDEX myindex ON mytable ( col1 ) STORING (col3, col4);",
@@ -499,15 +515,23 @@ public class DdlDiffTest {
 
   private static List<String> getDiff(
       String originalDdl, String newDdl, boolean allowDropStatements) throws DdlDiffException {
-    return DdlDiff.build(originalDdl, newDdl)
-        .generateDifferenceStatements(
-            ImmutableMap.of(
-                ALLOW_RECREATE_CONSTRAINTS_OPT,
-                true,
-                ALLOW_DROP_STATEMENTS_OPT,
-                allowDropStatements,
-                ALLOW_RECREATE_INDEXES_OPT,
-                false));
+    return getDiff(originalDdl, newDdl, allowDropStatements, false);
+  }
+
+  private static List<String> getDiff(
+      String originalDdl, String newDdl, boolean allowDropStatements, boolean ignoreProtoBundles)
+      throws DdlDiffException {
+    Map<String, Boolean> options =
+        ImmutableMap.of(
+            ALLOW_RECREATE_CONSTRAINTS_OPT,
+            true,
+            ALLOW_DROP_STATEMENTS_OPT,
+            allowDropStatements,
+            ALLOW_RECREATE_INDEXES_OPT,
+            false,
+            DdlDiff.IGNORE_PROTO_BUNDLES_OPT,
+            ignoreProtoBundles);
+    return DdlDiff.build(originalDdl, newDdl, options).generateDifferenceStatements(options);
   }
 
   @Test
@@ -516,7 +540,8 @@ public class DdlDiffTest {
         DdlDiff.build(
             "Create table table1 (col1 int64) primary key (col1);"
                 + "Create table table2 (col2 int64) primary key (col2);",
-            "Create table table1 (col1 int64) primary key (col1);");
+            "Create table table1 (col1 int64) primary key (col1);",
+            DEFAULT_OPTIONS);
 
     assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true)))
         .containsExactly("DROP TABLE table2");
@@ -530,7 +555,8 @@ public class DdlDiffTest {
         DdlDiff.build(
             "Create index index1 on table1 (col1 desc);"
                 + "Create index index2 on table2 (col2 desc);",
-            "Create index index1 on table1 (col1 desc);");
+            "Create index index1 on table1 (col1 desc);",
+            DEFAULT_OPTIONS);
 
     assertThat(diff.generateDifferenceStatements(ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true)))
         .containsExactly("DROP INDEX index2");
@@ -541,11 +567,18 @@ public class DdlDiffTest {
   @Test
   public void differentIndexesWithNoRecreate() {
     Map<String, Boolean> options =
-        ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, false, ALLOW_RECREATE_INDEXES_OPT, false);
+        ImmutableMap.of(
+            ALLOW_DROP_STATEMENTS_OPT,
+            false,
+            ALLOW_RECREATE_INDEXES_OPT,
+            false,
+            DdlDiff.IGNORE_PROTO_BUNDLES_OPT,
+            false);
     try {
       DdlDiff.build(
               "Create unique null_filtered index index1 on table1 (col1 desc)",
-              "Create unique null_filtered index index1 on table1 (col1 asc)")
+              "Create unique null_filtered index index1 on table1 (col1 asc)",
+              options)
           .generateDifferenceStatements(options);
       fail("Expected exception not thrown");
     } catch (DdlDiffException e) {
@@ -554,7 +587,8 @@ public class DdlDiffTest {
     try {
       DdlDiff.build(
               "Create unique null_filtered index index1 on table1 (col1 desc)",
-              "Create unique null_filtered index index1 on table1 (col2 desc)")
+              "Create unique null_filtered index index1 on table1 (col2 desc)",
+              options)
           .generateDifferenceStatements(options);
       fail("Expected exception not thrown");
     } catch (DdlDiffException e) {
@@ -563,7 +597,8 @@ public class DdlDiffTest {
     try {
       DdlDiff.build(
               "Create unique null_filtered index index1 on table1 (col1 desc)",
-              "Create index index1 on table1 (col1 desc)")
+              "Create index index1 on table1 (col1 desc)",
+              options)
           .generateDifferenceStatements(options);
       fail("Expected exception not thrown");
     } catch (DdlDiffException e) {
@@ -574,11 +609,18 @@ public class DdlDiffTest {
   @Test
   public void differentIndexesWithRecreate() throws DdlDiffException {
     Map<String, Boolean> options =
-        ImmutableMap.of(ALLOW_DROP_STATEMENTS_OPT, true, ALLOW_RECREATE_INDEXES_OPT, true);
+        ImmutableMap.of(
+            ALLOW_DROP_STATEMENTS_OPT,
+            true,
+            ALLOW_RECREATE_INDEXES_OPT,
+            true,
+            DdlDiff.IGNORE_PROTO_BUNDLES_OPT,
+            false);
     assertThat(
             DdlDiff.build(
                     "Create unique null_filtered index index1 on table1 (col1 desc)",
-                    "Create unique null_filtered index index1 on table1 (col1 asc)")
+                    "Create unique null_filtered index index1 on table1 (col1 asc)",
+                    options)
                 .generateDifferenceStatements(options))
         .isEqualTo(
             Arrays.asList(
@@ -587,7 +629,8 @@ public class DdlDiffTest {
     assertThat(
             DdlDiff.build(
                     "Create unique null_filtered index index1 on table1 ( col1 desc )",
-                    "Create unique null_filtered index index1 on table1 ( col2 desc )")
+                    "Create unique null_filtered index index1 on table1 ( col2 desc )",
+                    options)
                 .generateDifferenceStatements(options))
         .isEqualTo(
             Arrays.asList(
@@ -596,9 +639,27 @@ public class DdlDiffTest {
     assertThat(
             DdlDiff.build(
                     "Create unique null_filtered index index1 on table1 ( col1 desc )",
-                    "Create index index1 on table1 ( col1 desc )")
+                    "Create index index1 on table1 ( col1 desc )",
+                    options)
                 .generateDifferenceStatements(options))
         .isEqualTo(
             Arrays.asList("DROP INDEX index1", "CREATE INDEX index1 ON table1 ( col1 DESC )"));
+  }
+
+  @Test
+  public void ignoreProtoBundles_throwsExceptionWhenNotIgnoring() {
+    try {
+      getDiff("CREATE PROTO BUNDLE (a,b,c)", "", false, false);
+      fail("Expected exception not thrown");
+    } catch (UnsupportedOperationException e) {
+      assertThat(e.getMessage()).isEqualTo("Not Implemented");
+    } catch (DdlDiffException e) {
+      fail("Unexpected DdlDiffException: " + e);
+    }
+  }
+
+  @Test
+  public void ignoreProtoBundles_ignoresWhenFlagIsSet() throws DdlDiffException {
+    assertThat(getDiff("", "CREATE PROTO BUNDLE (a,b,c)", false, true)).isEmpty();
   }
 }

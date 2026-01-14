@@ -35,6 +35,7 @@ import com.google.cloud.solutions.spannerddl.parser.SimpleNode;
 import com.google.common.collect.ImmutableMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -54,7 +55,8 @@ public abstract class DatabaseDefinition {
    * @param statements List of parsed DDL statements
    * @return DatabaseDefinition instance
    */
-  public static DatabaseDefinition create(List<ASTddl_statement> statements) {
+  public static DatabaseDefinition create(
+      List<ASTddl_statement> statements, Map<String, Boolean> options) {
     // Use LinkedHashMap to preserve creation order in original DDL.
     LinkedHashMap<String, ASTcreate_table_statement> tablesInCreationOrder = new LinkedHashMap<>();
     LinkedHashMap<String, ASTcreate_index_statement> indexes = new LinkedHashMap<>();
@@ -126,6 +128,13 @@ public abstract class DatabaseDefinition {
           changeStreams.put(
               ((ASTcreate_change_stream_statement) statement).getName(),
               (ASTcreate_change_stream_statement) statement);
+          break;
+
+        case DdlParserTreeConstants.JJTCREATE_PROTO_BUNDLE_STATEMENT:
+        case DdlParserTreeConstants.JJTALTER_PROTO_BUNDLE_STATEMENT:
+          if (!options.get(DdlDiff.IGNORE_PROTO_BUNDLES_OPT)) {
+            throw new UnsupportedOperationException("Not Implemented");
+          }
           break;
 
         case DdlParserTreeConstants.JJTCREATE_OR_REPLACE_STATEMENT:

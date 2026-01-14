@@ -18,11 +18,9 @@ package com.google.cloud.solutions.spannerddl.parser;
 public class ASTalter_proto_bundle_statement extends SimpleNode {
   public ASTalter_proto_bundle_statement(int id) {
     super(id);
-    throw new UnsupportedOperationException("Not Implemented");
   }
 
   public ASTalter_proto_bundle_statement(DdlParser p, int id) {
     super(p, id);
-    throw new UnsupportedOperationException("Not Implemented");
   }
 }

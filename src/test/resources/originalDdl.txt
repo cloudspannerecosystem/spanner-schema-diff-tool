@@ -561,4 +561,32 @@ CREATE TABLE schema2.table1 (
 )PRIMARY KEY (col1);
 
 
+== TEST 68 Create view with/without named schama
+
+-- nothing
+
+== TEST 69 Replace view with dependencies
+
+CREATE TABLE input (
+  pk INT64,
+  col1 INT64
+) PRIMARY KEY (pk);
+
+CREATE INDEX inputByCol ON input (col1);
+
+CREATE OR REPLACE VIEW preprocess
+SQL SECURITY INVOKER
+AS SELECT t.pk, t.col1, 1 AS n
+   FROM input AS t;
+
+CREATE OR REPLACE VIEW final
+SQL SECURITY INVOKER
+AS SELECT v.PK, v.col1, v.n, "foo" AS s
+   FROM preprocess AS v;
+
+== TEST 70 Dropping view
+
+CREATE VIEW view1 SQL SECURITY INVOKER AS SELECT * FROM test1;
+CREATE OR REPLACE VIEW view2 SQL SECURITY DEFINER AS SELECT * FROM test2;
+
 ==

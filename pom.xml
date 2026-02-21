@@ -29,16 +29,16 @@
     <slf4j.version>2.0.17</slf4j.version>
     <commons-cli.version>1.11.0</commons-cli.version>
     <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
-    <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
-    <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
+    <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+    <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
     <ph-javacc-maven-plugin.version>5.0.1</ph-javacc-maven-plugin.version>
     <truth.version>1.4.5</truth.version>
     <junit.version>4.13.2</junit.version>
-    <spotless.version>3.1.0</spotless.version>
+    <spotless.version>3.2.1</spotless.version>
     <exec-maven.version>3.6.3</exec-maven.version>
     <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
     <auto-value.version>1.11.1</auto-value.version>
-    <error-prone.version>2.46.0</error-prone.version>
+    <error-prone.version>2.47.0</error-prone.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
     <jspecify.version>1.0.0</jspecify.version>

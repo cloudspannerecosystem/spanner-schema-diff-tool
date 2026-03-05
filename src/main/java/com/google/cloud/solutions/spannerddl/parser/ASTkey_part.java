@@ -43,7 +43,7 @@ public class ASTkey_part extends SimpleNode {
     }
 
     if (children.length == 1) {
-      return getKeyPath() + " ASC"; // key name without direction ;
+      return getKeyPath(); // key name without direction ;
     } else {
       // key name and ASC/DESC
       return getKeyPath() + " " + children[1].toString().toUpperCase(Locale.ROOT);

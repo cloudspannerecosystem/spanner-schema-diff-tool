@@ -30,20 +30,30 @@ public class ASTtable_interleave_clause extends SimpleNode {
   }
 
   public String getParentTableName() {
-    return AstTreeUtils.tokensToString((ASTinterleave_in) children[0]);
+    return AstTreeUtils.tokensToString(
+        AstTreeUtils.getChildByType(children, ASTinterleave_in.class));
   }
 
   public String getOnDelete() {
-    if (children.length == 2) {
-      // verify child type
-      return children[1].toString();
-    } else {
+    ASTon_delete_clause ondelete =
+        AstTreeUtils.getOptionalChildByType(children, ASTon_delete_clause.class);
+    if (ondelete == null) {
       return ASTon_delete_clause.ON_DELETE_NO_ACTION;
+    } else {
+      return ondelete.toString();
     }
   }
 
   @Override
   public String toString() {
-    return Joiner.on(" ").join("INTERLEAVE IN PARENT", getParentTableName(), getOnDelete());
+    return Joiner.on(" ")
+        .skipNulls()
+        .join(
+            "INTERLEAVE IN",
+            AstTreeUtils.getOptionalChildByType(children, ASTparent.class) == null
+                ? null
+                : "PARENT",
+            getParentTableName(),
+            getOnDelete());
   }
 }

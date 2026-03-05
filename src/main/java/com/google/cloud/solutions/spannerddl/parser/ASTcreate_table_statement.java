@@ -74,7 +74,16 @@ public class ASTcreate_table_statement extends SimpleNode {
   }
 
   public synchronized ASTprimary_key getPrimaryKey() {
-    return AstTreeUtils.getChildByType(children, ASTprimary_key.class);
+    // Primary key can be:
+    //  a table level primary key clause
+    //  a primary key specifyer on a column
+    //  nothing (no primary keys)
+    ASTprimary_key primary_key =
+        AstTreeUtils.getOptionalChildByType(children, ASTprimary_key.class);
+    if (primary_key == null) {
+      throw new UnsupportedOperationException("not implemented");
+    }
+    return primary_key;
   }
 
   public synchronized Optional<ASTtable_interleave_clause> getInterleaveClause() {
@@ -133,15 +142,18 @@ public class ASTcreate_table_statement extends SimpleNode {
     AstTreeUtils.validateChildrenClasses(
         children,
         ImmutableSet.of(
+            ASTif_not_exists.class,
+            ASTname.class,
             ASTcolumn_def.class,
             ASTforeign_key.class,
-            ASTname.class,
-            ASTif_not_exists.class,
-            ASTcheck_constraint.class,
             ASTprimary_key.class,
+            ASTcheck_constraint.class,
+            // ASTsynonym_clause.class,
+            ASTannotation.class,
             ASTtable_interleave_clause.class,
-            ASTrow_deletion_policy_clause.class,
-            ASTannotation.class));
+            ASTrow_deletion_policy_clause.class
+            // ASToptions_clause.class
+            ));
   }
 
   @Override

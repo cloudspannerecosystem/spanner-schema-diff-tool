@@ -47,6 +47,12 @@ public class DDLParsertUnsupportedDdlFromFileTest {
           try (StringReader in = new StringReader(ddlStatement)) {
             DdlParser parser = new DdlParser(in);
             parser.ddl_statement();
+            ASTddl_statement parsedStatement = (ASTddl_statement) parser.jjtree.rootNode();
+            // use toString to validate the statement -- this might throw IllegalArgumentException
+            // if class mismatch, so convert to UnsupportedOperationException
+            parsedStatement.toString();
+          } catch (IllegalArgumentException e) {
+            throw new UnsupportedOperationException(e);
           } catch (UnsupportedOperationException e) {
             throw e;
           } catch (Throwable e) {

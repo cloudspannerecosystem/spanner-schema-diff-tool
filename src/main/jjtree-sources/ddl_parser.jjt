@@ -96,6 +96,7 @@ void ddl_statement() :
     | analyze_statement()
     | rename_statement()
   )
+  [ ";" ]
   <EOF>
 }
 
@@ -108,10 +109,13 @@ void create_statement() #void :
     | create_table_statement()
     | create_index_statement()
     | create_search_index_statement()
+    | create_vector_index_statement()
     | create_or_replace_statement()
     | create_change_stream_statement()
     | create_sequence_statement()
+    | create_placement_statement()
     | create_role_statement()
+    | create_locality_group_statement()
   )
 }
 
@@ -156,7 +160,79 @@ void create_or_replace_statement() :
       create_view_statement()
     | create_model_statement()
     | create_schema_statement()
+    | create_function_statement()
+    | LOOKAHEAD(2) create_property_graph_statement()
   )
+}
+
+void function_data_type() :
+{}
+{
+      <ARRAY> "<" function_data_type() ">"
+    | <BOOL>
+    | <BYTES> ["(" column_length() ")"]
+    | <ENUM>
+    | <JSON>
+    | <INT64>
+    | <NUMERIC>
+    | <FLOAT32>
+    | <FLOAT64>
+    | <PROTO>
+    | <STRING> ["(" column_length() ")"]
+    | <STRUCT> ( "<" struct_fields() ">" | "<>" )
+    | <TIMESTAMP>
+    | <INTERVAL>
+    | <UUID>
+}
+
+void literal_value() :
+{}
+{
+      <INTEGER_LITERAL>
+    | <NUMERIC> any_string_literal()
+    | any_string_literal()
+    | <TRUEE>
+    | <FALSEE>
+    | <TIMESTAMP> any_string_literal()
+    | interval_expression()
+    | "[" [ literal_value() ( "," literal_value() )* ] "]"
+    | <ARRAY> [ "<" function_data_type() ">" ] "[" [ literal_value() ( "," literal_value() )* ] "]"
+    | "(" expression() ")"
+    | <STRUCT> "<" struct_fields() ">" "(" [ expression() ( "," expression() )* ] ")"
+    | <JSON> any_string_literal()
+}
+
+void literal_value_or_null() :
+{}
+{
+  literal_value() | <NULLL>
+}
+
+void function_parameter_list() :
+{}
+{
+  function_param() ( "," function_param() )*
+}
+
+void function_param() :
+{}
+{
+  identifier() #name function_data_type() [ <DEFAULTT> literal_value_or_null() #param_default_expression ]
+}
+
+void create_function_statement() :
+{}
+{
+  <FUNCTION>
+  qualified_identifier() #name
+  "(" [ function_parameter_list() ] ")"
+  [ <RETURNS> function_data_type() #return_type ]
+  [ (<NOT> <DETERMINISTIC>)  #determinism ]
+  [ <LANGUAGE> (<SQL> | <REMOTE>) #language ]
+  [ <REMOTE> #remote ]
+  [ <SQL> <SECURITY> sql_security() ]
+  ( ( <AS> "(" expression() #function_definition ")" )
+  | ( options_clause() #options ) )
 }
 
 void alter_index_statement() :
@@ -164,9 +240,12 @@ void alter_index_statement() :
 {
   <INDEX>
   ( qualified_identifier() #name )
-  ( <ADD> #add | <DROP> #drop )
+  [
+    (<ADD> #add | <DROP> #drop)
   <STORED> <COLUMN>
   ( identifier() #column_name )
+  ]
+  [ <SET> options_clause() ]
 }
 
 void alter_search_index_statement() :
@@ -201,15 +280,17 @@ void create_table_statement() :
   [ if_not_exists() ]
   qualified_identifier() #name
   "(" [ table_element() ( LOOKAHEAD(2) "," table_element() )* [ "," ] ] ")"
-  primary_key()
+  [ primary_key() ]
   [ LOOKAHEAD(2) "," table_interleave_clause() ]
   [ LOOKAHEAD(2) "," row_deletion_policy_clause() ]
+  [ LOOKAHEAD(2) "," options_clause() ]
 }
 
 void table_element() #void :
 {}
 {
     LOOKAHEAD(3) foreign_key()
+  | LOOKAHEAD(3) primary_key()
   | LOOKAHEAD(3) check_constraint()
   | LOOKAHEAD(3) synonym_clause()
 
@@ -226,9 +307,37 @@ void column_def() :
   identifier() #name
   column_type()
   [ <NOT> <NULLL> #not_null ]
-  [ generation_clause() | column_default_clause() ]
+  [ generation_clause()
+  | LOOKAHEAD (column_default_clause() column_on_update_clause()) column_default_clause() column_on_update_clause()
+  | LOOKAHEAD (column_on_update_clause() column_default_clause()) column_on_update_clause() column_default_clause()
+  | column_default_clause()
+  | identity_column_clause()
+  | <AUTO_INCREMENT> #auto_increment
+  ]
+  [ <PLACEMENT> <KEY> #placement_key ]
   [ <HIDDEN> #hidden ]
+  [ <PRIMARY> <KEY> #primary_key ]
   [ options_clause() ]
+}
+
+void identity_column_clause() :
+{}
+{
+  <GENERATED> <BY> <DEFAULTT> <AS> <IDENTITY> [ "(" sequence_param_list() ")" ]
+}
+
+void sequence_param_list() :
+{}
+{
+  sequence_param() ( sequence_param() )*
+}
+
+void sequence_param() :
+{}
+{
+  <BIT_REVERSED_POSITIVE> #bit_reversed_positive
+  | <SKIPP> <RANGE> int_value() #skip_range_min "," int_value() #skip_range_max
+  | <START> <COUNTER> <WITH> int_value() #start_with_counter
 }
 
 void column_def_alter_attrs() :
@@ -236,7 +345,13 @@ void column_def_alter_attrs() :
 {
   column_type()
   [ <NOT> <NULLL> #not_null ]
-  [ generation_clause() | column_default_clause() ]
+  [ generation_clause()
+  | LOOKAHEAD (column_default_clause() column_on_update_clause()) column_default_clause() column_on_update_clause()
+  | LOOKAHEAD (column_on_update_clause() column_default_clause()) column_on_update_clause() column_default_clause()
+  | column_default_clause()
+  | identity_column_clause()
+  ]
+  [ <PLACEMENT> <KEY> #placement_key ]
 }
 
 void column_def_alter() :
@@ -244,10 +359,19 @@ void column_def_alter() :
 {
     LOOKAHEAD(2) <SET> ( options_clause()
                          | column_default_clause()
+                         | column_on_update_clause()
                          | (<NOT> <NULLL> #set_not_null )
+                         | (<PLACEMENT> <KEY> #set_placement_key )
                        )
   | LOOKAHEAD(2) <DROP>  ( <DEFAULTT> #drop_column_default
                           | ( <NOT> <NULLL> #drop_not_null )
+                          | (<PLACEMENT> <KEY> #drop_placement_key )
+                        )
+  | LOOKAHEAD(2) <DROP> <ON> <UPDATE> #drop_column_on_update
+  | <ALTER> <IDENTITY> ( <RESTART> <COUNTER> <WITH> int_value() #restart_counter
+                         | <SET> ( <SKIPP> <RANGE> int_value() #skip_range_min
+                                               "," int_value() #skip_range_max
+                                   | <NO> <SKIPP> <RANGE> #no_skip_range )
                         )
   | column_def_alter_attrs()
 }
@@ -255,8 +379,8 @@ void column_def_alter() :
 void column_type() :
 {}
 {
-    <FLOAT32> // not supported by emulator
-  | <FLOAT64>
+    <FLOAT64>
+  | <FLOAT32>
   | <INT64>
   | <BOOL>
   | <STRING> "(" column_length() #length ")"
@@ -266,7 +390,10 @@ void column_type() :
   | <NUMERIC>
   | <PG> "." qualified_identifier() #pgtype
   | <JSON>
+  | <UUID>
+  | <INTERVAL>
   | <ARRAY> "<" column_type() ">"
+      [ "(" <VECTOR_LENGTH> "="">" <INTEGER_LITERAL> #vector_length ")"]
   | <TOKENLIST>
   | <STRUCT> ( "<" struct_fields() ">" | "<>" )
   | dotted_path()
@@ -303,6 +430,12 @@ void column_default_clause() :
   <DEFAULTT> "(" expression() #column_default_expression ")"
 }
 
+void column_on_update_clause() :
+{}
+{
+  <ON> <UPDATE> "(" expression() #column_on_update_expression ")"
+}
+
 void primary_key() #void :
 {}
 {
@@ -318,6 +451,14 @@ void foreign_key() :
   <REFERENCES> qualified_identifier() #referenced_table
     "(" identifier_list() #referenced_columns ")"
   [ <ON> <DELETE> referential_action() #on_delete ]
+  [ enforcement() ]
+}
+
+void enforcement() :
+{}
+{
+  <ENFORCED> #enforced
+    | <NOT> <ENFORCED> #not_enforced
 }
 
 void referential_action() :
@@ -349,7 +490,7 @@ void synonym_clause() :
 void table_interleave_clause() :
 {}
 {
-  <INTERLEAVE> <IN> <PARENT> qualified_identifier() #interleave_in
+  <INTERLEAVE> <IN> [ <PARENT> #parent ] qualified_identifier() #interleave_in
     [ on_delete_clause() ]
 }
 
@@ -389,7 +530,9 @@ void create_index_statement() :
   <ON> qualified_identifier() #table
   key() #columns
   [ <STORING> stored_column_list() ]
+  [ <WHERE> create_index_where_clause() ]
   [ LOOKAHEAD(2) "," index_interleave_clause() ]
+  [ options_clause() ]
 }
 
 void create_search_index_statement() :
@@ -406,12 +549,28 @@ void create_search_index_statement() :
   [ options_clause() ]
 }
 
+void create_vector_index_statement() :
+{}
+{
+  <VECTOR><INDEX>
+  [ if_not_exists() ]
+  qualified_identifier() #name
+  <ON> qualified_identifier() #index_base
+  "("
+  key_part() #index_key
+  ")"
+  [ <STORING> stored_column_list() ]
+  [ <PARTITION> <BY> partition_key() ]
+  [ <WHERE> create_index_where_clause() ]
+  [ options_clause() ]
+}
+
 void token_key_list() :
 {}
 {
   "("
-    [ path()
-      ("," path() )*
+    [ key_part()
+      ("," key_part() )*
     ]
   ")"
 }
@@ -497,6 +656,25 @@ void create_role_statement() :
   <ROLE> identifier() #name
 }
 
+
+void create_locality_group_statement() :
+{}
+{
+  <LOCALITY> <GROUP>
+  [ if_not_exists() ]
+  (<DEFAULTT> #defaultt | qualified_identifier() #name)
+  [ options_clause() ]
+}
+
+void alter_locality_group_statement() :
+{}
+{
+  <LOCALITY> <GROUP>
+  [ if_exists() ]
+  (<DEFAULTT> #defaultt | qualified_identifier() #name)
+  [<SET> options_clause()]
+}
+
 void privilege() :
 {}
 {
@@ -520,6 +698,7 @@ void target_type():
   | <CHANGE> <STREAM> #change_stream
   | <VIEW> #view
   | <SEQUENCE> #sequence
+  | <LOCALITY> <GROUP> #locality_group
 }
 
 void privilege_target():
@@ -558,6 +737,16 @@ void create_sequence_statement() :
 {}
 {
   <SEQUENCE> [ if_not_exists() ] qualified_identifier() #name
+  [ sequence_param_list() ]
+  [ options_clause() ]
+}
+
+void create_placement_statement() :
+{}
+{
+  <PLACEMENT>
+  [ if_not_exists() ]
+  qualified_identifier() #name
   [ options_clause() ]
 }
 
@@ -576,7 +765,7 @@ void key_part() :
 {}
 {
   path()
-  [   <ASC>
+  [   <ASC> #asc
     | <DESC> #desc
   ]
 }
@@ -585,6 +774,12 @@ void stored_column() :
 {}
 {
   path()
+}
+
+void alter_stored_column() :
+{}
+{
+  path() <SET> options_clause()
 }
 
 void stored_column_list() :
@@ -650,6 +845,22 @@ void statement_tokens() :
   | ")" )+
 }
 
+void create_property_graph_statement() :
+{}
+{
+ <PROPERTY> <GRAPH>
+[ if_not_exists() #if_not_exists ]
+(qualified_identifier() #name) element_tables() #element_tables
+}
+
+void element_tables() :
+{}
+{
+  ( googlesql_statement_token_no_paren()
+  | "("
+  | ")" )*
+}
+
 void if_not_exists() :
 {}
 {
@@ -693,14 +904,19 @@ void drop_statement() :
     ( <TABLE> #table [ if_exists() ]
       | <INDEX> #index [ if_exists() ]
       | <SEARCH> <INDEX> #search_index [ if_exists() ]
+      | <VECTOR> <INDEX> #vector_index [ if_exists() ]
       | <VIEW> #view [ if_exists() ]
+      | <FUNCTION> #function [ if_exists() ]
       | <CHANGE> <STREAM> #change_stream
       | <ROLE> #role
+      | <PLACEMENT> #placement [ if_exists() ]
       | <SEQUENCE> #sequence [ if_exists() ]
       | <MODEL> #model [ if_exists() ]
       | <SCHEMA> #schema [ if_exists() ]
+      | LOOKAHEAD(2) <PROPERTY> <GRAPH> #graph [ if_exists() ]
     ) qualified_identifier() #name
     | <PROTO> #proto_bundle <BUNDLE> #name
+    | <LOCALITY> <GROUP> #locality_group [ if_exists() ] (<DEFAULTT> #defaultt |  qualified_identifier() #name)
   )
 }
 
@@ -718,6 +934,9 @@ void alter_statement() #void :
     | alter_sequence_statement()
     | alter_model_statement()
     | alter_schema_statement()
+    | alter_locality_group_statement()
+    | alter_placement_statement()
+    | alter_vector_index_statement()
   )
 }
 
@@ -730,7 +949,7 @@ void alter_database_statement() :
 void alter_table_statement() :
 {}
 {
-  <TABLE> (qualified_identifier() #table_name)
+  <TABLE> [ if_exists() ] (qualified_identifier() #table_name)
   (   LOOKAHEAD(3) <DROP> <CONSTRAINT> #drop_constraint identifier() #constraint_name
     | LOOKAHEAD(3) <DROP> <ROW> <DELETION> <POLICY> #drop_row_deletion_policy
     | LOOKAHEAD(3) <DROP> <SYNONYM> qualified_identifier() #drop_synonym
@@ -739,6 +958,7 @@ void alter_table_statement() :
     | LOOKAHEAD(1) <ALTER> #alter_column [LOOKAHEAD(2) <COLUMN>]
         (identifier() #name) column_def_alter()
     | LOOKAHEAD(2) <SET> #set_on_delete on_delete_clause()
+    | LOOKAHEAD(2) <SET> options_clause()
     | LOOKAHEAD(2) <RENAME> <TO> qualified_identifier() #rename_to
         ["," <ADD> <SYNONYM> qualified_identifier() #synonym]
     | LOOKAHEAD(4) <ADD> foreign_key()
@@ -749,6 +969,7 @@ void alter_table_statement() :
     | LOOKAHEAD(1) <ADD> #add_column [
         LOOKAHEAD(6) <COLUMN> [ if_not_exists() ]
       ] column_def()
+    | LOOKAHEAD(2) <SET> table_interleave_clause() #set_interleave_clause
     | <REPLACE> row_deletion_policy_clause() #replace_row_deletion_policy
   )
 }
@@ -778,8 +999,13 @@ void alter_change_stream_statement() :
 void alter_sequence_statement() :
 {}
 {
-  <SEQUENCE> [ if_exists() ] (qualified_identifier() #name) <SET> options_clause()
-
+  <SEQUENCE> [ if_exists() ] (qualified_identifier() #name)
+  (
+    <SET> options_clause()
+    | <RESTART> <COUNTER> <WITH> int_value() #restart_counter
+    | <SKIPP> <RANGE> int_value() #skip_range_min "," int_value() #skip_range_max
+    | <NO> <SKIPP> <RANGE> #no_skip_range
+  )
 }
 
 void alter_schema_statement() :
@@ -795,6 +1021,25 @@ void alter_model_statement() :
   <MODEL> [ if_exists() ] (qualified_identifier() #name)
   [<SET> options_clause()]
 }
+
+void alter_placement_statement() :
+{}
+{
+  <PLACEMENT> [ if_exists() ] (qualified_identifier() #name)
+  [<SET> options_clause()]
+}
+
+void alter_vector_index_statement() :
+{}
+{
+  <VECTOR> <INDEX> (qualified_identifier() #name)
+  (   <ADD> <STORED> <COLUMN> stored_column() #add_stored_column
+    | <DROP> <STORED> <COLUMN> identifier() #drop_stored_column_name
+    | <ALTER> <STORED> <COLUMN> alter_stored_column() #alter_stored_column
+    | <SET> options_clause()
+  )
+}
+
 
 void analyze_statement() :
 {}

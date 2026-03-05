@@ -18,6 +18,7 @@ package com.google.cloud.solutions.spannerddl.parser;
 
 import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -81,6 +82,16 @@ public class ASTforeign_key extends SimpleNode {
 
   @Override
   public String toString() {
+    AstTreeUtils.validateChildrenClasses(
+        children,
+        ImmutableSet.of(
+            ASTconstraint_name.class,
+            ASTreferencing_columns.class,
+            ASTreferenced_table.class,
+            ASTreferenced_columns.class,
+            ASTon_delete.class
+            // ASTenforcement.class
+            ));
     return "CONSTRAINT "
         + getName()
         + " FOREIGN KEY ( "

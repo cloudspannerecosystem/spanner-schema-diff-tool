@@ -79,7 +79,7 @@ public class DDLParserTest {
                     + "     sizedstring = \"xxx\" ) AND boolcol = true and intcol > -123.4 and \n"
                     + "     numericcol < 1.5)\n"
                     + ")\n"
-                    + "PRIMARY KEY (intcol ASC, floatcol DESC, boolcol ASC), \n"
+                    + "PRIMARY KEY (intcol ASC, floatcol DESC, boolcol), \n"
                     + "INTERLEAVE IN PARENT `other_table` ON DELETE CASCADE, \n"
                     + "ROW DELETION POLICY (OLDER_THAN ( timestampcol, INTERVAL 10 DAY ))")
                 // remove extra spaces left in expected output for readability
@@ -111,7 +111,7 @@ public class DDLParserTest {
     assertThat(statement.toString())
         .isEqualTo(
             "CREATE UNIQUE NULL_FILTERED INDEX testindex ON testtable "
-                + "( col1 ASC, col2 DESC, col3 ASC ) "
+                + "( col1, col2 DESC, col3 ASC ) "
                 + "STORING ( col4, col5, col6 ) , "
                 + "INTERLEAVE IN other_table");
 
@@ -119,12 +119,6 @@ public class DDLParserTest {
     ASTcreate_index_statement statement2 =
         (ASTcreate_index_statement) parseAndVerifyToString(statement.toString()).jjtGetChild(0);
     assertThat(statement).isEqualTo(statement2);
-  }
-
-  @Test
-  public void parseDDLCreateTableSyntaxError() {
-    parseCheckingParseException(
-        "Create table test1 ( col1 int64 )", "Was expecting:\n\n\"primary\" ...");
   }
 
   @Test
@@ -170,7 +164,7 @@ public class DDLParserTest {
     assertThat(statement.toString())
         .isEqualTo(
             "CREATE TABLE myTest ( key INT64, value INT64 AS ( key * 100 ) STORED, "
-                + "CONSTRAINT ck_key CHECK (key > 0) ) PRIMARY KEY (key ASC)");
+                + "CONSTRAINT ck_key CHECK (key > 0) ) PRIMARY KEY (key)");
 
     // Test re-parse of toString output.
     ASTcreate_table_statement statement2 =

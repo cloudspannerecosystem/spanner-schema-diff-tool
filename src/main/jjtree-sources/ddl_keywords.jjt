@@ -119,6 +119,8 @@ TOKEN:
   | <ADD:                      "add">
   | <ALTER:                    "alter">
   | <ANALYZE:                  "analyze">
+  | <AUTO_INCREMENT:           "auto_increment">
+  | <BIT_REVERSED_POSITIVE:    "bit_reversed_positive">
   | <BOOL:                     "bool">
   | <BUNDLE:                   "bundle">
   | <BYTES:                    "bytes">
@@ -127,21 +129,27 @@ TOKEN:
   | <CHECK:                    "check">
   | <COLUMN:                   "column">
   | <CONSTRAINT:               "constraint">
+  | <COUNTER:                  "counter">
   | <DATABASE:                 "database">
   | <DATE:                     "date">
   | <DAY:                      "day">
   | <DEFINER:                  "definer">
   | <DELETE:                   "delete">
   | <DELETION:                 "deletion">
+  | <DETERMINISTIC:            "deterministic">
   | <DROP:                     "drop">
+  | <ENFORCED:                 "enforced">
   | <EXECUTE:                  "execute">
   | <FIRST:                    "first">
   | <FLOAT32:                  "float32">
   | <FLOAT64:                  "float64">
   | <FOREIGN:                  "foreign">
   | <FUNCTION:                 "function">
+  | <GENERATED:                "generated">
   | <GRANT:                    "grant">
+  | <GRAPH:                    "graph">
   | <HIDDEN:                   "hidden">
+  | <IDENTITY:                 "identity">
   | <INDEX:                    "index">
   | <INPUT:                    "input">
   | <INSERT:                   "insert">
@@ -150,7 +158,9 @@ TOKEN:
   | <INVOKER:                  "invoker">
   | <JSON:                     "json">
   | <KEY:                      "key">
+  | <LANGUAGE:                 "language">
   | <LAST:                     "last">
+  | <LOCALITY:                 "locality">
   | <MAX:                      "max">
   | <MODEL:                    "model">
   | <NULL_FILTERED:            "null_filtered">
@@ -159,12 +169,16 @@ TOKEN:
   | <OUTPUT:                   "output">
   | <PARENT:                   "parent">
   | <PG:                       "pg">
+  | <PLACEMENT:                "placement">
   | <POLICY:                   "policy">
   | <PRIMARY:                  "primary">
+  | <PROPERTY:                 "property">
   | <REFERENCES:               "references">
   | <REMOTE:                   "remote">
   | <RENAME:                   "rename">
   | <REPLACE:                  "replace">
+  | <RESTART:                  "restart">
+  | <RETURNS:                  "returns">
   | <REVOKE:                   "revoke">
   | <ROLE:                     "role">
   | <ROW:                      "row">
@@ -172,7 +186,9 @@ TOKEN:
   | <SEARCH:                   "search">
   | <SECURITY:                 "security">
   | <SEQUENCE:                 "sequence">
+  | <SKIPP:                    "skip">
   | <SQL:                      "sql">
+  | <START:                    "start">
   | <STATISTICS:               "statistics">
   | <STORED:                   "stored">
   | <STORING:                  "storing">
@@ -185,6 +201,9 @@ TOKEN:
   | <UNIQUE:                   "unique">
   | <UPDATE:                   "update">
   | <USAGE:                    "usage">
+  | <UUID:                     "uuid">
+  | <VECTOR:                   "vector">
+  | <VECTOR_LENGTH:            "vector_length">
   | <VIEW:                     "view">
 }
 
@@ -195,6 +214,8 @@ void pseudoReservedWord() #void :
   | <ADD>
   | <ALTER>
   | <ANALYZE>
+  | <AUTO_INCREMENT>
+  | <BIT_REVERSED_POSITIVE>
   | <BOOL>
   | <BUNDLE>
   | <BYTES>
@@ -203,21 +224,27 @@ void pseudoReservedWord() #void :
   | <CHECK>
   | <COLUMN>
   | <CONSTRAINT>
+  | <COUNTER>
   | <DATABASE>
   | <DATE>
   | <DAY>
   | <DEFINER> // Not supported by emulator
   | <DELETE>
   | <DELETION>
+  | <DETERMINISTIC>
   | <DROP>
+  | <ENFORCED>
   | <EXECUTE>
   | <FIRST>
-  | <FLOAT32> // Not supported by emulator
+  | <FLOAT32>
   | <FLOAT64>
   | <FOREIGN>
   | <FUNCTION>
+  | <GENERATED>
   | <GRANT>
+  | <GRAPH>
   | <HIDDEN>
+  | <IDENTITY>
   | <INDEX>
   | <INPUT>
   | <INSERT>
@@ -226,7 +253,9 @@ void pseudoReservedWord() #void :
   | <INVOKER>
   | <JSON>
   | <KEY>
+  | <LANGUAGE>
   | <LAST>
+  | <LOCALITY>
   | <MAX>
   | <MODEL>
   | <NULL_FILTERED>
@@ -235,12 +264,16 @@ void pseudoReservedWord() #void :
   | <OUTPUT>
   | <PARENT>
   | <PG>
+  | <PLACEMENT>
   | <POLICY>
   | <PRIMARY>
+  | <PROPERTY>
   | <REFERENCES>
   | <REMOTE>
   | <RENAME>
   | <REPLACE>
+  | <RESTART>
+  | <RETURNS>
   | <REVOKE>
   | <ROLE>
   | <ROW>
@@ -248,7 +281,9 @@ void pseudoReservedWord() #void :
   | <SEARCH>
   | <SECURITY>
   | <SEQUENCE>
+  | <SKIPP>
   | <SQL>
+  | <START>
   | <STATISTICS>
   | <STORED>
   | <STORING>
@@ -261,6 +296,9 @@ void pseudoReservedWord() #void :
   | <UNIQUE>
   | <UPDATE>
   | <USAGE>
+  | <UUID>
+  | <VECTOR>
+  | <VECTOR_LENGTH>
   | <VIEW>
 }
 

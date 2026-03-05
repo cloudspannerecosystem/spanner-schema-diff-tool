@@ -60,14 +60,14 @@ public class DdlDiffTest {
     assertThat(result).hasSize(4);
 
     assertThat(result.get(0).toString())
-        .isEqualTo("CREATE TABLE test1 ( col1 INT64 ) PRIMARY KEY (col1 ASC)");
+        .isEqualTo("CREATE TABLE test1 ( col1 INT64 ) PRIMARY KEY (col1)");
     assertThat(result.get(1).toString())
-        .isEqualTo("CREATE TABLE test2 ( col2 FLOAT64 ) PRIMARY KEY (col2 ASC)");
+        .isEqualTo("CREATE TABLE test2 ( col2 FLOAT64 ) PRIMARY KEY (col2)");
     assertThat(result.get(2).toString())
         .isEqualTo(
-            "CREATE TABLE test3 ( col3 STRING(MAX) ) PRIMARY KEY (col3 ASC), "
+            "CREATE TABLE test3 ( col3 STRING(MAX) ) PRIMARY KEY (col3), "
                 + "INTERLEAVE IN PARENT testparent ON DELETE NO ACTION");
-    assertThat(result.get(3).toString()).isEqualTo("CREATE INDEX index1 ON table1 ( col1 ASC )");
+    assertThat(result.get(3).toString()).isEqualTo("CREATE INDEX index1 ON table1 ( col1 )");
   }
 
   @Test
@@ -491,7 +491,7 @@ public class DdlDiffTest {
                         false)))
         .containsExactly(
             "DROP INDEX myindex",
-            "CREATE INDEX myindex ON mytable ( col1 ASC ) STORING ( col3, col4 )");
+            "CREATE INDEX myindex ON mytable ( col1 ) STORING ( col3, col4 )");
   }
 
   @Test

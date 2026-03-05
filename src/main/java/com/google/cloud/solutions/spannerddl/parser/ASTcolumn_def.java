@@ -18,6 +18,7 @@ package com.google.cloud.solutions.spannerddl.parser;
 
 import com.google.cloud.solutions.spannerddl.diff.AstTreeUtils;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
 import org.jspecify.annotations.Nullable;
 
 public class ASTcolumn_def extends SimpleNode {
@@ -84,45 +85,21 @@ public class ASTcolumn_def extends SimpleNode {
   }
 
   private void validate() {
-
-    /* Column definition is:
-         name
-         column_type
-         not_null (optional)
-         generation_clause(optional) OR column_default_clause(optional)
-         options_clause(optional)
-
-       Parser will handle most issues, but we should check if an unknown class has been added to the
-       parser.
-       Iterate through children checking for optional items in order.
-    */
-
-    int index = 2; // skip name and type
-    if (index < children.length && children[index] instanceof ASTnot_null) {
-      // NOT NULL
-      index++;
-    }
-    if (index < children.length && children[index] instanceof ASTgeneration_clause) {
-      // generated
-      index++;
-    }
-    if (index < children.length && children[index] instanceof ASTcolumn_default_clause) {
-      // default value
-      index++;
-    }
-    if (index < children.length && children[index] instanceof ASThidden) {
-      // default value
-      index++;
-    }
-    if (index < children.length && children[index] instanceof ASToptions_clause) {
-      // options
-      index++;
-    }
-
-    if (index < children.length) {
-      // we have an unknown child.
-      throw new IllegalArgumentException("Unknown child type " + children[index]);
-    }
+    AstTreeUtils.validateChildrenClasses(
+        children,
+        ImmutableSet.of(
+            ASTname.class,
+            ASTcolumn_type.class,
+            ASTnot_null.class,
+            ASTgeneration_clause.class,
+            ASTcolumn_default_clause.class,
+            // ASTcolumn_on_update_clause.class,
+            // ASTidentity_column_clause.class,
+            ASTauto_increment.class,
+            ASTplacement_key.class,
+            ASThidden.class,
+            ASTprimary_key.class,
+            ASToptions_clause.class));
   }
 
   @Override

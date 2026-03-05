@@ -42,6 +42,7 @@
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
     <jspecify.version>1.0.0</jspecify.version>
+    <google-java-format.version>1.33.0</google-java-format.version>
   </properties>
   <dependencies>
     <dependency>
@@ -308,6 +309,7 @@
           <java>
             <googleJavaFormat>
               <style>GOOGLE</style>
+              <version>${google-java-format.version}</version>
             </googleJavaFormat>
           </java>
         </configuration>

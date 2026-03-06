@@ -66,7 +66,8 @@ public class ASTcreate_index_statement extends SimpleNode
             getChildByType(children, ASTcolumns.class),
             getOptionalChildByType(children, ASTstored_column_list.class),
             (interleave != null ? "," : null),
-            interleave);
+            interleave,
+            getOptions());
   }
 
   /**
@@ -91,7 +92,12 @@ public class ASTcreate_index_statement extends SimpleNode
             getChildByType(children, ASTtable.class),
             getChildByType(children, ASTcolumns.class),
             (interleave != null ? "," : null),
-            interleave);
+            interleave,
+            getOptions());
+  }
+
+  public ASToptions_clause getOptions() {
+    return getOptionalChildByType(children, ASToptions_clause.class);
   }
 
   private void validateChildren() {
@@ -105,7 +111,8 @@ public class ASTcreate_index_statement extends SimpleNode
             ASTif_not_exists.class,
             ASTname.class,
             ASTtable.class,
-            ASTindex_interleave_clause.class));
+            ASTindex_interleave_clause.class,
+            ASToptions_clause.class));
   }
 
   public List<String> getStoredColumnNames() {

@@ -203,4 +203,8 @@ CREATE TABLE test1 (
   value INT64
 ) PRIMARY KEY (keycol ASC), INTERLEAVE IN other_table ON DELETE NO ACTION
 
+== Test 21 create index with OPTIONS
+
+CREATE INDEX myIndex ON mytable ( key ASC, index ASC ) STORING ( table ) , INTERLEAVE IN parent_table OPTIONS (some_option='enabled')
+
 ==

@@ -261,8 +261,4 @@ CREATE TABLE test_table (
 
 CREATE INDEX IF NOT EXISTS usage ON usage_table ( mycol ASC ) WHERE  mycol IS NOT NULL
 
-== Test 34 create index options clause
-
-CREATE INDEX IF NOT EXISTS usage ON usage_table ( mycol ASC ) OPTIONS ( key = 'value' )
-
 ==

@@ -38,7 +38,7 @@
     <exec-maven.version>3.6.3</exec-maven.version>
     <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
     <auto-value.version>1.11.1</auto-value.version>
-    <error-prone.version>2.47.0</error-prone.version>
+    <error-prone.version>2.48.0</error-prone.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
     <jspecify.version>1.0.0</jspecify.version>

@@ -319,6 +319,15 @@ public class DdlDiffTest {
         true,
         "Cannot change interleaved parent of table test1");
 
+    // add  parent constraint
+    getDiffCheckDdlDiffException(
+        "create table test1 (col1 int64, col2 int64) "
+            + "primary key (col1), interleave in testparent;",
+        "create table test1 (col1 int64, col2 int64) "
+            + "primary key (col1), interleave in parent testparent",
+        true,
+        "Cannot change interleaved parent of table test1");
+
     // change on delete
     assertThat(
             getDiff(

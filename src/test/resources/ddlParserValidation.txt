@@ -196,4 +196,11 @@ CREATE TABLE test1 (
   value INT64
 ) PRIMARY KEY (keycol ASC), OPTIONS (key='value')
 
+== Test 20 create table, interleave in non-parent
+
+CREATE TABLE test1 (
+  keycol INT64,
+  value INT64
+) PRIMARY KEY (keycol ASC), INTERLEAVE IN other_table ON DELETE NO ACTION
+
 ==

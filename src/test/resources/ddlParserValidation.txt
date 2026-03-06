@@ -207,4 +207,12 @@ CREATE TABLE test1 (
 
 CREATE INDEX myIndex ON mytable ( key ASC, index ASC ) STORING ( table ) , INTERLEAVE IN parent_table OPTIONS (some_option='enabled')
 
+== Test 22 create table inline primary key
+
+CREATE TABLE test1 ( keycol INT64 NOT NULL PRIMARY KEY, value INT64 )
+
+== Test 23 create table optional primary key
+
+CREATE TABLE test1 ( keycol INT64, value INT64 )
+
 ==

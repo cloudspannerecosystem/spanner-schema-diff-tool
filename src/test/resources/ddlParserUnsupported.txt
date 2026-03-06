@@ -222,20 +222,6 @@ CREATE TABLE test1 (
   value STRING(MAX) NOT NULL PLACEMENT KEY
 ) PRIMARY KEY (keycol ASC)
 
-== Test 27 create table inline primary key
-
-CREATE TABLE test1 (
-  keycol INT64 NOT NULL PRIMARY KEY,
-  value INT64 PLACEMENT KEY
-)
-
-== Test 28 create table optional primary key
-
-CREATE TABLE test1 (
-  keycol INT64,
-  value INT64 DEFAULT (keycol * 100 + PI ( ))
-)
-
 == Test 30 create table column on update clause
 
 CREATE TABLE test1 (

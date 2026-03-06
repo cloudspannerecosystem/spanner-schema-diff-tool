@@ -43,11 +43,10 @@ public class DDLParsertValidateDdlFromFileTest {
       DdlParser parser = new DdlParser(in);
       parser.ddl_statement();
       ASTddl_statement parsedStatement = (ASTddl_statement) parser.jjtree.rootNode();
-
       assertWithMessage("Mismatch for section %s:", segmentName)
           .that(parsedStatement.toString())
           .isEqualTo(ddlStatement);
-    } catch (Throwable e) {
+    } catch (ParseException | UnsupportedOperationException | IllegalArgumentException e) {
       System.err.println("Exception in section " + segmentName);
       e.printStackTrace(System.err);
       assertWithMessage(

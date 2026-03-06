@@ -81,6 +81,9 @@ public class ASTcolumn_def extends SimpleNode {
             getGenerationClause(),
             getColumnDefaultClause(),
             (isHidden() ? "HIDDEN" : null),
+            AstTreeUtils.getOptionalChildByType(children, ASTprimary_key.class) == null
+                ? null
+                : "PRIMARY KEY",
             getOptionsClause());
   }
 

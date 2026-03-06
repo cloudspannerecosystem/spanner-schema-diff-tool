@@ -80,9 +80,6 @@ public class ASTcreate_table_statement extends SimpleNode {
     //  nothing (no primary keys)
     ASTprimary_key primary_key =
         AstTreeUtils.getOptionalChildByType(children, ASTprimary_key.class);
-    if (primary_key == null) {
-      throw new UnsupportedOperationException("not implemented");
-    }
     return primary_key;
   }
 
@@ -136,7 +133,8 @@ public class ASTcreate_table_statement extends SimpleNode {
                     (withConstraints
                         ? getOptionalChildByType(children, ASTrow_deletion_policy_clause.class)
                         : null),
-                    getOptions()));
+                    getOptions()))
+        .trim();
   }
 
   public ASToptions_clause getOptions() {

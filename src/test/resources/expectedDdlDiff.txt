@@ -380,6 +380,7 @@ ALTER TABLE mytable SET OPTIONS (locality_group='lg2')
 ALTER TABLE mytable SET OPTIONS (droppedKey=NULL,newKey='value2')
 
 == test 75 column changing not null with default value
+
 ALTER TABLE test ALTER COLUMN add_nn BOOL NOT NULL DEFAULT (FALSE)
 ALTER TABLE test ALTER COLUMN add_both BOOL NOT NULL DEFAULT (FALSE)
 ALTER TABLE test ALTER COLUMN remove_NN BOOL DEFAULT (FALSE)
@@ -387,6 +388,10 @@ ALTER TABLE test ALTER COLUMN remove_def DROP DEFAULT
 ALTER TABLE test ALTER COLUMN remove_both BOOL
 ALTER TABLE test ALTER COLUMN change_both BOOL NOT NULL DEFAULT (TRUE)
 ALTER TABLE test ALTER COLUMN change_def SET DEFAULT (TRUE)
+
+== test 76 add UUID column
+
+ALTER TABLE test1 ADD COLUMN col3 UUID
 
 ==
 

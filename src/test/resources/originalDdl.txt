@@ -604,5 +604,12 @@ CREATE TABLE test (
   change_def BOOL NOT NULL DEFAULT (FALSE),
 ) PRIMARY KEY (id)
 
+== test 76 add UUID column
+
+create table test1 (
+    col1 int64,
+    col2 string(max)
+) primary key (col1);
+
 ==
 

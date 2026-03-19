@@ -63,6 +63,7 @@ CREATE TABLE test.test (
     intarray ARRAY<INT64>,
     numericcol NUMERIC,
     jsoncol JSON,
+    uuidcol UUID,
     pgcolumn PG.SOMETHING,
     generatedcol STRING(MAX) AS ( sizedstring + strstr ( maxstring, strpos ( maxstring, 'xxx' ), length ( maxstring ) ) + 2.0 ) STORED,
     tokenlistCol TOKENLIST AS ( TOKENIZE_FULLTEXT ( maxstring ) ) HIDDEN,

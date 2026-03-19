@@ -267,6 +267,20 @@ public class DdlDiffTest {
         "create table test1 (col1 float64) primary key (col1);",
         true,
         "Cannot change type of table test1 column col1");
+
+    // change type to UUID
+    getDiffCheckDdlDiffException(
+        "create table test1 (col1 int64, col2 int64) primary key (col1);",
+        "create table test1 (col1 int64, col2 uuid) primary key (col1);",
+        true,
+        "Cannot change type of table test1 column col2");
+
+    // change STRING(36) to UUID
+    getDiffCheckDdlDiffException(
+        "create table test1 (col1 int64, col2 string(36)) primary key (col1);",
+        "create table test1 (col1 int64, col2 uuid) primary key (col1);",
+        true,
+        "Cannot change type of table test1 column col2");
   }
 
   @Test

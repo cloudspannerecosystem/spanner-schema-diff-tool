@@ -591,5 +591,9 @@ create table mytable (keycol int64) primary key(keycol), OPTIONS(locality_group 
 
 create table mytable (keycol int64) primary key(keycol), OPTIONS(existingKey='value', droppedKey='value1')
 
+== TEST 75 create table with named params using =>
+
+-- Nothing here
+
 ==
 

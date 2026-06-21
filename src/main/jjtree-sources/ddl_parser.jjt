@@ -393,7 +393,7 @@ void column_type() :
   | <UUID>
   | <INTERVAL>
   | <ARRAY> "<" column_type() ">"
-      [ "(" <VECTOR_LENGTH> "="">" <INTEGER_LITERAL> #vector_length ")"]
+      [ "(" <VECTOR_LENGTH> "=>" <INTEGER_LITERAL> #vector_length ")"]
   | <TOKENLIST>
   | <STRUCT> ( "<" struct_fields() ">" | "<>" )
   | dotted_path()

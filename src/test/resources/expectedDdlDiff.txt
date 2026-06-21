@@ -379,5 +379,9 @@ ALTER TABLE mytable SET OPTIONS (locality_group='lg2')
 
 ALTER TABLE mytable SET OPTIONS (droppedKey=NULL,newKey='value2')
 
+== test 75 column not null changed but default same
+
+ALTER TABLE AlbumsIndex ALTER COLUMN enforcement_enabled BOOL NOT NULL DEFAULT (FALSE)
+
 ==
 

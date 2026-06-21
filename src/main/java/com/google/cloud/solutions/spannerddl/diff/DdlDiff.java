@@ -625,7 +625,8 @@ public class DdlDiff {
                   "ALTER COLUMN",
                   columnDiff.rightValue().getColumnName(),
                   columnDiff.rightValue().getColumnTypeString(),
-                  (columnDiff.rightValue().isNotNull() ? "NOT NULL" : null)));
+                  (columnDiff.rightValue().isNotNull() ? "NOT NULL" : null),
+                  columnDiff.rightValue().getColumnDefaultClause()));
     }
 
     // Update options.

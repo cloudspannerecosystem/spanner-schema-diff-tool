@@ -591,5 +591,12 @@ create table mytable (keycol int64) primary key(keycol), OPTIONS(locality_group 
 
 create table mytable (keycol int64) primary key(keycol), OPTIONS(existingKey='value', droppedKey='value1')
 
+== test 75 column not null changed but default same
+
+CREATE TABLE AlbumsIndex (
+  id STRING(36),
+  enforcement_enabled BOOL DEFAULT (FALSE),
+) PRIMARY KEY (id)
+
 ==
 

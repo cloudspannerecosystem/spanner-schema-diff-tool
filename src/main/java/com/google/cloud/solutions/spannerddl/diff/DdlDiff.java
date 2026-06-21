@@ -611,11 +611,13 @@ public class DdlDiff {
     }
 
     // Not null or type length limit change.
+    boolean notNullOrTypeChanged;
     if (columnDiff.leftValue().isNotNull() != columnDiff.rightValue().isNotNull()
         || !columnDiff
             .leftValue()
             .getColumnTypeString()
             .equals(columnDiff.rightValue().getColumnTypeString())) {
+      notNullOrTypeChanged = true;
       alterStatements.add(
           Joiner.on(" ")
               .skipNulls()
@@ -627,6 +629,8 @@ public class DdlDiff {
                   columnDiff.rightValue().getColumnTypeString(),
                   (columnDiff.rightValue().isNotNull() ? "NOT NULL" : null),
                   columnDiff.rightValue().getColumnDefaultClause()));
+    } else {
+      notNullOrTypeChanged = false;
     }
 
     // Update options.
@@ -650,7 +654,7 @@ public class DdlDiff {
         columnDiff.leftValue().getColumnDefaultClause();
     final ASTcolumn_default_clause newDefaultValue =
         columnDiff.rightValue().getColumnDefaultClause();
-    if (!Objects.equals(oldDefaultValue, newDefaultValue)) {
+    if (!notNullOrTypeChanged && !Objects.equals(oldDefaultValue, newDefaultValue)) {
       if (newDefaultValue == null) {
         alterStatements.add(
             "ALTER TABLE "

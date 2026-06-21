@@ -62,7 +62,14 @@ public class ASTcolumn_type extends SimpleNode {
         // length.
         return typeName + "(" + ((ASTlength) children[0]) + ")";
       case "ARRAY":
-        return "ARRAY<" + ((ASTcolumn_type) children[0]) + ">";
+        String arrayType = "ARRAY<" + ((ASTcolumn_type) children[0]) + ">";
+        if (jjtGetNumChildren() > 1) {
+          return arrayType
+              + "(vector_length=>"
+              + ((SimpleNode) children[1]).jjtGetLastToken().toString()
+              + ")";
+        }
+        return arrayType;
       case "PG": // PG.pgtype
         return AstTreeUtils.tokensToString(this).toUpperCase(Locale.ROOT);
       case "STRUCT":

@@ -379,5 +379,9 @@ ALTER TABLE mytable SET OPTIONS (locality_group='lg2')
 
 ALTER TABLE mytable SET OPTIONS (droppedKey=NULL,newKey='value2')
 
+== TEST 75 create table with named params using =>
+
+CREATE TABLE test_named_params ( key INT64, key_tokens TOKENLIST AS ( tokenize_substring ( key, ngram_size_min => 3, ngram_size_max => 3, relative_search_types => [ 'word_prefix' ] ) ) HIDDEN ) PRIMARY KEY (key)
+
 ==
 

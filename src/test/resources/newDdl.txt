@@ -592,4 +592,11 @@ create table mytable (keycol int64) primary key(keycol), OPTIONS(locality_group 
 
 create table mytable (keycol int64) primary key(keycol), OPTIONS(existingKey='value', newKey='value2')
 
+== TEST 75 create table with named params using =>
+
+create table test_named_params (
+  key int64,
+  key_tokens tokenlist as (tokenize_substring(key, ngram_size_min=>3, ngram_size_max=>3, relative_search_types=>['word_prefix'])) hidden
+) primary key (key);
+
 ==

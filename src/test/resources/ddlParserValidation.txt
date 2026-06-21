@@ -215,4 +215,12 @@ CREATE TABLE test1 ( keycol INT64 NOT NULL PRIMARY KEY, value INT64 )
 
 CREATE TABLE test1 ( keycol INT64, value INT64 )
 
+== Test 24 named params using => in generation expression
+
+CREATE TABLE test_named_params ( key INT64, key_tokens TOKENLIST AS ( TOKENIZE_SUBSTRING ( key, ngram_size_min => 3, ngram_size_max => 3, relative_search_types => [ 'word_prefix' ] ) ) HIDDEN ) PRIMARY KEY (key)
+
+== Test 25 ARRAY with vector_length=>
+
+CREATE TABLE test_vector_length ( key INT64, embedding ARRAY<FLOAT32>(vector_length=>128) ) PRIMARY KEY (key)
+
 ==

@@ -136,6 +136,7 @@ public class AstTreeUtils {
       if (t.next != null
           && !t.next.toString().equals(",")
           && !t.next.toString().equals(".")
+          && !(tok.equals("=") && t.next.toString().equals(">"))
           && !tok.equals(".")) {
         sb.append(" ");
       }

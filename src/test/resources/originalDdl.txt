@@ -611,5 +611,10 @@ create table test1 (
     col2 string(max)
 ) primary key (col1);
 
-==
+== test 77 with => in column expression
 
+create table test1 (
+    col1 int64
+) primary key (col1);
+
+==

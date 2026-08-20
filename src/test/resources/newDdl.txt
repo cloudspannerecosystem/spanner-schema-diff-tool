@@ -613,4 +613,11 @@ create table test1 (
     col3 uuid
 ) primary key (col1);
 
+== test 77 with => in column expression
+
+create table test1 (
+    col1 int64,
+    col2 TOKENLIST AS (TOKENIZE_NGRAMS(domain, ngram_size_min => 2, ngram_size_max => 12)) HIDDEN,
+) primary key (col1);
+
 ==

@@ -286,8 +286,7 @@ public class DdlDiffTest {
   @Test
   public void generateAlterTable_equivalentQuotedIdentifiers() throws DdlDiffException {
     String unquoted =
-        "CREATE TABLE test1 (index INT64 NOT NULL, col2 STRING(1024))"
-            + " PRIMARY KEY (index);";
+        "CREATE TABLE test1 (index INT64 NOT NULL, col2 STRING(1024))" + " PRIMARY KEY (index);";
     String quoted =
         "CREATE TABLE test1 (`index` INT64 NOT NULL, `col2` STRING(1024))"
             + " PRIMARY KEY (`index`);";

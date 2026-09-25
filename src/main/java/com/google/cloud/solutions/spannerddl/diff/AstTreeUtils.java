@@ -129,7 +129,7 @@ public class AstTreeUtils {
       Token firstToken, Token lastToken, boolean upperCaseReserved) {
     StringBuilder sb = new StringBuilder();
     Token t = firstToken;
-    while (t != lastToken) {
+    while (!t.equals(lastToken)) {
       String tok = t.toString();
       sb.append(isReservedWord(tok) && upperCaseReserved ? tok.toUpperCase(Locale.ROOT) : tok);
 

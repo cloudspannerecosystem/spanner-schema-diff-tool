@@ -40,6 +40,8 @@ public class DDLParsertUnsupportedDdlFromFileTest {
   }
 
   @Test
+  // Suppress Error-prone warning triggered by parser.ddl_statement().
+  @SuppressWarnings("AssertThrowsMultipleStatements")
   public void validateDDL() {
     assertThrows(
         UnsupportedOperationException.class,

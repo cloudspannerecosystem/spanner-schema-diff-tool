@@ -123,6 +123,20 @@ public class DDLParserTest {
   }
 
   @Test
+  public void parseNonParentInterleaveDoesNotAddOnDelete() throws ParseException {
+    ASTcreate_table_statement statement =
+        (ASTcreate_table_statement)
+            parse(
+                    "create table test (col1 int64) primary key (col1),"
+                        + " interleave in other_table")
+                .jjtGetChild(0);
+
+    assertThat(statement.toString())
+        .isEqualTo(
+            "CREATE TABLE test ( col1 INT64 ) PRIMARY KEY (col1)," + " INTERLEAVE IN other_table");
+  }
+
+  @Test
   public void parseDDLCreateIndexSyntaxError() {
     parseCheckingParseException(
         "Create index index1 on test1", "Was expecting one of:\n\n\"(\" ...");

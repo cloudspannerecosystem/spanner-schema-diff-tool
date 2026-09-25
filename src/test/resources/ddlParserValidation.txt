@@ -202,7 +202,7 @@ CREATE TABLE test1 (
 CREATE TABLE test1 (
   keycol INT64,
   value INT64
-) PRIMARY KEY (keycol ASC), INTERLEAVE IN other_table ON DELETE NO ACTION
+) PRIMARY KEY (keycol ASC), INTERLEAVE IN other_table
 
 == Test 21 create index with OPTIONS
 

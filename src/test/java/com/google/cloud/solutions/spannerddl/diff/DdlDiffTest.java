@@ -20,6 +20,7 @@ import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_DROP_STAT
 import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_RECREATE_CONSTRAINTS_OPT;
 import static com.google.cloud.solutions.spannerddl.diff.DdlDiff.ALLOW_RECREATE_INDEXES_OPT;
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 import com.google.cloud.solutions.spannerddl.parser.ASTddl_statement;
@@ -352,15 +353,6 @@ public class DdlDiffTest {
         true,
         "Cannot change interleaved parent of table test1");
 
-    // add  parent constraint
-    getDiffCheckDdlDiffException(
-        "create table test1 (col1 int64, col2 int64) "
-            + "primary key (col1), interleave in testparent;",
-        "create table test1 (col1 int64, col2 int64) "
-            + "primary key (col1), interleave in parent testparent",
-        true,
-        "Cannot change interleaved parent of table test1");
-
     // change on delete
     assertThat(
             getDiff(
@@ -379,6 +371,96 @@ public class DdlDiffTest {
                     + "primary key (col1), interleave in parent testparent on delete cascade",
                 true))
         .containsExactly("ALTER TABLE test1 SET ON DELETE CASCADE");
+  }
+
+  @Test
+  public void generateAlterTable_removeInterleaveParentEnforcement() throws DdlDiffException {
+    assertThat(
+            getDiff(
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in parent testparent on delete cascade;",
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in testparent;",
+                true))
+        .containsExactly("ALTER TABLE test1 SET INTERLEAVE IN testparent");
+  }
+
+  @Test
+  public void generateAlterTable_addInterleaveParentEnforcement() throws DdlDiffException {
+    assertThat(
+            getDiff(
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in testparent;",
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in parent testparent;",
+                true))
+        .containsExactly("ALTER TABLE test1 SET INTERLEAVE IN PARENT testparent");
+  }
+
+  @Test
+  public void generateAlterTable_addInterleaveParentEnforcementWithCascade()
+      throws DdlDiffException {
+    assertThat(
+            getDiff(
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in testparent;",
+                "create table test1 (col1 int64, col2 int64) "
+                    + "primary key (col1), interleave in parent testparent on delete cascade;",
+                true))
+        .containsExactly(
+            "ALTER TABLE test1 SET INTERLEAVE IN PARENT testparent",
+            "ALTER TABLE test1 SET ON DELETE CASCADE")
+        .inOrder();
+  }
+
+  @Test
+  public void generateAlterTable_changeInterleaveParentAndEnforcementRejected() {
+    getDiffCheckDdlDiffException(
+        "create table test1 (col1 int64, col2 int64) "
+            + "primary key (col1), interleave in parent testparent;",
+        "create table test1 (col1 int64, col2 int64) "
+            + "primary key (col1), interleave in otherparent;",
+        true,
+        "Cannot change interleaved parent of table test1");
+  }
+
+  @Test
+  public void generateDifferences_nonParentInterleaveDoesNotAddOnDelete() throws DdlDiffException {
+    String parentTable = "create table parent_table (col1 int64) primary key (col1);";
+    String colocatedTable =
+        "create table colocated (col1 int64) primary key (col1), interleave in parent_table;";
+
+    assertThat(getDiff(parentTable, parentTable + colocatedTable, false))
+        .containsExactly(
+            "CREATE TABLE colocated ( col1 INT64 ) PRIMARY KEY (col1),"
+                + " INTERLEAVE IN parent_table");
+  }
+
+  @Test
+  public void generateAlterTable_nonParentInterleaveCanAddColumn() throws DdlDiffException {
+    assertThat(
+            getDiff(
+                "create table test1 (col1 int64) primary key (col1),"
+                    + " interleave in parent_table;",
+                "create table test1 (col1 int64, col2 int64) primary key (col1),"
+                    + " interleave in parent_table;",
+                false))
+        .containsExactly("ALTER TABLE test1 ADD COLUMN col2 INT64");
+  }
+
+  @Test
+  public void parseNonParentInterleaveRejectsOnDelete() {
+    IllegalArgumentException error =
+        assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                DdlDiff.parseDdl(
+                    "create table test (col1 int64) primary key (col1),"
+                        + " interleave in other_table on delete no action"));
+
+    assertThat(error)
+        .hasMessageThat()
+        .isEqualTo("ON DELETE is only valid for INTERLEAVE IN PARENT clauses");
   }
 
   @Test

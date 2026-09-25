@@ -105,16 +105,21 @@ public class ASTcolumn_def extends SimpleNode {
             ASToptions_clause.class));
   }
 
+  private String comparableDefinition() {
+    String name = getColumnName();
+    return AstTreeUtils.unquoteIdentifier(name) + toString().substring(name.length());
+  }
+
   @Override
   public boolean equals(Object other) {
     if (other instanceof ASTcolumn_def) {
-      return this.toString().equals(other.toString());
+      return this.comparableDefinition().equals(((ASTcolumn_def) other).comparableDefinition());
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return toString().hashCode();
+    return comparableDefinition().hashCode();
   }
 }

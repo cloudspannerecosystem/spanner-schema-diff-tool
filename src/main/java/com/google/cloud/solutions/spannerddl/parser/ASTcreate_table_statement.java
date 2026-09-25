@@ -52,7 +52,7 @@ public class ASTcreate_table_statement extends SimpleNode {
     for (Node child : children) {
       if (child instanceof ASTcolumn_def) {
         ASTcolumn_def column = (ASTcolumn_def) child;
-        columns.put(column.getColumnName(), column);
+        columns.put(AstTreeUtils.unquoteIdentifier(column.getColumnName()), column);
       }
     }
     return columns;

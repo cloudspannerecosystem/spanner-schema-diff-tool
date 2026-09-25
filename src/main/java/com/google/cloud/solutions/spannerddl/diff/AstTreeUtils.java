@@ -111,6 +111,16 @@ public class AstTreeUtils {
         .collect(Collectors.toList());
   }
 
+  /** Returns the name represented by either a quoted or unquoted identifier token. */
+  public static String unquoteIdentifier(String identifier) {
+    if (identifier.length() >= 2
+        && identifier.charAt(0) == '`'
+        && identifier.charAt(identifier.length() - 1) == '`') {
+      return identifier.substring(1, identifier.length() - 1);
+    }
+    return identifier;
+  }
+
   private AstTreeUtils() {}
 
   /**

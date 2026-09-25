@@ -31,6 +31,29 @@ public class ASTprimary_key extends SimpleNode {
     super(p, id);
   }
 
+  /** Compares key columns without treating optional identifier quoting as a key change. */
+  public boolean hasSameColumns(ASTprimary_key other) {
+    List<ASTkey_part> keyparts = AstTreeUtils.getChildrenAssertType(children, ASTkey_part.class);
+    List<ASTkey_part> otherKeyparts =
+        AstTreeUtils.getChildrenAssertType(other.children, ASTkey_part.class);
+    if (keyparts.size() != otherKeyparts.size()) {
+      return false;
+    }
+    for (int i = 0; i < keyparts.size(); i++) {
+      ASTkey_part keypart = keyparts.get(i);
+      ASTkey_part otherKeypart = otherKeyparts.get(i);
+      if (!AstTreeUtils.unquoteIdentifier(keypart.getKeyPath())
+              .equals(AstTreeUtils.unquoteIdentifier(otherKeypart.getKeyPath()))
+          || !keypart
+              .toString()
+              .substring(keypart.getKeyPath().length())
+              .equals(otherKeypart.toString().substring(otherKeypart.getKeyPath().length()))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Override
   public String toString() {
     List<ASTkey_part> keyparts = AstTreeUtils.getChildrenAssertType(children, ASTkey_part.class);

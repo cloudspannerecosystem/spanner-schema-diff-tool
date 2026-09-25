@@ -506,7 +506,7 @@ public class DdlDiff {
     }
 
     // Check Key is same
-    if (!left.getPrimaryKey().toString().equals(right.getPrimaryKey().toString())) {
+    if (!left.getPrimaryKey().hasSameColumns(right.getPrimaryKey())) {
       throw new DdlDiffException("Cannot change primary key of table " + left.getTableName());
     }
 

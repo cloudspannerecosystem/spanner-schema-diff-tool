@@ -284,6 +284,25 @@ public class DdlDiffTest {
   }
 
   @Test
+  public void generateAlterTable_equivalentQuotedIdentifiers() throws DdlDiffException {
+    String unquoted =
+        "CREATE TABLE test1 (index INT64 NOT NULL, col2 STRING(1024))" + " PRIMARY KEY (index);";
+    String quoted =
+        "CREATE TABLE test1 (`index` INT64 NOT NULL, `col2` STRING(1024))"
+            + " PRIMARY KEY (`index`);";
+
+    assertThat(getDiff(unquoted, quoted, true)).isEmpty();
+    assertThat(getDiff(quoted, unquoted, true)).isEmpty();
+    assertThat(
+            getDiff(
+                unquoted,
+                "CREATE TABLE test1 (`index` INT64 NOT NULL, `col2` STRING(2048))"
+                    + " PRIMARY KEY (`index`);",
+                true))
+        .containsExactly("ALTER TABLE test1 ALTER COLUMN `col2` STRING(2048)");
+  }
+
+  @Test
   public void generateAlterTable_changeKey() {
     // change key col
     getDiffCheckDdlDiffException(

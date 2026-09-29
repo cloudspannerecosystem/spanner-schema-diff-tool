@@ -15,7 +15,9 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - name: Run release-please
+        # https://github.com/googleapis/release-please-action/releases/tag/v5.0.0
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
         with:
           token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json

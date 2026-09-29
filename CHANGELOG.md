@@ -1,5 +1,41 @@
 # Changelog
 
+## [1.26.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.25.0...v1.26.0) (2026-09-29)
+
+
+### Features
+
+* Add flag to allow ignoring proto statements ([#232](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/232)) ([718984a](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/718984aba6d5f32ea202c674fb2bcab39e833cde))
+* add LOCALITY GROUP and table OPTIONS support ([d97c555](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/d97c5555c3a63a7f7fb3b41f2e370631c810718a))
+* Add reference validation ([#218](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/218)) ([7368ef3](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/7368ef37b9c6449a19d839d89c3527127dd81ce2))
+* add support for inline PRIMARY KEYs ([596afc1](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/596afc11a122ba093073d540077fc404f95aaa91))
+* add support for non-parent interleaving ([8d8d074](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/8d8d0744ef9f2f9b0bd8a59f7ae2728fbf4f83d0))
+* add support index OPTIONS clause ([04d7cf6](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/04d7cf68f6d9b94eeb1be13e88b063b06ce62c66))
+* add support UUID type ([#239](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/239)) ([86f9e5f](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/86f9e5feac572648b0ce5851c7d7ae9d433091d9)), closes [#238](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/238)
+* generate default clause when table column NULL is changed ([#250](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/250)) ([cd1dabf](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/cd1dabf141ccb19692cf633b023ecc8f1646bd49))
+* **parser:** sync parser jjt with emulator ([be2c24e](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/be2c24ec9e4af6b4c4b65985b8aca4d04854ecb9))
+
+
+### Bug Fixes
+
+* AssertThrowsMultipleStatements error. ([#258](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/258)) ([fcf1395](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/fcf139577f6b6174e7fb19978ea224bfb25eeae8))
+* **deps:** update actions/checkout action to v5 ([#215](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/215)) ([c23347f](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/c23347f636520fd73394a8dface069d5a4ee417b))
+* **deps:** update actions/checkout action to v6 ([#231](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/231)) ([f108292](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/f1082925675d5904d35f3ef83f4a27e95af0b056))
+* **deps:** update actions/setup-java action to v5 ([#216](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/216)) ([adbab5b](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/adbab5bf361fd5a01831b425f6ab4a8b7691c4f0))
+* **deps:** update dependency com.diffplug.spotless:spotless-maven-plugin to v3 ([#222](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/222)) ([3c6800e](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/3c6800e52a2f5a84148191c57dcf991cc4cbe6d8))
+* **deps:** update dependency com.diffplug.spotless:spotless-maven-plugin to v3.10.3 ([#259](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/259)) ([d605ebc](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/d605ebcffe83cc48cfd7095fc8b95214582bc14c))
+* **deps:** update dependency com.helger.maven:ph-javacc-maven-plugin to v5 ([#219](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/219)) ([56ac3f8](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/56ac3f8036cf160f1a133b1f41c04f1de5733c3d))
+* **deps:** update github/codeql-action action to v4 ([#226](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/226)) ([265c043](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/265c0433038f2510c802416cc496ed0c5132ef1e))
+* **deps:** update mvn-packages ([#200](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/200)) ([24cc8ce](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/24cc8ce18c5b39234abed1b2c2feaa8d181aa9a8))
+* **deps:** update mvn-packages ([#224](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/224)) ([ae999ff](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/ae999ffaa7c0659d6b5664a267c03c55d6813410))
+* **deps:** update mvn-packages ([#233](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/233)) ([5daafa1](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/5daafa1bbfe9ecd22ac95ab03141fd9fa7968daf))
+* **deps:** update mvn-packages ([#235](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/235)) ([83738b4](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/83738b4676f6854a063cd54c2f36d3d2ab4a4ec3))
+* **errorprone:** fix errorprone recommendations ([618f205](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/618f20516592cb542dd15633a7b0111dfcf90e06))
+* fix ReferenceEquality error in AST tree walk. ([#257](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/257)) ([f1d33ab](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/f1d33abd36cbb061fd0610b65cb0367dcc1ed492))
+* generated of expression having =&gt; ([#252](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/252)) ([ba098ca](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/ba098ca7a63742464ca5e1fe0932afc0b39d5d75))
+* support non-parent interleaving and parent enforcement changes ([#251](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/251)) ([24b53ad](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/24b53ad9cbc142766d7b1869b643f450fe19dadc))
+* treat optional identifier quoting as equivalent in table diffs ([#254](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/issues/254)) ([6923c84](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/commit/6923c8404da0dfd61f8c3cdeb7cc9ff753f193ba))
+
 ## [1.25.0](https://github.com/cloudspannerecosystem/spanner-schema-diff-tool/compare/v1.24.0...v1.25.0) (2025-01-16)
 
 

@@ -36,7 +36,7 @@
     <junit.version>4.13.2</junit.version>
     <spotless.version>3.10.3</spotless.version>
     <exec-maven.version>3.6.4</exec-maven.version>
-    <build-helper-maven-plugin.version>3.6.2</build-helper-maven-plugin.version>
+    <build-helper-maven-plugin.version>3.7.0</build-helper-maven-plugin.version>
     <auto-value.version>1.11.1</auto-value.version>
     <error-prone.version>2.50.0</error-prone.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
